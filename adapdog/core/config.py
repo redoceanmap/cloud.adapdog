@@ -1,0 +1,35 @@
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# 예: postgresql+asyncpg://user:password@localhost:5432/adapdog
+# 설정하지 않으면 DB 없이 부팅된다 (목 골격 단계).
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# Gemini 동선 에이전트. 키가 없으면 규칙기반 폴백 에이전트로 자동 대체된다.
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
+
+# 반려동물 동반 가능 문화시설 위치 (data.go.kr 15111389, odcloud 자동변환 API).
+# 활용신청 후 본인 Swagger 페이지에서 엔드포인트(uddi 포함)와 서비스키를 발급받아 채운다.
+# 둘 중 하나라도 비어 있으면 목 데이터로 폴백한다.
+PETPLACE_API_ENDPOINT = os.getenv("PETPLACE_API_ENDPOINT")        # 예: https://api.odcloud.kr/api/15111389/v1/uddi:xxxxxxxx
+PETPLACE_API_SERVICE_KEY = os.getenv("PETPLACE_API_SERVICE_KEY")  # 공공데이터포털 일반 인증키(Decoding)
+PETPLACE_API_MAX_ROWS = int(os.getenv("PETPLACE_API_MAX_ROWS", "3000"))
+
+# data.go.kr 일반 인증키 — 승인된 KTO API 4종 공통. 인제스트가 API 데이터를 DB에 적재할 때 사용.
+DATA_GO_KR_SERVICE_KEY = os.getenv("DATA_GO_KR_SERVICE_KEY")
+
+# 기상청 단기예보 조회서비스(초단기실황, data.go.kr 1360000). 별도 활용신청 필요.
+# 키가 없으면 목 날씨로 폴백한다. 미지정 시 data.go.kr 공통 인증키를 재사용한다.
+KMA_WEATHER_ENDPOINT = os.getenv(
+    "KMA_WEATHER_ENDPOINT",
+    "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst",
+)
+KMA_SERVICE_KEY = os.getenv("KMA_SERVICE_KEY") or DATA_GO_KR_SERVICE_KEY
+
+# 전국길관광정보 표준데이터 CSV (둘레길 추천용). 좌표 없는 선형 코스 데이터.
+_CSV_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "csv")
+TRAIL_CSV_PATH = os.getenv("TRAIL_CSV_PATH", os.path.join(_CSV_DIR, "전국길관광정보표준데이터.csv"))
