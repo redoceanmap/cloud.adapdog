@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.database.session import create_all_tables, dispose_engine, init_engine
 from map.adapter.inbound.api import map_router
+from users.adapter.inbound.api import users_router
 
 
 def _configure_logging() -> None:
@@ -50,6 +51,7 @@ app.add_middleware(
 )
 
 app.include_router(map_router, prefix="/api")
+app.include_router(users_router, prefix="/api")
 
 
 @app.get("/")

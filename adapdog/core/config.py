@@ -8,6 +8,12 @@ load_dotenv()
 # 설정하지 않으면 DB 없이 부팅된다 (목 골격 단계).
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+# JWT 인증. 회원(account) 로그인 토큰 발급/검증에 사용.
+# 운영 시 반드시 환경변수로 안전한 값을 주입한다(기본값은 로컬 개발용).
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-insecure-change-me")
+JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "1440"))  # 기본 24시간
+
 # Gemini 동선 에이전트. 키가 없으면 규칙기반 폴백 에이전트로 자동 대체된다.
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
@@ -21,6 +27,11 @@ PETPLACE_API_MAX_ROWS = int(os.getenv("PETPLACE_API_MAX_ROWS", "3000"))
 
 # data.go.kr 일반 인증키 — 승인된 KTO API 4종 공통. 인제스트가 API 데이터를 DB에 적재할 때 사용.
 DATA_GO_KR_SERVICE_KEY = os.getenv("DATA_GO_KR_SERVICE_KEY")
+
+# TheDogAPI (thedogapi.com) 견종 표준정보. breed_catalog 시드 인제스트가 사용.
+# 키가 없으면 시드 없이 큐레이션 목 데이터로만 자동완성한다.
+DOG_API_KEY = os.getenv("DOG_API_KEY")
+DOG_API_ENDPOINT = os.getenv("DOG_API_ENDPOINT", "https://api.thedogapi.com/v1/breeds")
 
 # 기상청 단기예보 조회서비스(초단기실황, data.go.kr 1360000). 별도 활용신청 필요.
 # 키가 없으면 목 날씨로 폴백한다. 미지정 시 data.go.kr 공통 인증키를 재사용한다.

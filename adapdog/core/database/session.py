@@ -32,13 +32,20 @@ def init_engine() -> None:
     )
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
+def get_session_factory() -> async_sessionmaker[AsyncSession]:
+    """초기화된 세션 팩토리를 반환. 미초기화면 init 시도 후에도 없으면 에러.
+
+    repository 구현들이 공유하는 단일 진입점 — DB 미초기화 처리를 한 곳으로 통일한다.
+    """
     if async_session_factory is None:
         init_engine()
     if async_session_factory is None:
         raise RuntimeError("데이터베이스 엔진이 초기화되지 않았습니다. DATABASE_URL을 확인하세요.")
+    return async_session_factory
 
-    async with async_session_factory() as session:
+
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    async with get_session_factory()() as session:
         yield session
 
 
