@@ -1,0 +1,132 @@
+/* 발자국 — Color system
+ * Hero: Paw Coral. Ground: warm cream paper + warm ink.
+ * Semantics carry the product's verdict & risk system (green / amber / orange / red).
+ * Base palette first, then semantic aliases.
+ */
+
+:root {
+  /* ---- Brand: Paw Coral ---- */
+  --coral-50:  #fff4ef;
+  --coral-100: #ffe4d7;
+  --coral-200: #ffc7af;
+  --coral-300: #ffa783;
+  --coral-400: #ff8455;
+  --coral-500: #fb6536; /* base / primary */
+  --coral-600: #ea5021;
+  --coral-700: #c23e17;
+  --coral-800: #98331a;
+  --coral-900: #7a2e18;
+
+  /* ---- Warm neutral (taupe ink) ---- */
+  --sand-0:   #ffffff;
+  --sand-50:  #fbf7f2; /* page paper */
+  --sand-100: #f4eee5;
+  --sand-150: #ece4d8;
+  --sand-200: #ddd3c5;
+  --sand-300: #c4b9a9;
+  --sand-400: #9d9383;
+  --sand-500: #766c5e;
+  --sand-600: #574f43;
+  --sand-700: #3e372e;
+  --sand-800: #2a241d; /* primary text */
+  --sand-900: #1a1611;
+
+  /* ---- Sky (route / map / info / accessibility) ---- */
+  --sky-50:  #eaf1fe;
+  --sky-100: #d3e2fd;
+  --sky-300: #87b0fb;
+  --sky-500: #3e7bfa;
+  --sky-600: #2b62d9;
+  --sky-700: #2049a8;
+
+  /* ---- Success: 입장 가능 / 안전 ---- */
+  --green-50:  #e8f6ee;
+  --green-100: #c8ebd6;
+  --green-500: #1fa85c;
+  --green-600: #18874a;
+  --green-700: #136b3b;
+
+  /* ---- Warning: 조건부 가능 / 주의 ---- */
+  --amber-50:  #fef3e0;
+  --amber-100: #fde3b8;
+  --amber-500: #ef9d1e;
+  --amber-600: #cc8112;
+  --amber-700: #9a610b;
+
+  /* ---- High heat / 고위험 ---- */
+  --orange-50:  #fef0e6;
+  --orange-100: #fdd8be;
+  --orange-500: #f2742b;
+  --orange-600: #d65c17;
+
+  /* ---- Danger: 입장 불가 / 위험 ---- */
+  --red-50:  #fdecec;
+  --red-100: #f9d2d3;
+  --red-500: #e5484d;
+  --red-600: #c8363b;
+  --red-700: #8e2227;
+
+  /* ===== Semantic aliases ===== */
+
+  /* Brand */
+  --brand:          var(--coral-500);
+  --brand-hover:    var(--coral-600);
+  --brand-pressed:  var(--coral-700);
+  --brand-soft:     var(--coral-50);
+  --brand-soft-2:   var(--coral-100);
+  --brand-border:   var(--coral-200);
+  --on-brand:       #ffffff;
+
+  /* Text */
+  --text-strong:  var(--sand-900);
+  --text-body:    var(--sand-800);
+  --text-muted:   var(--sand-500);
+  --text-subtle:  var(--sand-400);
+  --text-on-dark: #ffffff;
+  --text-brand:   var(--coral-700);
+  --text-link:    var(--sky-600);
+
+  /* Surfaces */
+  --surface-page:       var(--sand-50);
+  --surface-card:       #ffffff;
+  --surface-sunken:     var(--sand-100);
+  --surface-raised:     #ffffff;
+  --surface-inverse:    var(--sand-900);
+  --surface-brand:      var(--coral-500);
+  --surface-brand-soft: var(--coral-50);
+
+  /* Borders */
+  --border-subtle:  var(--sand-150);
+  --border-default: var(--sand-200);
+  --border-strong:  var(--sand-300);
+  --border-brand:   var(--coral-200);
+
+  /* Feedback — fill / soft / text */
+  --success:       var(--green-500);
+  --success-soft:  var(--green-50);
+  --success-text:  var(--green-700);
+  --warning:       var(--amber-500);
+  --warning-soft:  var(--amber-50);
+  --warning-text:  var(--amber-700);
+  --danger:        var(--red-500);
+  --danger-soft:   var(--red-50);
+  --danger-text:   var(--red-700);
+  --info:          var(--sky-500);
+  --info-soft:     var(--sky-50);
+  --info-text:     var(--sky-700);
+
+  /* Domain semantics */
+  --verdict-allowed:     var(--green-500);
+  --verdict-conditional: var(--amber-500);
+  --verdict-denied:      var(--red-500);
+  --risk-low:      var(--green-500);
+  --risk-moderate: var(--amber-500);
+  --risk-high:     var(--orange-500);
+  --risk-severe:   var(--red-500);
+  --route-line:    var(--coral-500);
+  --vet-marker:    var(--sky-600);
+  --access-accent: var(--sky-600);
+
+  /* Focus ring */
+  --focus-ring: color-mix(in srgb, var(--coral-500) 45%, transparent);
+}

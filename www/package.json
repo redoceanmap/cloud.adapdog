@@ -1,0 +1,10 @@
+{
+  "name": "adapdog-www",
+  "version": "0.1.0",
+  "private": true,
+  "description": "발자국 App 프론트엔드 (정적 React+Babel UI, 빌드 단계 없음)",
+  "scripts": {
+    "dev": "python3 -m http.server 3000",
+    "start": "python3 -m http.server 3000"
+  }
+}

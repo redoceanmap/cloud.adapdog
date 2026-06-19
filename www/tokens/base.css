@@ -1,0 +1,60 @@
+/* 발자국 — Base reset + element defaults
+ * Applies the brand ground (cream paper, warm ink, Pretendard) to bare HTML.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font: var(--text-body);
+  font-family: var(--font-sans);
+  color: var(--text-body);
+  background: var(--surface-page);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss06" 1; /* Pretendard refined punctuation */
+}
+
+h1, h2, h3, h4, h5, h6, p, figure {
+  margin: 0;
+}
+
+a {
+  color: var(--text-link);
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--coral-200);
+  color: var(--sand-900);
+}
+
+/* Optional helpers (consumers may use, components don't depend on them) */
+.balja-display { font: var(--text-display); letter-spacing: var(--ls-tight); color: var(--text-strong); }
+.balja-title   { font: var(--text-title); letter-spacing: var(--ls-snug); color: var(--text-strong); }
+.balja-body    { font: var(--text-body); color: var(--text-body); }
+.balja-muted   { color: var(--text-muted); }

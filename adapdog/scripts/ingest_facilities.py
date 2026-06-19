@@ -7,8 +7,11 @@
 from __future__ import annotations
 
 import csv
+import json
 import os
 import sys
+import urllib.parse
+import urllib.request
 from urllib.parse import urlparse
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "apps"))
@@ -18,7 +21,7 @@ from pyproj import Transformer
 from sqlalchemy import create_engine, insert
 from sqlalchemy.orm import Session
 
-from core.config import DATABASE_URL
+from core.config import DATABASE_URL, DATA_GO_KR_SERVICE_KEY
 from core.database.base import Base
 from map.adapter.outbound.orm.inclusive_filter_orm import BarrierFreeFacility, BarrierFreeFeature
 from map.adapter.outbound.orm.pet_place_orm import (
@@ -34,6 +37,12 @@ CSV_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__)
 PET_CSV = os.path.join(CSV_DIR, "한국문화정보원_전국 반려동물 동반 가능 문화시설 위치 데이터_20250324.csv")
 BF_CSV = os.path.join(CSV_DIR, "한국문화정보원_전국 배리어프리 문화예술관광지_20221125.csv")
 VET_CSV = os.path.join(CSV_DIR, "동물_동물병원.csv")
+
+# KTO(한국관광공사) 실시간 API. data.go.kr 일반 인증키(DATA_GO_KR_SERVICE_KEY) 공통 사용.
+_GOCAMPING_URL = "https://apis.data.go.kr/B551011/GoCamping/basedList"
+_PETTOUR_URL = "https://apis.data.go.kr/B551011/KorService2/detailPetTour2"
+_AREA_BASED_URL = "https://apis.data.go.kr/B551011/KorService2/areaBasedList2"
+_KTO_COMMON = {"_type": "json", "MobileOS": "ETC", "MobileApp": "adapdog"}
 
 _TRUTHY = {"Y", "y", "있음", "가능", "유", "O", "o", "1", "true"}
 
@@ -72,6 +81,105 @@ def _region_from_address(addr: str) -> tuple[str, str]:
     sido = tokens[0] if tokens else ""
     sigungu = tokens[1] if len(tokens) > 1 else ""
     return sido, sigungu
+
+
+def _kto_items(base: str, params: dict, rows: int = 1000):
+    """KTO 표준 응답을 페이지네이션하며 item dict를 순회한다(serviceKey 자동 주입)."""
+    page = 1
+    while True:
+        query = {**_KTO_COMMON, **params, "serviceKey": DATA_GO_KR_SERVICE_KEY,
+                 "numOfRows": rows, "pageNo": page}
+        url = base + "?" + urllib.parse.urlencode(query, safe="=")
+        with urllib.request.urlopen(url, timeout=30) as resp:
+            body = json.loads(resp.read().decode("utf-8", "replace")).get("response", {}).get("body", {})
+        items = body.get("items") or ""
+        items = items.get("item", []) if isinstance(items, dict) else []
+        if not items:
+            break
+        yield from items
+        if page * rows >= int(body.get("totalCount", 0) or 0):
+            break
+        page += 1
+
+
+def _ingest_gocamping(dim: "DimensionBuilder", facility_rows: list[dict],
+                      policy_rows: list[dict], size_rows: list[dict], start_fid: int) -> int:
+    """고캠핑(15101933) → facility. 반려동물 동반 가능 캠핑장만, 예약 URL 보관."""
+    fid = start_fid
+    count = 0
+    for it in _kto_items(_GOCAMPING_URL, {}):
+        animal = (it.get("animalCmgCl") or "").strip()
+        if not animal or "불가" in animal or "가능" not in animal:
+            continue
+        c = _coord(it.get("mapY"), it.get("mapX"))
+        name = (it.get("facltNm") or "").strip()
+        if c is None or not name:
+            continue
+        sido, sigungu = _region_from_address(it.get("addr1", ""))
+        fid += 1
+        count += 1
+        facility_rows.append({
+            "id": fid, "name": name, "latitude": c[0], "longitude": c[1],
+            "region_id": dim.region_id(sido, sigungu),
+            "category_id": dim.category_id("캠핑", (it.get("induty") or "").strip(), ""),
+            "road_address": (it.get("addr1") or "").strip() or None,
+            "jibun_address": None,
+            "phone": (it.get("tel") or "").strip() or None,
+            "operating_hours": None,
+            "homepage": (it.get("resveUrl") or it.get("homepage") or "").strip() or None,
+        })
+        policy_rows.append({
+            "facility_id": fid, "companion_allowed": True,
+            "restriction": animal if "가능(" in animal else None,
+            "extra_fee": None, "indoor": False, "outdoor": True,
+        })
+        for sz in PetSize.parse_allowed(animal):
+            size_rows.append({"facility_id": fid, "pet_size": sz.value})
+    print(f"고캠핑: facility={count} (반려동물 가능만)")
+    return fid
+
+
+def _ingest_pettour(dim: "DimensionBuilder", facility_rows: list[dict],
+                    policy_rows: list[dict], size_rows: list[dict], start_fid: int) -> int:
+    """반려동물 동반여행(KorService2). 동반등록 콘텐츠(detailPetTour2)와 전국 숙박을 조인."""
+    pet_info = {it["contentid"]: it for it in _kto_items(_PETTOUR_URL, {}) if it.get("contentid")}
+    fid = start_fid
+    count = 0
+    for it in _kto_items(_AREA_BASED_URL, {"contentTypeId": 32}):
+        info = pet_info.get(it.get("contentid"))
+        if info is None:
+            continue  # 반려동물 동반 미등록 숙소 제외
+        c = _coord(it.get("mapy"), it.get("mapx"))
+        name = (it.get("title") or "").strip()
+        if c is None or not name:
+            continue
+        sido, sigungu = _region_from_address(it.get("addr1", ""))
+        fid += 1
+        count += 1
+        restriction = " / ".join(p for p in (
+            (info.get("acmpyTypeCd") or "").strip(),
+            (info.get("acmpyNeedMtr") or "").strip(),
+            (info.get("etcAcmpyInfo") or "").strip(),
+        ) if p) or None
+        facility_rows.append({
+            "id": fid, "name": name, "latitude": c[0], "longitude": c[1],
+            "region_id": dim.region_id(sido, sigungu),
+            "category_id": dim.category_id("숙박", "", ""),
+            "road_address": (it.get("addr1") or "").strip() or None,
+            "jibun_address": None,
+            "phone": (it.get("tel") or "").strip() or None,
+            "operating_hours": None,
+            "homepage": None,
+        })
+        policy_rows.append({
+            "facility_id": fid, "companion_allowed": True,
+            "restriction": restriction, "extra_fee": None,
+            "indoor": True, "outdoor": False,
+        })
+        for sz in PetSize.parse_allowed(info.get("acmpyPsblCpam")):
+            size_rows.append({"facility_id": fid, "pet_size": sz.value})
+    print(f"반려동물 동반여행 숙박: facility={count} (동반등록 매칭)")
+    return fid
 
 
 class DimensionBuilder:
@@ -160,6 +268,7 @@ def ingest() -> None:
                 "jibun_address": (r.get("지번주소") or "").strip() or None,
                 "phone": (r.get("전화번호") or "").strip() or None,
                 "operating_hours": (r.get("운영시간") or "").strip() or None,
+                "homepage": (r.get("홈페이지") or "").strip() or None,
             })
             policy_rows.append({
                 "facility_id": fid,
@@ -197,6 +306,7 @@ def ingest() -> None:
                 "jibun_address": jibun or None,
                 "phone": (r.get("전화번호") or "").strip() or None,
                 "operating_hours": None,
+                "homepage": None,
             })
             policy_rows.append({
                 "facility_id": fid, "companion_allowed": True, "restriction": None,
@@ -205,6 +315,13 @@ def ingest() -> None:
             for sz in PetSize.all_sizes():
                 size_rows.append({"facility_id": fid, "pet_size": sz.value})
     print(f"동물병원: facility={vet_count} (영업중만)")
+
+    # ── 고캠핑 + 반려동물 동반여행 숙박 (KTO 실시간 API) ──
+    if DATA_GO_KR_SERVICE_KEY:
+        fid = _ingest_gocamping(dim, facility_rows, policy_rows, size_rows, fid)
+        fid = _ingest_pettour(dim, facility_rows, policy_rows, size_rows, fid)
+    else:
+        print("DATA_GO_KR_SERVICE_KEY 미설정 → 고캠핑/반려동물동반여행 적재 생략")
 
     # ── barrier_free (15111386) ──
     bid = 0

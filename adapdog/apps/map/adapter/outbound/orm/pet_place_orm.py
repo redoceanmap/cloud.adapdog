@@ -29,7 +29,11 @@ class Category(Base):
 
 
 class Facility(Base):
-    """반려동물 동반 가능 시설 (pet_place). 원천: data.go.kr 15111389."""
+    """반려동물 동반 가능 시설 (pet_place). category 차원으로 출처를 구분한다.
+
+    원천: 문화시설 CSV(15111389), 동물병원(LOCALDATA), 고캠핑(15101933),
+    반려동물 동반여행 숙박(KorService2+detailPetTour2).
+    """
 
     __tablename__ = "facility"
 
@@ -43,6 +47,7 @@ class Facility(Base):
     jibun_address: Mapped[str | None] = mapped_column(String, nullable=True)
     phone: Mapped[str | None] = mapped_column(String, nullable=True)
     operating_hours: Mapped[str | None] = mapped_column(String, nullable=True)
+    homepage: Mapped[str | None] = mapped_column(String, nullable=True)
 
 
 class FacilityPetPolicy(Base):

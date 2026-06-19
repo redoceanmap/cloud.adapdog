@@ -24,7 +24,7 @@ class PetFriendlyPlace:
         return bool(self.restriction) and self.restriction.strip() not in ("제한사항 없음", "해당없음")
 
     def accommodates(self, size: PetSize) -> bool:
-        """우리 애(size)가 이 시설에 들어갈 수 있는가."""
+        """우리 아이(size)가 이 시설에 들어갈 수 있는가."""
         if size == PetSize.UNKNOWN:
             return True
         return size in self.allowed_sizes
