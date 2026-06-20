@@ -121,6 +121,7 @@ def build_rows() -> tuple[list[dict], list[dict], list[str], set[str]]:
         seen.add(key)
         row = {
             "breed": key,
+            "display_name": ko,
             "size": SIZE_OVERRIDES.get(ko, _size_from_weight(b["weight_metric"]).value),
             "temperament": _temperament_ko(b["temperament"], unmapped_adj),
         }
@@ -136,7 +137,7 @@ def build_rows() -> tuple[list[dict], list[dict], list[str], set[str]]:
         if key in seen or src is None:
             continue
         seen.add(key)
-        catalog_rows.append({"breed": key, "size": src["size"], "temperament": src["temperament"]})
+        catalog_rows.append({"breed": key, "display_name": alias_ko, "size": src["size"], "temperament": src["temperament"]})
         for trait in BreedTrait.from_breed(alias_ko):
             trait_rows.append({"breed": key, "trait": trait.value})
 
