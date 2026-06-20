@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 import os
+import statistics
 import sys
 import urllib.parse
 import urllib.request
@@ -81,6 +83,84 @@ def _region_from_address(addr: str) -> tuple[str, str]:
     sido = tokens[0] if tokens else ""
     sigungu = tokens[1] if len(tokens) > 1 else ""
     return sido, sigungu
+
+
+def _haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    """두 위경도 간 하버사인 거리(km)."""
+    radius = 6371.0
+    d_lat = math.radians(lat2 - lat1)
+    d_lng = math.radians(lng2 - lng1)
+    a = (
+        math.sin(d_lat / 2) ** 2
+        + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(d_lng / 2) ** 2
+    )
+    return radius * 2 * math.asin(math.sqrt(a))
+
+
+def _dedup_facilities(
+    facility_rows: list[dict], policy_rows: list[dict], size_rows: list[dict], precision: int = 5,
+) -> tuple[list[dict], list[dict], list[dict]]:
+    """이름 + 좌표가 완전히 같은 시설을 하나로 정리(중복 적재 제거).
+
+    원천 데이터는 동일 시설을 여러 번 적재하는 경우가 많다(같은 이름·같은 좌표).
+    좌표가 다르면 다른 지점(분점), 좌표는 같아도 이름이 다르면 한 건물의 다른 가게이므로
+    둘 다 보존한다 — '이름+좌표 동일'만 안전하게 제거한다. 첫 행을 생존시킨다(survivorship).
+    """
+    seen: set[tuple] = set()
+    bad_ids: set[int] = set()
+    for f in facility_rows:
+        key = (f["name"], round(f["latitude"], precision), round(f["longitude"], precision))
+        if key in seen:
+            bad_ids.add(f["id"])
+        else:
+            seen.add(key)
+
+    if not bad_ids:
+        print("중복 시설: 없음")
+        return facility_rows, policy_rows, size_rows
+
+    print(f"중복 시설 제거: {len(bad_ids)}건 (이름+좌표 동일)")
+    facility_rows = [f for f in facility_rows if f["id"] not in bad_ids]
+    policy_rows = [p for p in policy_rows if p["facility_id"] not in bad_ids]
+    size_rows = [s for s in size_rows if s["facility_id"] not in bad_ids]
+    return facility_rows, policy_rows, size_rows
+
+
+def _drop_geo_outliers(
+    facility_rows: list[dict], policy_rows: list[dict], size_rows: list[dict],
+    threshold_km: float = 50.0, min_region: int = 5,
+) -> tuple[list[dict], list[dict], list[dict]]:
+    """시군구별 좌표 중앙값에서 threshold_km 이상 떨어진 시설을 좌표 오류로 보고 격리.
+
+    원천 공공데이터의 좌표 입력 오류(예: '강릉시'인데 위도가 깨져 동해 남쪽으로 찍힘)를
+    적재 전에 거른다. 중앙값은 이상치 자체에 강건하고, 외부 경계 데이터가 필요 없다.
+    region 시설이 min_region개 미만이면 중앙값을 신뢰할 수 없어 건너뛴다.
+    """
+    groups: dict[int, list[dict]] = {}
+    for f in facility_rows:
+        if f["region_id"] is not None:
+            groups.setdefault(f["region_id"], []).append(f)
+
+    bad_ids: set[int] = set()
+    for group in groups.values():
+        if len(group) < min_region:
+            continue
+        med_lat = statistics.median(f["latitude"] for f in group)
+        med_lng = statistics.median(f["longitude"] for f in group)
+        bad_ids.update(
+            f["id"] for f in group
+            if _haversine_km(f["latitude"], f["longitude"], med_lat, med_lng) > threshold_km
+        )
+
+    if not bad_ids:
+        print("좌표 이상치: 없음")
+        return facility_rows, policy_rows, size_rows
+
+    print(f"좌표 이상치 제거: {len(bad_ids)}건 (시군구 좌표 중앙값에서 {threshold_km:.0f}km+ 이탈)")
+    facility_rows = [f for f in facility_rows if f["id"] not in bad_ids]
+    policy_rows = [p for p in policy_rows if p["facility_id"] not in bad_ids]
+    size_rows = [s for s in size_rows if s["facility_id"] not in bad_ids]
+    return facility_rows, policy_rows, size_rows
 
 
 def _kto_items(base: str, params: dict, rows: int = 1000):
@@ -347,6 +427,10 @@ def ingest() -> None:
                 if _truthy(r.get(col)):
                     feat_rows.append({"facility_id": bid, "feature_code": code})
     print(f"barrier_free: facility={len(bf_rows)} features={len(feat_rows)}")
+
+    # ── 데이터 정제: 중복 제거 → 좌표 이상치 격리 (원천 데이터 품질 보정) ──
+    facility_rows, policy_rows, size_rows = _dedup_facilities(facility_rows, policy_rows, size_rows)
+    facility_rows, policy_rows, size_rows = _drop_geo_outliers(facility_rows, policy_rows, size_rows)
 
     # ── 벌크 적재 ──
     with Session(engine) as s:

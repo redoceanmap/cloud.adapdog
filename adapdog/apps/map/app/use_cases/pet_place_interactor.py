@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+from core.introduction import Introduction
 from map.app.ports.input.pet_place_use_case import PetPlaceUseCase
 from map.app.ports.output.pet_place_port import PetFriendlyPlacePort
 from map.domain.entities.pet_place_entity import PetFriendlyPlace
@@ -19,3 +20,8 @@ class PetPlaceInteractor(PetPlaceUseCase):
         places = await self.repository.find_places(region)
         logger.info("[PetPlaceInteractor] find_places | region=%s count=%d", region, len(places))
         return places
+
+    async def introduce_myself(self) -> Introduction:
+        intro = await self.repository.introduce_myself()
+        intro.trail.append("interactor")
+        return intro

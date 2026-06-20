@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from core.introduction import IntroductionSchema
 from users.adapter.inbound.api.schemas.account_schema import (
     AccountSchema,
     LoginSchema,
@@ -68,3 +69,13 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="이메일 또는 비밀번호가 올바르지 않습니다"
         )
     return TokenSchema(access_token=token)
+
+
+@account_router.get("/myself", tags=["자기소개 (연동 검증)"])
+async def introduce_myself(
+    account_use_case: AccountUseCase = Depends(get_account_use_case),
+) -> IntroductionSchema:
+    """연동 검증용 자기소개 — router→use case→interactor→port→repository 전 계층 확인."""
+    intro = await account_use_case.introduce_myself()
+    intro.trail.append("router")
+    return IntroductionSchema.from_entity(intro)

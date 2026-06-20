@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+from core.introduction import Introduction
 from map.adapter.inbound.api.schemas.entry_verdict_schema import EntryVerdictSchema
 from map.app.dtos.entry_verdict_dto import EntryVerdictResponse
 from map.app.ports.input.entry_verdict_use_case import EntryVerdictUseCase
@@ -44,3 +45,8 @@ class EntryVerdictInteractor(EntryVerdictUseCase):
             conditions=verdict.conditions,
             message=self.message.render(verdict),
         )
+
+    async def introduce_myself(self) -> Introduction:
+        intro = await self.message.introduce_myself()
+        intro.trail.append("interactor")
+        return intro

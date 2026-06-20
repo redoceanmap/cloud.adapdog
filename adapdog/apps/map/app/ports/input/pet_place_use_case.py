@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
+from core.introduction import Introduction
 from map.domain.entities.pet_place_entity import PetFriendlyPlace
 
 
@@ -15,4 +16,9 @@ class PetPlaceUseCase(ABC):
     @abstractmethod
     async def find_places(self, region: str) -> list[PetFriendlyPlace]:
         """지역명으로 반려동물 동반 가능 시설(도메인 엔티티)을 조회한다."""
+        ...
+
+    @abstractmethod
+    async def introduce_myself(self) -> Introduction:
+        """이 기능의 자기소개(연동 검증)."""
         ...

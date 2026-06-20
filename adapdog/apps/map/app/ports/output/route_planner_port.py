@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
+from core.introduction import Introduction
 from map.app.dtos.route_planner_dto import AgentCoursePlan, CourseBrief
 from map.domain.entities.route_planner_entity import Trail
 
@@ -16,6 +17,15 @@ class RoutePlannerAgentPort(ABC):
     async def plan(self, brief: CourseBrief) -> AgentCoursePlan:
         """반려견 조건과 지역을 받아 펫 동반 가능 동선을 생성한다."""
         ...
+
+    async def introduce_myself(self) -> Introduction:
+        """연동 검증용 자기소개 — repository 계층에서 출발한다(구현체가 상속)."""
+        return Introduction(
+            context="map",
+            feature="route_planner",
+            message="AI 펫 동선 플래너 기능입니다. 연동 정상!",
+            trail=["repository"],
+        )
 
 
 class TrailPort(ABC):

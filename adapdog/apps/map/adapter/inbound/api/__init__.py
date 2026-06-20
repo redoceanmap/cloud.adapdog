@@ -20,6 +20,7 @@ def __getattr__(name: str):
 def _build_map_router():
     from fastapi import APIRouter
 
+    from map.adapter.inbound.api.v1.cohort_recommendation_router import cohort_recommendation_router
     from map.adapter.inbound.api.v1.entry_verdict_router import entry_verdict_router
     from map.adapter.inbound.api.v1.inclusive_filter_router import inclusive_filter_router
     from map.adapter.inbound.api.v1.pet_place_router import pet_place_router
@@ -34,4 +35,5 @@ def _build_map_router():
     router.include_router(entry_verdict_router)
     router.include_router(policy_card_router)
     router.include_router(safety_alert_router)
+    router.include_router(cohort_recommendation_router)
     return router

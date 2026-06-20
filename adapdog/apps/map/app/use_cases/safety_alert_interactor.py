@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+from core.introduction import Introduction
 from map.adapter.inbound.api.schemas.safety_alert_schema import SafetyAlertSchema
 from map.app.dtos.safety_alert_dto import SafetyAlertResponse
 from map.app.ports.input.pet_place_use_case import PetPlaceUseCase
@@ -50,3 +51,8 @@ class SafetyAlertInteractor(SafetyAlertUseCase):
             nearest_hospital=alert.nearest_hospital,
             nearest_hospital_km=alert.nearest_hospital_km,
         )
+
+    async def introduce_myself(self) -> Introduction:
+        intro = await self.weather.introduce_myself()
+        intro.trail.append("interactor")
+        return intro

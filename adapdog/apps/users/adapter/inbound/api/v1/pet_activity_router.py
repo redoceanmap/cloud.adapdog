@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
+from core.introduction import IntroductionSchema
 from users.adapter.inbound.api.schemas.pet_activity_schema import (
     PetActivityRecordSchema,
     PetActivitySchema,
@@ -38,3 +39,13 @@ async def pet_activities(
     """특정 반려동물의 행동 기록 목록(인증 필요)."""
     items = await use_case.list_by_pet(pet_id)
     return [PetActivitySchema.from_entity(a) for a in items]
+
+
+@pet_activity_router.get("/myself", tags=["자기소개 (연동 검증)"])
+async def introduce_myself(
+    use_case: PetActivityUseCase = Depends(get_pet_activity_use_case),
+) -> IntroductionSchema:
+    """연동 검증용 자기소개 — router→use case→interactor→port→repository 전 계층 확인."""
+    intro = await use_case.introduce_myself()
+    intro.trail.append("router")
+    return IntroductionSchema.from_entity(intro)

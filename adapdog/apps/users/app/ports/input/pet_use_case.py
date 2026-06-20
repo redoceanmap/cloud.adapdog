@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Optional
 
+from core.introduction import Introduction
 from users.domain.entities.pet_entity import Pet
 
 
@@ -25,4 +26,9 @@ class PetUseCase(ABC):
 
     @abstractmethod
     async def list_by_account(self, account_id: int) -> list[Pet]:
+        ...
+
+    @abstractmethod
+    async def introduce_myself(self) -> Introduction:
+        """이 기능의 자기소개(연동 검증)."""
         ...

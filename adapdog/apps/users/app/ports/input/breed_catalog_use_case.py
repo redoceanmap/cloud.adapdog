@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
+from core.introduction import Introduction
 from users.domain.entities.breed_catalog_entity import BreedProfile
 
 
@@ -15,4 +16,9 @@ class BreedCatalogUseCase(ABC):
     @abstractmethod
     async def lookup(self, breed: str) -> BreedProfile:
         """견종명으로 표준 프로필을 조회한다. 미등록 견종도 기본값으로 항상 반환한다."""
+        ...
+
+    @abstractmethod
+    async def introduce_myself(self) -> Introduction:
+        """이 기능의 자기소개(연동 검증)."""
         ...

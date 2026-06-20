@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+from core.introduction import Introduction
 from users.app.ports.input.breed_catalog_use_case import BreedCatalogUseCase
 from users.app.ports.output.breed_catalog_port import BreedCatalogPort
 from users.domain.entities.breed_catalog_entity import BreedProfile
@@ -26,3 +27,8 @@ class BreedCatalogInteractor(BreedCatalogUseCase):
             return BreedProfile.unknown(breed)
         logger.info("[BreedCatalogInteractor] lookup | breed=%s size=%s", breed, profile.size.value)
         return profile
+
+    async def introduce_myself(self) -> Introduction:
+        intro = await self.repository.introduce_myself()
+        intro.trail.append("interactor")
+        return intro

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+from core.introduction import Introduction
 from users.app.ports.input.account_use_case import AccountUseCase
 from users.app.ports.output.account_port import (
     AccountPort,
@@ -61,3 +62,8 @@ class AccountInteractor(AccountUseCase):
         if account is None:
             raise InvalidCredentialsError("account not found")
         return account
+
+    async def introduce_myself(self) -> Introduction:
+        intro = await self.repository.introduce_myself()
+        intro.trail.append("interactor")
+        return intro

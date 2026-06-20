@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+from core.introduction import Introduction
 from map.adapter.inbound.api.schemas.policy_card_schema import PolicyCardSchema
 from map.app.dtos.policy_card_dto import BadgeItem, PolicyCardResponse
 from map.app.ports.input.policy_card_use_case import PolicyCardUseCase
@@ -27,3 +28,8 @@ class PolicyCardInteractor(PolicyCardUseCase):
             source_text=card.source_text,
             badges=[BadgeItem(code=b.value, label=b.label) for b in card.badges],
         )
+
+    async def introduce_myself(self) -> Introduction:
+        intro = await self.parser.introduce_myself()
+        intro.trail.append("interactor")
+        return intro

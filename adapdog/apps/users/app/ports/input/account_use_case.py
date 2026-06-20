@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
+from core.introduction import Introduction
 from users.domain.entities.account_entity import Account
 
 
@@ -21,4 +22,9 @@ class AccountUseCase(ABC):
     @abstractmethod
     async def authenticate(self, token: str) -> Account:
         """access token을 검증하고 해당 회원을 반환한다."""
+        ...
+
+    @abstractmethod
+    async def introduce_myself(self) -> Introduction:
+        """이 기능의 자기소개(연동 검증)."""
         ...

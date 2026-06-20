@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
 # apps/ 를 import 경로에 추가 → bounded context를 `map.xxx` 로 임포트
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "apps"))
@@ -10,6 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "apps"))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from core.config import DATABASE_URL
 from core.database.session import create_all_tables, dispose_engine, init_engine
 from map.adapter.inbound.api import map_router
 from users.adapter.inbound.api import users_router
@@ -57,6 +59,17 @@ app.include_router(users_router, prefix="/api")
 @app.get("/")
 def read_root():
     return {"message": "발자국 API", "docs": "/docs"}
+
+
+@app.get("/api/health")
+def health_check():
+    """프론트 연결 상태 점검용 헬스 엔드포인트(운영 관심사 → composition root에 둠)."""
+    return {
+        "status": "ok",
+        "service": "발자국 API",
+        "storage": "db" if DATABASE_URL else "memory",
+        "time": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 if __name__ == "__main__":

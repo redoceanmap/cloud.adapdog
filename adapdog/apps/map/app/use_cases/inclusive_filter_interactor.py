@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+from core.introduction import Introduction
 from map.adapter.inbound.api.schemas.inclusive_filter_schema import InclusiveFilterSchema
 from map.app.dtos.inclusive_filter_dto import InclusiveFilterResponse, InclusivePlaceItem
 from map.app.ports.input.inclusive_filter_use_case import InclusiveFilterUseCase
@@ -57,3 +58,8 @@ class InclusiveFilterInteractor(InclusiveFilterUseCase):
             count=len(items),
             places=items,
         )
+
+    async def introduce_myself(self) -> Introduction:
+        intro = await self.barrier_free.introduce_myself()
+        intro.trail.append("interactor")
+        return intro

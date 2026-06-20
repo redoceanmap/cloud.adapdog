@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+from core.introduction import Introduction
 from users.app.ports.input.pet_activity_use_case import PetActivityUseCase
 from users.app.ports.output.pet_activity_port import PetActivityPort
 from users.domain.entities.pet_activity_entity import PetActivity
@@ -32,3 +33,8 @@ class PetActivityInteractor(PetActivityUseCase):
 
     async def list_by_pet(self, pet_id: int) -> list[PetActivity]:
         return await self.repository.find_by_pet(pet_id)
+
+    async def introduce_myself(self) -> Introduction:
+        intro = await self.repository.introduce_myself()
+        intro.trail.append("interactor")
+        return intro

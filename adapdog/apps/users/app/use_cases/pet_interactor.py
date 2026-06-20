@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
+from core.introduction import Introduction
 from users.app.ports.input.breed_catalog_use_case import BreedCatalogUseCase
 from users.app.ports.input.pet_use_case import PetUseCase
 from users.app.ports.output.pet_port import PetPort
@@ -56,3 +57,8 @@ class PetInteractor(PetUseCase):
 
     async def list_by_account(self, account_id: int) -> list[Pet]:
         return await self.repository.find_by_account(account_id)
+
+    async def introduce_myself(self) -> Introduction:
+        intro = await self.repository.introduce_myself()
+        intro.trail.append("interactor")
+        return intro

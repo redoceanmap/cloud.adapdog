@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+from core.introduction import Introduction
 from map.adapter.inbound.api.schemas.route_planner_schema import RoutePlannerSchema
 from map.app.dtos.route_planner_dto import CourseBrief, RoutePlanResponse, RouteStopDto
 from map.app.ports.input.route_planner_use_case import RoutePlannerUseCase
@@ -48,3 +49,8 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
             stops=stops,
             recommended_trails=plan.trails,
         )
+
+    async def introduce_myself(self) -> Introduction:
+        intro = await self.agent.introduce_myself()
+        intro.trail.append("interactor")
+        return intro
