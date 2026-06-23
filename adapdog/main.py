@@ -13,7 +13,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import DATABASE_URL
 from core.database.session import create_all_tables, dispose_engine, init_engine
+from care.adapter.inbound.api import care_router
+from community.adapter.inbound.api import community_router
+from creative.adapter.inbound.api import creative_router
 from map.adapter.inbound.api import map_router
+from trips.adapter.inbound.api import trips_router
 from users.adapter.inbound.api import users_router
 
 
@@ -54,6 +58,10 @@ app.add_middleware(
 
 app.include_router(map_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
+app.include_router(trips_router, prefix="/api")
+app.include_router(care_router, prefix="/api")
+app.include_router(creative_router, prefix="/api")
+app.include_router(community_router, prefix="/api")
 
 
 @app.get("/")

@@ -1,0 +1,15 @@
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from typing import Optional
+
+from creative.app.dtos.vlog_dto import VlogDto
+
+
+class VlogUseCase(ABC):
+    """브이로그 조회 입력 포트."""
+
+    @abstractmethod
+    async def list_vlogs(self, pet_id: Optional[int] = None) -> list[VlogDto]:
+        """반려동물(선택)로 브이로그를 조회한다. pet_id가 없으면 전체."""
+        ...

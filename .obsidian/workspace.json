@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/ERD.md",
+                "file": "docs/발자국_ERD.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "ERD"
+              "title": "발자국_ERD"
             }
           }
         ]
@@ -185,18 +185,41 @@
   },
   "active": "a016361f5c23e45c",
   "lastOpenFiles": [
-    "www/src/components/shared/index.ts",
-    "www/src/components/shared/ReservationButton.tsx",
-    "www/src/components/shared/BreedSelect.tsx",
-    "www/src/components/layout/BottomNav.tsx",
-    "www/src/components/record/index.ts",
-    "www/src/components/record/RecordScreen.tsx",
-    "www/src/components/record/RecordPostCard.tsx",
-    "www/src/components/profile/index.ts",
-    "www/src/components/profile/ProfileScreen.tsx",
-    "www/src/components/map/index.ts",
-    "www/src/components/map/PlaceBottomSheet.tsx",
-    "www/README.md",
-    "docs/ERD.md"
+    "www/dist/assets/index-CBOjSWxV.js",
+    "adapdog/apps/users/app/use_cases/__pycache__/pet_stamp_interactor.cpython-313.pyc",
+    "adapdog/apps/users/domain/entities/__pycache__/pet_stamp_entity.cpython-313.pyc",
+    "adapdog/apps/users/app/ports/output/__pycache__/pet_stamp_port.cpython-313.pyc",
+    "adapdog/apps/users/adapter/outbound/repositories/__pycache__/pet_stamp_repository.cpython-313.pyc",
+    "adapdog/apps/users/adapter/outbound/orm/__pycache__/pet_stamp_orm.cpython-313.pyc",
+    "adapdog/apps/users/dependencies/__pycache__/pet_stamp_provider.cpython-313.pyc",
+    "adapdog/apps/users/app/ports/input/__pycache__/pet_stamp_use_case.cpython-313.pyc",
+    "adapdog/apps/users/app/dtos/__pycache__/pet_stamp_dto.cpython-313.pyc",
+    "adapdog/apps/users/adapter/inbound/api/schemas/__pycache__/pet_stamp_schema.cpython-313.pyc",
+    "adapdog/apps/users/adapter/inbound/api/v1/__pycache__/pet_stamp_router.cpython-313.pyc",
+    "www/node_modules/lucide-react/README.md",
+    "www/node_modules/caniuse-lite/README.md",
+    "www/node_modules/recharts/README.md",
+    "www/node_modules/recharts/DEVELOPING.md",
+    "www/node_modules/recharts/CONTRIBUTING.md",
+    "www/node_modules/recharts/CHANGELOG.md",
+    "www/node_modules/recharts/AGENTS.md",
+    "www/node_modules/victory-vendor/README.md",
+    "www/node_modules/victory-vendor/CHANGELOG.md",
+    "www/node_modules/typescript/SECURITY.md",
+    "www/node_modules/typescript/README.md",
+    "www/node_modules/@esbuild/darwin-arm64/README.md",
+    "www/node_modules/@reduxjs/toolkit/README.md",
+    "www/node_modules/@reduxjs/toolkit/skills/orchestrate-side-effects/handle-side-effects/references/listener-workflows.md",
+    "www/node_modules/@reduxjs/toolkit/skills/model-redux-state/design-state-ownership/references/state-ownership.md",
+    "www/node_modules/@reduxjs/toolkit/skills/model-redux-state/build-slices-and-selectors/references/slice-patterns.md",
+    "www/node_modules/@reduxjs/toolkit/skills/manage-server-data/adopt-rtk-query/references/endpoint-lifecycle.md",
+    "www/node_modules/@reduxjs/toolkit/skills/build-modern-redux-apps/modern-redux/references/store-lifetime.md",
+    "www/node_modules/@reduxjs/toolkit/skills/orchestrate-side-effects/handle-side-effects/SKILL.md",
+    "www/node_modules/@reduxjs/toolkit/skills/model-redux-state/design-state-ownership/SKILL.md",
+    "www/node_modules/@reduxjs/toolkit/skills/model-redux-state/build-slices-and-selectors/SKILL.md",
+    "www/node_modules/@reduxjs/toolkit/skills/manage-server-data/adopt-rtk-query/SKILL.md",
+    "www/node_modules/@reduxjs/toolkit/skills/evolve-and-diagnose-redux-apps/migrate-to-modern-redux/SKILL.md",
+    "www/node_modules/@reduxjs/toolkit/skills/evolve-and-diagnose-redux-apps/debug-redux-toolkit-apps/SKILL.md",
+    "www/node_modules/@reduxjs/toolkit/skills/build-modern-redux-apps/redux-dataflow/SKILL.md"
   ]
 }

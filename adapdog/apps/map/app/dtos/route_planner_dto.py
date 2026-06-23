@@ -55,6 +55,8 @@ class RouteStopDto:
     category: str
     latitude: float
     longitude: float
+    distance_from_prev_km: float = 0.0
+    similarity: int = 0  # 닮은친구% — 같은 크기 코호트의 방문 인기도
 
 
 @dataclass(frozen=True)

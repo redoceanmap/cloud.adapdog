@@ -1,58 +1,48 @@
-@import 'tailwindcss';
-
-@custom-variant dark (&:where(.dark, .dark *));
-
-@theme {
-  --font-sans: 'Pretendard Variable', 'Pretendard', ui-sans-serif, system-ui, sans-serif;
-  --color-brand-50: #f0fdf7;
-  --color-brand-100: #d5f5e8;
-  --color-brand-200: #a8e8cf;
-  --color-brand-300: #6fd4b0;
-  --color-brand-400: #3fbf93;
-  --color-brand-500: #1fa876;
-  --color-brand-600: #178a63;
-  --color-brand-700: #126e4f;
-  --color-brand-800: #0f5840;
-  --color-brand-900: #0c4734;
-  --color-canvas: #fff7ed;
-  --color-surface: #ffffff;
-  --color-surface-muted: #ffedd5;
-  --color-ink: #292524;
-  --color-ink-muted: #78716c;
-  --color-line: #e7e5e4;
-  --shadow-tab: 0 -6px 24px rgba(120, 90, 60, 0.08), 0 -2px 8px rgba(120, 90, 60, 0.04);
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-@layer theme {
-  :root,
-  :host {
-    @variant dark {
-      --color-canvas: #2e2a26;
-      --color-surface: #3c3732;
-      --color-surface-muted: #363129;
-      --color-ink: #f5f5f4;
-      --color-ink-muted: #a8a29e;
-      --color-line: #57534e;
-      --shadow-tab: 0 -6px 24px rgba(0, 0, 0, 0.2), 0 -2px 8px rgba(0, 0, 0, 0.1);
-    }
-  }
-}
-
+html,
 body {
-  @apply bg-canvas text-ink antialiased;
-  font-family: var(--font-sans);
-  letter-spacing: -0.01em;
+  font-family: Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #e7e5df;
+  color: #1a1a1d;
+  -webkit-font-smoothing: antialiased;
 }
 
-@keyframes slide-up {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
+/* 화면 스크롤 영역 스크롤바 숨김 (원본 .scr) */
+.scr::-webkit-scrollbar {
+  width: 0;
 }
 
-.animate-slide-up {
-  animation: slide-up 0.3s ease-out;
+/* Material Symbols Rounded — 원본 .msr(outline) / .msf(filled) 두 클래스 보존 */
+.msr,
+.msf {
+  font-family: 'Material Symbols Rounded';
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  /* ligature(아이콘명→아이콘) 활성화 */
+  font-feature-settings: 'liga';
+  -moz-font-feature-settings: 'liga';
+}
+.msr {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+.msf {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+input,
+button,
+textarea {
+  font-family: inherit;
 }

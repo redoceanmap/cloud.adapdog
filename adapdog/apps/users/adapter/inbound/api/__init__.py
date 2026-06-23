@@ -23,12 +23,18 @@ def _build_users_router():
 
     from users.adapter.inbound.api.v1.account_router import account_router
     from users.adapter.inbound.api.v1.breed_catalog_router import breed_catalog_router
+    from users.adapter.inbound.api.v1.breed_prediction_router import breed_prediction_router
     from users.adapter.inbound.api.v1.pet_activity_router import pet_activity_router
+    from users.adapter.inbound.api.v1.pet_persona_router import pet_persona_router
     from users.adapter.inbound.api.v1.pet_router import pet_router
+    from users.adapter.inbound.api.v1.pet_stamp_router import pet_stamp_router
 
     router = APIRouter(prefix="/users", tags=["users"])
     router.include_router(account_router)
     router.include_router(pet_router)
     router.include_router(pet_activity_router)
     router.include_router(breed_catalog_router)
+    router.include_router(breed_prediction_router)
+    router.include_router(pet_persona_router)
+    router.include_router(pet_stamp_router)
     return router

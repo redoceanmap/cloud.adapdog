@@ -1,98 +1,44 @@
-import type { ApiError } from '@/types';
-import { loadAuthToken } from '@/utils/authToken';
+// 백엔드(FastAPI, :8000) 호출 클라이언트.
+// vite dev 프록시(/api → 127.0.0.1:8000)를 통해 같은 출처로 요청한다.
+const BASE = '/api';
 
-/** 백엔드 루트(http://host:8000)만 적어도 /api 가 붙도록 정규화 */
-export function resolveApiBaseUrl(): string {
-  const raw = (import.meta.env.VITE_API_BASE_URL ?? '/api').trim();
-
-  if (raw.startsWith('http://') || raw.startsWith('https://')) {
-    const withoutTrailing = raw.replace(/\/+$/, '');
-    return withoutTrailing.endsWith('/api') ? withoutTrailing : `${withoutTrailing}/api`;
-  }
-
-  const relative = raw.startsWith('/') ? raw : `/${raw}`;
-  return relative.replace(/\/+$/, '') || '/api';
-}
-
-const BASE_URL = resolveApiBaseUrl();
-
-export function getApiBaseUrl(): string {
-  return BASE_URL;
-}
-
-export class ApiClientError extends Error {
-  status?: number;
-
-  constructor(message: string, status?: number) {
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    public path: string,
+    message: string,
+  ) {
     super(message);
-    this.name = 'ApiClientError';
-    this.status = status;
+    this.name = 'ApiError';
   }
 }
 
-export interface RequestOptions extends Omit<RequestInit, 'body'> {
-  body?: unknown;
-  params?: Record<string, string | number | boolean | undefined>;
-}
-
-function buildUrl(path: string, params?: RequestOptions['params']): string {
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  const url = BASE_URL.startsWith('http')
-    ? new URL(`${BASE_URL}${normalizedPath}`)
-    : new URL(`${BASE_URL}${normalizedPath}`, window.location.origin);
-
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined) {
-        url.searchParams.set(key, String(value));
-      }
-    });
-  }
-
-  return url.toString();
-}
-
-async function parseError(response: Response): Promise<ApiError> {
-  try {
-    const data = (await response.json()) as { message?: string; detail?: string | { msg?: string }[] };
-    const detail =
-      typeof data.detail === 'string'
-        ? data.detail
-        : Array.isArray(data.detail)
-          ? data.detail.map((item) => item.msg).filter(Boolean).join(', ')
-          : undefined;
-
-    return {
-      message: detail ?? data.message ?? response.statusText,
-      status: response.status,
-    };
-  } catch {
-    return { message: response.statusText || '요청에 실패했습니다.', status: response.status };
-  }
-}
-
-export async function apiClient<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { body, params, headers, ...rest } = options;
-  const token = loadAuthToken();
-
-  const response = await fetch(buildUrl(path, params), {
-    ...rest,
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(BASE + path, {
+    ...init,
     headers: {
-      ...(body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...headers,
+      'Content-Type': 'application/json',
+      ...(init?.headers ?? {}),
     },
-    body: body instanceof FormData ? body : body !== undefined ? JSON.stringify(body) : undefined,
   });
-
-  if (!response.ok) {
-    const error = await parseError(response);
-    throw new ApiClientError(error.message, error.status);
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new ApiError(res.status, path, body || res.statusText);
   }
+  return res.json() as Promise<T>;
+}
 
-  if (response.status === 204) {
-    return undefined as T;
+export const apiGet = <T>(path: string) => request<T>(path);
+
+export const apiPost = <T>(path: string, body: unknown) =>
+  request<T>(path, { method: 'POST', body: JSON.stringify(body) });
+
+/** 백엔드 헬스체크 — 연결 상태 확인용. */
+export async function checkHealth(): Promise<boolean> {
+  try {
+    const r = await apiGet<{ status: string }>('/health');
+    return r.status === 'ok';
+  } catch {
+    return false;
   }
-
-  return (await response.json()) as T;
 }

@@ -10,10 +10,12 @@ from map.adapter.outbound.repositories.route_planner_repository import (
     CsvTrailRepository,
     RuleBasedRoutePlannerAgent,
 )
+from map.app.ports.input.cohort_recommendation_use_case import CohortRecommendationUseCase
 from map.app.ports.input.pet_place_use_case import PetPlaceUseCase
 from map.app.ports.input.route_planner_use_case import RoutePlannerUseCase
 from map.app.ports.output.route_planner_port import RoutePlannerAgentPort, TrailPort
 from map.app.use_cases.route_planner_interactor import RoutePlannerInteractor
+from map.dependencies.cohort_recommendation_provider import get_cohort_recommendation_use_case
 from map.dependencies.pet_place_provider import get_pet_place_use_case
 
 logger = logging.getLogger(__name__)
@@ -44,5 +46,6 @@ def get_route_planner_agent(
 
 def get_route_planner_use_case(
     agent: RoutePlannerAgentPort = Depends(get_route_planner_agent),
+    cohort: CohortRecommendationUseCase = Depends(get_cohort_recommendation_use_case),
 ) -> RoutePlannerUseCase:
-    return RoutePlannerInteractor(agent=agent)
+    return RoutePlannerInteractor(agent=agent, cohort=cohort)

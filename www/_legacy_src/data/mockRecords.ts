@@ -1,0 +1,40 @@
+import type { RecordPost } from '@/types';
+
+export const mockRecordPosts: RecordPost[] = [
+  {
+    id: 'post-1',
+    authorName: '보리네',
+    dogName: '보리',
+    breed: '골든리트리버',
+    likes: 248,
+    comments: 19,
+    location: '양양 서피비치',
+    caption: '대형견도 마당 넓은 펜션이라 맘껏 뛰었어요! 바다 보이는 산책로도 최고 🐾',
+    courseTitle: '양양 1박2일',
+    photoUrl: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=600&h=400&fit=crop',
+  },
+  {
+    id: 'post-2',
+    authorName: '두부맘',
+    dogName: '두부',
+    breed: '푸들',
+    likes: 132,
+    comments: 8,
+    location: '강릉 안목',
+    caption: '카페 테라스에서 반려견 동반 OK! 오후에는 바람이 시원해서 산책하기 좋았어요.',
+    courseTitle: '강릉 카페 코스',
+    photoUrl: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&h=400&fit=crop',
+  },
+  {
+    id: 'post-3',
+    authorName: '초코집사',
+    dogName: '초코',
+    breed: '시바견',
+    likes: 96,
+    comments: 12,
+    location: '경주 황리단길',
+    caption: '골목길 산책 코스 추천! 사람 많은 시간은 피하면 한적하게 걸을 수 있어요.',
+    courseTitle: '경주 고택 하루',
+    photoUrl: 'https://images.unsplash.com/photo-1558787533-7fb077cc7e22?w=600&h=400&fit=crop',
+  },
+];

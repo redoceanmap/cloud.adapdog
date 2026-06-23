@@ -1,0 +1,58 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Pretendard Variable', 'Pretendard', ui-sans-serif, system-ui, sans-serif;
+  --color-brand-50: #f0fdf7;
+  --color-brand-100: #d5f5e8;
+  --color-brand-200: #a8e8cf;
+  --color-brand-300: #6fd4b0;
+  --color-brand-400: #3fbf93;
+  --color-brand-500: #1fa876;
+  --color-brand-600: #178a63;
+  --color-brand-700: #126e4f;
+  --color-brand-800: #0f5840;
+  --color-brand-900: #0c4734;
+  --color-canvas: #fff7ed;
+  --color-surface: #ffffff;
+  --color-surface-muted: #ffedd5;
+  --color-ink: #292524;
+  --color-ink-muted: #78716c;
+  --color-line: #e7e5e4;
+  --shadow-tab: 0 -6px 24px rgba(120, 90, 60, 0.08), 0 -2px 8px rgba(120, 90, 60, 0.04);
+}
+
+@layer theme {
+  :root,
+  :host {
+    @variant dark {
+      --color-canvas: #2e2a26;
+      --color-surface: #3c3732;
+      --color-surface-muted: #363129;
+      --color-ink: #f5f5f4;
+      --color-ink-muted: #a8a29e;
+      --color-line: #57534e;
+      --shadow-tab: 0 -6px 24px rgba(0, 0, 0, 0.2), 0 -2px 8px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+body {
+  @apply bg-canvas text-ink antialiased;
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
