@@ -5,6 +5,7 @@ import type {
   BreedPrediction,
   BreedPreview,
   CareReminder,
+  ChatMessage,
   CohortPlace,
   CommunityPost,
   DecorationTemplate,
@@ -18,6 +19,7 @@ import type {
   PetStamp,
   PolicyCardResult,
   Reservation,
+  RouteChatResponse,
   RoutePlanRequest,
   RoutePlanResponse,
   SafetyAlertResult,
@@ -40,6 +42,14 @@ export const searchPlaces = (region: string) =>
 /** C1→C2 동선 플래너 — 프롬프트 조건으로 코스 생성(LLM). */
 export const planRoute = (req: RoutePlanRequest) =>
   apiPost<RoutePlanResponse>('/map/route-planner/plan', req);
+
+/** C1 대화형 동선 플래너 — 대화 기록을 보내 Gemini와 멀티턴으로 코스를 좁힌다. */
+export const chatRoute = (messages: ChatMessage[], petSize = 'medium', petBreed?: string) =>
+  apiPost<RouteChatResponse>('/map/route-planner/chat', {
+    messages,
+    pet_size: petSize,
+    pet_breed: petBreed ?? null,
+  });
 
 /** C5 입장 판정 — 시설×반려동물 규칙 기반 판정. */
 export const checkEntry = (req: EntryCheckRequest) =>

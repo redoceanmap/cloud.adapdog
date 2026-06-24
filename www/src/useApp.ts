@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { checkHealth } from './api/client';
 import {
+  chatRoute,
   checkEntry,
   checkSafety,
   cohortRecommendation,
@@ -22,7 +23,6 @@ import {
   getVlogs,
   getYearSummary,
   parsePolicy,
-  planRoute,
   previewBreed,
   searchInclusive,
 } from './api/endpoints';
@@ -148,13 +148,65 @@ export function useApp() {
     // planner toggle
     isPlannerPrompt: (s.plannerMode || 'prompt') === 'prompt',
     isPlannerResults: s.plannerMode === 'results',
-    submitPrompt: () => {
-      setState({ plannerMode: 'results', planLoading: true, planError: null });
-      planRoute({ region: '전주', days: 1, pet_size: 'large', pet_breed: '골든 리트리버' })
-        .then((plan) => setState({ plan, planLoading: false }))
-        .catch((err) => setState({ planLoading: false, planError: String(err) }));
-    },
     editPrompt: () => setState({ plannerMode: 'prompt' }),
+
+    // ── 대화형 플래너 (route-planner/chat, Gemini 연동) ──
+    chatMessages: s.chatMessages || [],
+    chatInput: s.chatInput || '',
+    chatLoading: !!s.chatLoading,
+    isPlannerChatEmpty: !(s.chatMessages && s.chatMessages.length),
+    setChatInput: (val) => setState({ chatInput: val }),
+    sendChat: (text) => {
+      const content = (typeof text === 'string' ? text : s.chatInput || '').trim();
+      if (!content || s.chatLoading) return;
+      const history = [...(s.chatMessages || []), { role: 'user', content }];
+      setState({ chatMessages: history, chatInput: '', chatLoading: true });
+      chatRoute(
+        history.map((m) => ({ role: m.role, content: m.content })),
+        'large',
+        '골든 리트리버',
+      )
+        .then((res) =>
+          setState((prev) => ({
+            chatLoading: false,
+            chatMessages: [
+              ...prev.chatMessages,
+              { role: 'assistant', content: res.reply, course: res.course },
+            ],
+          })),
+        )
+        .catch((err) =>
+          setState((prev) => ({
+            chatLoading: false,
+            chatMessages: [
+              ...prev.chatMessages,
+              { role: 'assistant', content: '연결에 문제가 생겼어요. 백엔드(:8000)를 확인해 주세요.' },
+            ],
+            chatError: String(err),
+          })),
+        );
+    },
+    /** 채팅에서 확정된 코스를 기존 결과/지도 화면으로 보낸다. */
+    viewCourse: (course) => setState({ plan: course, plannerMode: 'results', plannerView: 'list' }),
+    // ── 꾸미기 버전 선택 (기본=골든리트리버, 카드마다 다른 버전) ──
+    decoSel: s.decoSel || 'base',
+    selectDeco: (key) => () => setState({ decoSel: key }),
+    decoImage: ({ base: '/pet-breed.png', pink: '/deco-pink-cut.png', navy: '/deco-navy-cut.png', photobook: '/deco-photobook.jpg', figure: '/deco-figure.jpg' })[s.decoSel || 'base'],
+    decoCaption: ({ base: '체리, 골든 리트리버', pink: '체리, 전주 한옥마을에서 분홍 저고리', navy: '체리, 남색 도포 한복', photobook: '체리, 우리 강아지 포토북', figure: '체리, 3D 피규어' })[s.decoSel || 'base'],
+    // 옷 입은 강아지(누끼)는 3D 형태로 띄워 드래그 회전, 포토북·피규어는 사진 그대로.
+    decoIs3d: ['base', 'pink', 'navy'].includes(s.decoSel || 'base'),
+    // ── 특징 편집 칩 (단일 선택) ──
+    taActivity: s.traitActivity || '활동량 많음',
+    taSocial: s.traitSocial || '사람 좋아함',
+    taBody: s.traitBody || '더위 취약',
+    setTrait: (key, val) => () => setState({ [key]: val }),
+    /** 채팅 헤더 뒤로가기 — 대화 중이면 대화를 비워 시작 화면으로, 빈 상태면 내 강아지 탭으로. */
+    backChat: () =>
+      setState((prev) =>
+        prev.chatMessages && prev.chatMessages.length
+          ? { chatMessages: [], chatInput: '', chatLoading: false }
+          : { screen: 'dog', emg: false },
+      ),
     // ── 플래너 API 연동(Phase 1) ──
     backendOk: s.backendOk,
     planLoading: !!s.planLoading,
@@ -215,10 +267,21 @@ export function useApp() {
     petPhoto: s.petPhoto || null,
     hasPhoto: !!s.petPhoto,
     noPhoto: !s.petPhoto,
+    // AI 3D 모델 MVP 영상(투명 배경). Safari는 VP9-알파 webm을 못 돌려 멈추므로
+    // HEVC-알파 mp4로, 그 외(Chrome/Firefox/Edge)는 VP9-알파 webm으로 분기한다.
+    petModelSrc: (() => {
+      if (typeof navigator === 'undefined') return '/pet-3d-mvp.webm';
+      const ua = navigator.userAgent;
+      const isSafari = /^((?!chrome|crios|chromium|android|edg).)*safari/i.test(ua);
+      return isSafari ? '/pet-3d-mvp.mp4' : '/pet-3d-mvp.webm';
+    })(),
     fig3dStyle:
       (s.petPhoto
         ? 'background-image:url(' + s.petPhoto + '); background-size:cover; background-position:center; '
         : 'background-color:#EBB06A; ') +
+      'transform:perspective(800px) rotateY(' + (s.rotY ?? -18) + 'deg) rotateX(' + (s.rotX ?? 4) + 'deg);',
+    // 배경 이미지는 각 요소가 지정하고 회전 변환만 공유(투명 PNG 마스코트/실사용).
+    fig3dRotate:
       'transform:perspective(800px) rotateY(' + (s.rotY ?? -18) + 'deg) rotateX(' + (s.rotX ?? 4) + 'deg);',
     onDragStart: (e) => {
       const startX = e.touches ? e.touches[0].clientX : e.clientX;

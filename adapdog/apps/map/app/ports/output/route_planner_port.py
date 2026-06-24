@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import Optional
 
 from core.introduction import Introduction
-from map.app.dtos.route_planner_dto import AgentCoursePlan, CourseBrief
+from map.app.dtos.route_planner_dto import AgentCoursePlan, ChatMessage, ChatTurn, CourseBrief
 from map.domain.entities.route_planner_entity import Trail
+from map.domain.value_objects.pet_place_vo import PetSize
 
 
 class RoutePlannerAgentPort(ABC):
@@ -16,6 +18,13 @@ class RoutePlannerAgentPort(ABC):
     @abstractmethod
     async def plan(self, brief: CourseBrief) -> AgentCoursePlan:
         """반려견 조건과 지역을 받아 펫 동반 가능 동선을 생성한다."""
+        ...
+
+    @abstractmethod
+    async def chat(
+        self, messages: list[ChatMessage], pet_size: PetSize, pet_breed: Optional[str]
+    ) -> ChatTurn:
+        """대화 기록을 받아 대화형으로 응답하고, 코스 확정 시 동선 계획을 함께 반환한다."""
         ...
 
     async def introduce_myself(self) -> Introduction:

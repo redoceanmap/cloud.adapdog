@@ -49,6 +49,26 @@ class AgentCoursePlan:
 
 
 @dataclass(frozen=True)
+class ChatMessage:
+    """대화 한 턴 (인터랙터 → 에이전트). role은 'user' | 'assistant'."""
+
+    role: str
+    content: str
+
+
+@dataclass(frozen=True)
+class ChatTurn:
+    """에이전트의 대화 응답 — 답변 텍스트 + (코스 확정 시) 동선 계획.
+
+    plan이 None이면 아직 대화 단계(코스 미확정). region은 응답 코스 라벨용.
+    """
+
+    reply: str
+    region: Optional[str] = None
+    plan: Optional[AgentCoursePlan] = None
+
+
+@dataclass(frozen=True)
 class RouteStopDto:
     order: int
     name: str
@@ -68,3 +88,11 @@ class RoutePlanResponse:
     summary: str
     stops: list[RouteStopDto]
     recommended_trails: list[TrailDto] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class RouteChatResponse:
+    """대화형 동선 플래너 응답 — AI 답변 + (코스 확정 시) 추천 코스."""
+
+    reply: str
+    course: Optional[RoutePlanResponse] = None

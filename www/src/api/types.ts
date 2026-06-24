@@ -43,6 +43,17 @@ export interface RoutePlanResponse {
   recommended_trails: unknown[];
 }
 
+// ── 대화형 동선 플래너(route-planner/chat) ──
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface RouteChatResponse {
+  reply: string;
+  course: RoutePlanResponse | null;
+}
+
 export interface EntryCheckRequest {
   region: string;
   place_name: string;
