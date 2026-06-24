@@ -5,7 +5,7 @@ import { Play, User } from "lucide-react";
 
 export default function VisualHooks() {
   return (
-    <section className="py-24 bg-brown text-white overflow-hidden">
+    <section className="py-24 bg-ink text-white overflow-hidden">
       <div className="max-w-6xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -30,13 +30,13 @@ export default function VisualHooks() {
           >
             <div className="bg-white/10 rounded-3xl p-6 backdrop-blur-sm border border-white/10">
               <div className="flex items-center gap-2 mb-4">
-                <Play className="w-5 h-5 text-coral" />
+                <Play className="w-5 h-5 text-sage-light" />
                 <span className="font-semibold">강아지 시점 AI 브이로그</span>
               </div>
-              <div className="relative aspect-[9/16] max-w-[220px] mx-auto rounded-2xl overflow-hidden bg-gradient-to-b from-sage/40 to-brown-light/60 shadow-2xl">
+              <div className="relative aspect-[9/16] max-w-[220px] mx-auto rounded-2xl overflow-hidden bg-gradient-to-b from-sage/50 to-ink/80 shadow-2xl">
                 <div className="absolute inset-0 flex flex-col justify-between p-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-coral flex items-center justify-center text-sm">
+                    <div className="w-8 h-8 rounded-full bg-sage flex items-center justify-center text-sm">
                       🐕
                     </div>
                     <span className="text-xs font-medium">@몽이의여행</span>
@@ -75,7 +75,7 @@ export default function VisualHooks() {
                 <User className="w-5 h-5 text-sage-light" />
                 <span className="font-semibold">AI 아바타 가이드</span>
               </div>
-              <div className="relative aspect-square max-w-[280px] mx-auto rounded-2xl overflow-hidden bg-gradient-to-br from-sage/30 to-sage-light/20 shadow-2xl">
+              <div className="relative aspect-square max-w-[280px] mx-auto rounded-2xl overflow-hidden bg-gradient-to-br from-lavender/30 to-sage/20 shadow-2xl">
                 <svg className="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 200 200">
                   <path d="M20 100 Q60 40 100 100 T180 80" stroke="white" strokeWidth="2" fill="none" strokeDasharray="4 4" />
                 </svg>
@@ -92,7 +92,7 @@ export default function VisualHooks() {
                   className="absolute top-1/2 -translate-y-1/2"
                   style={{ left: "20%" }}
                 >
-                  <div className="w-12 h-12 rounded-full bg-coral shadow-lg flex items-center justify-center text-xl border-2 border-white">
+                  <div className="w-12 h-12 rounded-full bg-sage shadow-lg flex items-center justify-center text-xl border-2 border-white">
                     🐕
                   </div>
                 </motion.div>

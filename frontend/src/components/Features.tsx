@@ -88,10 +88,10 @@ function SparklesIcon({ className }: { className?: string }) {
 }
 
 const colorMap: Record<string, { bg: string; text: string; border: string; tag: string }> = {
-  coral: { bg: "bg-coral/10", text: "text-coral", border: "border-coral/20", tag: "bg-coral/15 text-coral" },
-  sage: { bg: "bg-sage/10", text: "text-sage", border: "border-sage/20", tag: "bg-sage/15 text-sage" },
-  gold: { bg: "bg-gold/10", text: "text-yellow-700", border: "border-gold/30", tag: "bg-gold/15 text-yellow-700" },
-  lavender: { bg: "bg-lavender/10", text: "text-purple-600", border: "border-lavender/30", tag: "bg-lavender/15 text-purple-600" },
+  coral: { bg: "bg-coral/10", text: "text-coral-dark", border: "border-coral/20", tag: "bg-coral/15 text-coral-dark" },
+  sage: { bg: "bg-sage/10", text: "text-sage", border: "border-sage/20", tag: "bg-sage/15 text-sage-dark" },
+  gold: { bg: "bg-lavender/10", text: "text-lavender", border: "border-lavender/30", tag: "bg-lavender/15 text-lavender" },
+  lavender: { bg: "bg-lavender/10", text: "text-lavender", border: "border-lavender/30", tag: "bg-lavender/15 text-lavender" },
 };
 
 export default function Features() {
@@ -104,7 +104,7 @@ export default function Features() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <span className="text-sm font-semibold text-coral uppercase tracking-wider">
+          <span className="text-sm font-semibold text-sage uppercase tracking-wider">
             Features
           </span>
           <h2 className="text-3xl md:text-4xl font-extrabold text-brown mt-2 mb-4">

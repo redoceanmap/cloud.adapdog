@@ -1,19 +1,35 @@
 @import "tailwindcss";
 
+/*
+ * 스카이 & 포포 팔레트
+ * Primary   #2E9BFF  비비드 블루  → sage
+ * Secondary #9B8FD4  라벤더      → lavender, gold
+ * Background #F8FAFC 아이스 화이트 → background, warm-white
+ * Text      #334155  슬레이트    → brown, foreground
+ * Accent    #F4A582  피치 CTA   → coral
+ */
 :root {
-  --background: #fffbf7;
-  --foreground: #2d2419;
-  --cream: #fff8f0;
-  --warm-white: #fffbf7;
-  --coral: #ff6b4a;
-  --coral-light: #ff8a6f;
-  --coral-dark: #e85a3a;
-  --sage: #7cb87c;
-  --sage-light: #a8d4a8;
-  --brown: #5c4a3a;
-  --brown-light: #8b7355;
-  --gold: #f4c542;
-  --lavender: #c4b5fd;
+  --background: #f8fafc;
+  --foreground: #334155;
+  --warm-white: #f8fafc;
+  --cream: #f1f5f9;
+
+  --coral: #f4a582;
+  --coral-light: #f7bca0;
+  --coral-dark: #e8926a;
+
+  --sage: #2e9bff;
+  --sage-light: #6bb8ff;
+  --sage-dark: #1a7feb;
+
+  --brown: #334155;
+  --brown-light: #64748b;
+
+  --gold: #9b8fd4;
+  --lavender: #9b8fd4;
+  --lavender-light: #b5abe0;
+
+  --ink: #1e293b;
 }
 
 @theme inline {
@@ -26,10 +42,13 @@
   --color-coral-dark: var(--coral-dark);
   --color-sage: var(--sage);
   --color-sage-light: var(--sage-light);
+  --color-sage-dark: var(--sage-dark);
   --color-brown: var(--brown);
   --color-brown-light: var(--brown-light);
   --color-gold: var(--gold);
   --color-lavender: var(--lavender);
+  --color-lavender-light: var(--lavender-light);
+  --color-ink: var(--ink);
   --font-sans: var(--font-noto);
 }
 
@@ -54,11 +73,6 @@ body {
   100% { opacity: 0; transform: translateY(-10px) scale(0.8); }
 }
 
-@keyframes shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
@@ -68,20 +82,71 @@ body {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, var(--coral) 0%, var(--gold) 50%, var(--sage) 100%);
+  background: linear-gradient(135deg, var(--sage) 0%, var(--lavender) 55%, var(--coral) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .glass {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(46, 155, 255, 0.12);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--sage);
+  color: white;
+  font-weight: 600;
+  border-radius: 9999px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(46, 155, 255, 0.35);
+}
+.btn-primary:hover {
+  background: var(--sage-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(46, 155, 255, 0.4);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  color: var(--sage);
+  font-weight: 600;
+  border-radius: 9999px;
+  border: 2px solid rgba(46, 155, 255, 0.35);
+  transition: all 0.2s;
+}
+.btn-secondary:hover {
+  background: rgba(46, 155, 255, 0.08);
+  border-color: var(--sage);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  color: var(--brown-light);
+  font-weight: 600;
+  border-radius: 9999px;
+  border: 1px solid rgba(155, 143, 212, 0.35);
+  transition: all 0.2s;
+}
+.btn-ghost:hover {
+  color: var(--sage);
+  border-color: rgba(46, 155, 255, 0.4);
+  background: rgba(155, 143, 212, 0.06);
 }
 
 .paw-pattern {
-  background-image: radial-gradient(circle at 20% 80%, rgba(255, 107, 74, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(124, 184, 124, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(244, 197, 66, 0.05) 0%, transparent 70%);
+  background-image:
+    radial-gradient(circle at 20% 80%, rgba(46, 155, 255, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(155, 143, 212, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(244, 165, 130, 0.07) 0%, transparent 70%);
 }

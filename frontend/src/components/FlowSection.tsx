@@ -11,7 +11,7 @@ const steps = [
     title: "사진 업로드",
     description: "우리 강아지 사진 한 장만 올려주세요.",
     visual: (
-      <div className="bg-gradient-to-br from-coral/10 to-gold/10 rounded-2xl p-6 flex flex-col items-center justify-center h-48">
+      <div className="bg-gradient-to-br from-sage/10 to-lavender/10 rounded-2xl p-6 flex flex-col items-center justify-center h-48">
         <div className="w-20 h-20 rounded-full bg-white shadow-lg flex items-center justify-center text-4xl mb-3">
           🐕
         </div>
@@ -25,7 +25,7 @@ const steps = [
     title: "AI 페르소나 등장",
     description: "견종과 표정을 분석해 강아지만의 목소리가 탄생해요.",
     visual: (
-      <div className="bg-gradient-to-br from-lavender/20 to-coral/10 rounded-2xl p-6 h-48 flex flex-col justify-center">
+      <div className="bg-gradient-to-br from-lavender/20 to-sage/10 rounded-2xl p-6 h-48 flex flex-col justify-center">
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-lg">🐕</span>
@@ -49,7 +49,7 @@ const steps = [
       <div className="bg-gradient-to-br from-sage/20 to-sage-light/20 rounded-2xl p-6 h-48 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center opacity-30">
           <svg viewBox="0 0 200 120" className="w-full h-full">
-            <path d="M30 60 Q70 20 120 50 T180 40" stroke="#7cb87c" strokeWidth="3" fill="none" strokeDasharray="6 4" />
+            <path d="M30 60 Q70 20 120 50 T180 40" stroke="#2e9bff" strokeWidth="3" fill="none" strokeDasharray="6 4" />
           </svg>
         </div>
         <div className="relative space-y-2">
@@ -71,10 +71,10 @@ const steps = [
     title: "연말 요약 카드",
     description: "올해 가장 행복했던 순간을 카드로 받아보세요.",
     visual: (
-      <div className="bg-gradient-to-br from-gold/20 to-coral/20 rounded-2xl p-6 h-48 flex items-center justify-center">
+      <div className="bg-gradient-to-br from-lavender/20 to-coral/15 rounded-2xl p-6 h-48 flex items-center justify-center">
         <div className="bg-white rounded-2xl p-4 shadow-lg w-full max-w-[200px] text-center">
           <div className="text-2xl mb-2">✨</div>
-          <div className="text-xs font-bold text-coral mb-1">2025 몽이 Wrapped</div>
+          <div className="text-xs font-bold text-lavender mb-1">2025 몽이 Wrapped</div>
           <div className="text-[10px] text-brown-light">총 47회 산책 · 12곳 방문</div>
           <div className="text-[10px] text-brown-light">최애 장소: 한강 잔디밭 🌿</div>
         </div>
@@ -95,7 +95,7 @@ export default function FlowSection() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <span className="text-sm font-semibold text-gold uppercase tracking-wider">
+          <span className="text-sm font-semibold text-lavender uppercase tracking-wider">
             How it works
           </span>
           <h2 className="text-3xl md:text-4xl font-extrabold text-brown mt-2 mb-4">
@@ -117,21 +117,21 @@ export default function FlowSection() {
                   onClick={() => setActive(i)}
                   className={`w-full text-left p-5 rounded-2xl transition-all duration-300 flex items-start gap-4 ${
                     isActive
-                      ? "bg-white shadow-lg border border-coral/20"
+                      ? "bg-white shadow-lg border border-sage/20"
                       : "bg-white/50 hover:bg-white border border-transparent"
                   }`}
                 >
                   <div
                     className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                      isActive ? "bg-coral text-white" : "bg-cream text-brown-light"
+                      isActive ? "bg-sage text-white" : "bg-cream text-brown-light"
                     }`}
                   >
                     <Icon className="w-5 h-5" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-bold text-coral">STEP {step.num}</span>
-                      {isActive && <ChevronRight className="w-4 h-4 text-coral" />}
+                      <span className="text-xs font-bold text-sage">STEP {step.num}</span>
+                      {isActive && <ChevronRight className="w-4 h-4 text-sage" />}
                     </div>
                     <h3 className="font-bold text-brown mb-1">{step.title}</h3>
                     <p className="text-sm text-brown-light">{step.description}</p>

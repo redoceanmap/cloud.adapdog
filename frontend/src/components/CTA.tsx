@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 export default function CTA() {
   return (
     <section className="py-24 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-coral via-coral-dark to-brown" />
+      <div className="absolute inset-0 bg-gradient-to-br from-sage via-lavender to-ink" />
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-10 left-10 text-6xl">🐾</div>
         <div className="absolute top-20 right-20 text-4xl">🐾</div>
@@ -25,14 +25,14 @@ export default function CTA() {
         <div className="flex flex-wrap justify-center gap-4">
           <Link
             href="/register"
-            className="inline-flex items-center gap-2 bg-white text-coral font-bold px-8 py-4 rounded-full hover:bg-cream transition-all shadow-xl hover:-translate-y-0.5 text-lg"
+            className="inline-flex items-center gap-2 bg-white text-sage font-bold px-8 py-4 rounded-full hover:bg-cream transition-all shadow-xl hover:-translate-y-0.5 text-lg"
           >
             회원가입
             <ArrowRight className="w-5 h-5" />
           </Link>
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 bg-white/15 text-white font-semibold px-8 py-4 rounded-full border border-white/30 hover:bg-white/25 transition-all text-lg"
+            className="inline-flex items-center gap-2 bg-transparent text-white font-semibold px-8 py-4 rounded-full border-2 border-white/50 hover:bg-white/15 transition-all text-lg"
           >
             로그인
           </Link>

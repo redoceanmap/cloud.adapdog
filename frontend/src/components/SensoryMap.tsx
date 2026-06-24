@@ -113,9 +113,9 @@ export default function SensoryMap() {
             <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-xl border border-sage/10">
               <div className="absolute inset-0 bg-gradient-to-br from-sage/20 via-cream to-sage-light/30" />
               <svg className="absolute inset-0 w-full h-full opacity-20" viewBox="0 0 400 300">
-                <path d="M0 150 Q100 100 200 150 T400 150" stroke="#7cb87c" strokeWidth="2" fill="none" />
-                <path d="M50 0 Q150 100 100 200 T50 300" stroke="#7cb87c" strokeWidth="1.5" fill="none" />
-                <path d="M350 0 Q250 120 300 250 T350 300" stroke="#7cb87c" strokeWidth="1.5" fill="none" />
+                <path d="M0 150 Q100 100 200 150 T400 150" stroke="#2e9bff" strokeWidth="2" fill="none" />
+                <path d="M50 0 Q150 100 100 200 T50 300" stroke="#2e9bff" strokeWidth="1.5" fill="none" />
+                <path d="M350 0 Q250 120 300 250 T350 300" stroke="#2e9bff" strokeWidth="1.5" fill="none" />
               </svg>
 
               <div className="absolute top-4 left-4 bg-white/90 rounded-xl px-3 py-2 text-xs font-medium text-brown shadow">
@@ -136,7 +136,7 @@ export default function SensoryMap() {
                       animate={isActive ? { scale: 1.2 } : { scale: 1 }}
                       className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-colors ${
                         isActive
-                          ? "bg-coral text-white"
+                          ? "bg-sage text-white"
                           : "bg-white text-sage group-hover:bg-sage group-hover:text-white"
                       }`}
                     >
@@ -144,7 +144,7 @@ export default function SensoryMap() {
                     </motion.div>
                     <span
                       className={`absolute top-full mt-1 left-1/2 -translate-x-1/2 text-xs font-medium whitespace-nowrap px-2 py-0.5 rounded-full ${
-                        isActive ? "bg-coral text-white" : "bg-white/90 text-brown"
+                        isActive ? "bg-sage text-white" : "bg-white/90 text-brown"
                       }`}
                     >
                       {point.label}

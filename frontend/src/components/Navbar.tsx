@@ -46,7 +46,7 @@ export default function Navbar() {
     >
       <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-9 h-9 rounded-xl bg-coral flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+          <div className="w-9 h-9 rounded-xl bg-sage flex items-center justify-center shadow-md shadow-sage/25 group-hover:scale-105 transition-transform">
             <PawPrint className="w-5 h-5 text-white" />
           </div>
           <span className="text-xl font-bold text-brown">발자국</span>
@@ -57,7 +57,7 @@ export default function Navbar() {
             <a
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-brown-light hover:text-coral transition-colors"
+              className="text-sm font-medium text-brown-light hover:text-sage transition-colors"
             >
               {link.label}
             </a>
@@ -72,7 +72,7 @@ export default function Navbar() {
               </span>
               <button
                 onClick={handleLogout}
-                className="text-sm font-medium text-brown-light hover:text-coral transition-colors px-4 py-2"
+                className="text-sm font-medium text-brown-light hover:text-sage transition-colors px-4 py-2"
               >
                 로그아웃
               </button>
@@ -81,13 +81,13 @@ export default function Navbar() {
             <>
               <Link
                 href="/login"
-                className="text-sm font-medium text-brown-light hover:text-coral transition-colors px-4 py-2"
+                className="btn-secondary text-sm px-4 py-2"
               >
                 로그인
               </Link>
               <Link
                 href="/register"
-                className="text-sm font-semibold bg-coral text-white px-5 py-2.5 rounded-full hover:bg-coral-dark transition-colors shadow-md shadow-coral/25"
+                className="btn-primary text-sm px-5 py-2.5"
               >
                 회원가입
               </Link>
@@ -117,15 +117,15 @@ export default function Navbar() {
             </a>
           ))}
           {user ? (
-            <button onClick={handleLogout} className="text-sm text-coral font-medium text-left">
+            <button onClick={handleLogout} className="text-sm text-sage font-medium text-left">
               로그아웃
             </button>
           ) : (
             <div className="flex flex-col gap-2">
-              <Link href="/login" className="text-sm font-medium text-brown-light">
+              <Link href="/login" className="btn-secondary text-sm px-4 py-2 w-fit">
                 로그인
               </Link>
-              <Link href="/register" className="text-sm font-semibold text-coral">
+              <Link href="/register" className="btn-primary text-sm px-5 py-2.5 w-fit">
                 회원가입
               </Link>
             </div>

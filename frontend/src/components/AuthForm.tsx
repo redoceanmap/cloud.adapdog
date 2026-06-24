@@ -60,7 +60,7 @@ export default function AuthForm({ initialMode = "login" }: AuthFormProps) {
       <div className="absolute top-6 left-6">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-sm text-brown-light hover:text-coral transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-brown-light hover:text-sage transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           홈으로
@@ -69,7 +69,7 @@ export default function AuthForm({ initialMode = "login" }: AuthFormProps) {
 
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-coral flex items-center justify-center mx-auto mb-4 shadow-lg shadow-coral/30">
+          <div className="w-14 h-14 rounded-2xl bg-sage flex items-center justify-center mx-auto mb-4 shadow-lg shadow-sage/30">
             <PawPrint className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-extrabold text-brown">발자국</h1>
@@ -84,7 +84,7 @@ export default function AuthForm({ initialMode = "login" }: AuthFormProps) {
               type="button"
               onClick={() => switchMode(false)}
               className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-                !isRegister ? "bg-white text-coral shadow-sm" : "text-brown-light"
+                !isRegister ? "bg-white text-sage shadow-sm" : "text-brown-light"
               }`}
             >
               로그인
@@ -93,7 +93,7 @@ export default function AuthForm({ initialMode = "login" }: AuthFormProps) {
               type="button"
               onClick={() => switchMode(true)}
               className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-                isRegister ? "bg-white text-coral shadow-sm" : "text-brown-light"
+                isRegister ? "bg-white text-sage shadow-sm" : "text-brown-light"
               }`}
             >
               회원가입
@@ -112,7 +112,7 @@ export default function AuthForm({ initialMode = "login" }: AuthFormProps) {
                     onChange={(e) => setName(e.target.value)}
                     placeholder="보호자 이름"
                     required
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-brown/10 focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none transition-all text-sm"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-brown/10 focus:border-sage focus:ring-2 focus:ring-sage/20 outline-none transition-all text-sm"
                   />
                 </div>
               </div>
@@ -128,7 +128,7 @@ export default function AuthForm({ initialMode = "login" }: AuthFormProps) {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="email@example.com"
                   required
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-brown/10 focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none transition-all text-sm"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-brown/10 focus:border-sage focus:ring-2 focus:ring-sage/20 outline-none transition-all text-sm"
                 />
               </div>
             </div>
@@ -144,7 +144,7 @@ export default function AuthForm({ initialMode = "login" }: AuthFormProps) {
                   placeholder="6자 이상"
                   required
                   minLength={6}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-brown/10 focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none transition-all text-sm"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-brown/10 focus:border-sage focus:ring-2 focus:ring-sage/20 outline-none transition-all text-sm"
                 />
               </div>
             </div>
@@ -158,7 +158,7 @@ export default function AuthForm({ initialMode = "login" }: AuthFormProps) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-coral text-white font-semibold py-3.5 rounded-xl hover:bg-coral-dark transition-colors shadow-md shadow-coral/25 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full btn-primary justify-center py-3.5 rounded-xl disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
             >
               {loading ? "처리 중..." : isRegister ? "회원가입" : "로그인"}
             </button>
@@ -168,14 +168,14 @@ export default function AuthForm({ initialMode = "login" }: AuthFormProps) {
             {isRegister ? (
               <>
                 이미 계정이 있으신가요?{" "}
-                <Link href="/login" className="text-coral font-medium hover:underline">
+                <Link href="/login" className="text-sage font-medium hover:underline">
                   로그인
                 </Link>
               </>
             ) : (
               <>
                 아직 계정이 없으신가요?{" "}
-                <Link href="/register" className="text-coral font-medium hover:underline">
+                <Link href="/register" className="text-sage font-medium hover:underline">
                   회원가입
                 </Link>
               </>
