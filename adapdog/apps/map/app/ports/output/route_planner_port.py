@@ -5,6 +5,7 @@ from typing import Optional
 
 from core.introduction import Introduction
 from map.app.dtos.route_planner_dto import AgentCoursePlan, ChatMessage, ChatTurn, CourseBrief
+from map.domain.entities.pet_place_entity import PetFriendlyPlace
 from map.domain.entities.route_planner_entity import Trail
 from map.domain.value_objects.pet_place_vo import PetSize
 
@@ -22,7 +23,8 @@ class RoutePlannerAgentPort(ABC):
 
     @abstractmethod
     async def chat(
-        self, messages: list[ChatMessage], pet_size: PetSize, pet_breed: Optional[str]
+        self, messages: list[ChatMessage], pet_size: PetSize, pet_breed: Optional[str],
+        pet_traits: Optional[str] = None,
     ) -> ChatTurn:
         """대화 기록을 받아 대화형으로 응답하고, 코스 확정 시 동선 계획을 함께 반환한다."""
         ...
@@ -43,4 +45,22 @@ class TrailPort(ABC):
     @abstractmethod
     async def find_trails(self, region: str) -> list[Trail]:
         """지역(시작지점 주소 부분일치)의 둘레길 목록을 반환한다."""
+        ...
+
+
+class LodgingPort(ABC):
+    """목적지 펫 동반 숙소 조회 출력 포트(숙박 계획 시). 구현체는 repository에 둔다."""
+
+    @abstractmethod
+    async def find_lodging(self, region: str, pet_size: PetSize) -> list[PetFriendlyPlace]:
+        """지역의 펫 동반 가능 숙소(크기 동반 가능분)를 반환한다."""
+        ...
+
+
+class RouteLegsPort(ABC):
+    """자차 이동 시 출발→목적지 경로상 경유지 조회 출력 포트. 구현체는 repository에 둔다."""
+
+    @abstractmethod
+    async def stopovers(self, origin: str, destination: str, pet_size: PetSize) -> list[PetFriendlyPlace]:
+        """출발→목적지 가는 길에 들르기 좋은 펫 동반 경유지를 반환한다."""
         ...

@@ -31,6 +31,25 @@ export interface RouteStop {
   longitude: number;
   distance_from_prev_km: number;
   similarity: number;
+  reason?: string;
+  source?: string;
+}
+
+export interface LodgingPlace {
+  name: string;
+  category: string;
+  latitude: number;
+  longitude: number;
+  source?: string;
+}
+
+export interface Stopover {
+  name: string;
+  category: string;
+  latitude: number;
+  longitude: number;
+  reason?: string;
+  source?: string;
 }
 
 export interface RoutePlanResponse {
@@ -41,6 +60,8 @@ export interface RoutePlanResponse {
   summary: string;
   stops: RouteStop[];
   recommended_trails: unknown[];
+  lodging?: LodgingPlace[];
+  stopovers?: Stopover[];
 }
 
 // ── 대화형 동선 플래너(route-planner/chat) ──
@@ -49,9 +70,32 @@ export interface ChatMessage {
   content: string;
 }
 
+/** 대화로 채워지는 누적 여정 상태 — 매 요청에 직전 값을 다시 보낸다(서버 무상태). */
+export interface TripPlan {
+  origin: string;
+  destination: string | null;
+  transport: 'ktx' | 'bus' | 'car' | 'unset';
+  lodging: 'overnight' | 'daytrip' | 'unset';
+  stage: 'ask_destination' | 'ask_transport' | 'ask_lodging' | 'ready';
+}
+
 export interface RouteChatResponse {
   reply: string;
+  plan: TripPlan;
+  suggestions: string[];
   course: RoutePlanResponse | null;
+}
+
+// ── 시설 후기(review) ──
+export interface Review {
+  id: number;
+  facility_id: number;
+  place_name: string;
+  title: string;
+  body: string;
+  rating: number;
+  author: string;
+  source: string;
 }
 
 export interface EntryCheckRequest {
@@ -77,6 +121,19 @@ export interface CohortPlace {
   longitude: number;
   road_address: string;
   score: number;
+}
+
+/** 발자국 — 반려동물이 실제로 다녀온 시설(방문기록 집계, 실좌표). */
+export interface VisitedPlace {
+  facility_id: number;
+  name: string;
+  category: string | null;
+  latitude: number;
+  longitude: number;
+  region: string | null;
+  road_address: string | null;
+  visit_count: number;
+  first_visited_at: string | null;
 }
 
 // ── 둘러보기(E) ──
@@ -205,54 +262,6 @@ export interface Reservation {
   price: string;
   status: string;
   reserved_at: string;
-}
-
-// ── 꾸미기(F) ──
-export interface DecorationTemplate {
-  id: number;
-  name: string;
-  theme: string;
-  thumbnail_url: string;
-  source: string;
-}
-
-// ── 브이로그(G) ──
-export interface VlogClip {
-  seq: number;
-  source_type: string;
-  media_url: string;
-}
-
-export interface Vlog {
-  id: number;
-  pet_id: number;
-  itinerary_id: number;
-  tone: string;
-  video_url: string;
-  created_at: string;
-  clips: VlogClip[];
-}
-
-// ── 커뮤니티(H) ──
-export interface CommunityPost {
-  id: number;
-  account_id: number;
-  pet_id: number;
-  itinerary_id: number;
-  title: string;
-  body: string;
-  created_at: string;
-  like_count: number;
-}
-
-export interface YearSummary {
-  id: number;
-  pet_id: number;
-  year: number;
-  total_distance_km: number;
-  places_count: number;
-  story_text: string;
-  created_at: string;
 }
 
 export interface PetStamp {

@@ -1,48 +1,22 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html,
+/* 발자국 — standalone 시안 helmet 스타일 이식. 색 토큰/다크모드는 App 루트 인라인에서 주입. */
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; height: 100%; }
 body {
   font-family: Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #e7e5df;
-  color: #1a1a1d;
   -webkit-font-smoothing: antialiased;
 }
+input, button, textarea { font-family: inherit; }
+button { border: none; background: none; cursor: pointer; }
 
-/* 화면 스크롤 영역 스크롤바 숨김 (원본 .scr) */
-.scr::-webkit-scrollbar {
-  width: 0;
-}
+/* Material Symbols — msr(outlined) / msf(filled) */
+.msr { font-family: 'Material Symbols Rounded'; font-weight: 400; line-height: 1; -webkit-font-smoothing: antialiased; }
+.msf { font-family: 'Material Symbols Rounded'; font-weight: 400; line-height: 1; font-variation-settings: 'FILL' 1; -webkit-font-smoothing: antialiased; }
 
-/* Material Symbols Rounded — 원본 .msr(outline) / .msf(filled) 두 클래스 보존 */
-.msr,
-.msf {
-  font-family: 'Material Symbols Rounded';
-  font-weight: 400;
-  font-style: normal;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-smoothing: antialiased;
-  /* ligature(아이콘명→아이콘) 활성화 */
-  font-feature-settings: 'liga';
-  -moz-font-feature-settings: 'liga';
-}
-.msr {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-}
-.msf {
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-}
+/* 스크롤바(시안 .sc) */
+.sc::-webkit-scrollbar { width: 7px; height: 7px; }
+.sc::-webkit-scrollbar-thumb { background: rgba(140, 140, 150, .28); border-radius: 99px; }
+.sc::-webkit-scrollbar-track { background: transparent; }
 
-input,
-button,
-textarea {
-  font-family: inherit;
-}
+@keyframes wv { 0%, 100% { transform: scaleY(.4); } 50% { transform: scaleY(1); } }
+@keyframes ping { 0% { transform: scale(1); opacity: .55; } 100% { transform: scale(2.4); opacity: 0; } }
+@keyframes fadeup { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }

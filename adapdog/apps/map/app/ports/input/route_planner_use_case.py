@@ -9,6 +9,7 @@ from map.app.dtos.route_planner_dto import RouteChatResponse, RoutePlanResponse
 if TYPE_CHECKING:
     from map.adapter.inbound.api.schemas.route_planner_schema import (
         RouteChatSchema,
+        RouteOptimizeSchema,
         RoutePlannerSchema,
     )
 
@@ -24,6 +25,11 @@ class RoutePlannerUseCase(ABC):
     @abstractmethod
     async def chat(self, schema: "RouteChatSchema") -> RouteChatResponse:
         """대화 기록을 받아 대화형으로 응답하고, 코스가 확정되면 함께 반환한다."""
+        ...
+
+    @abstractmethod
+    async def optimize(self, schema: "RouteOptimizeSchema") -> RoutePlanResponse:
+        """사용자가 선택한 정류장들을 출발점 기준 최적 순서로 재배열한다."""
         ...
 
     @abstractmethod

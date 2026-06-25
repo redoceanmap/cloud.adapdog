@@ -7,8 +7,6 @@ import type {
   CareReminder,
   ChatMessage,
   CohortPlace,
-  CommunityPost,
-  DecorationTemplate,
   EntryCheckRequest,
   EntryVerdictResult,
   Festival,
@@ -19,16 +17,17 @@ import type {
   PetStamp,
   PolicyCardResult,
   Reservation,
+  Review,
   RouteChatResponse,
   RoutePlanRequest,
   RoutePlanResponse,
+  TripPlan,
   SafetyAlertResult,
   SafetyCheckRequest,
   StampSpot,
   SymptomCheck,
-  Vlog,
+  VisitedPlace,
   WalkingTrail,
-  YearSummary,
 } from './types';
 
 /** A5 견종 자동분류 — 견종명으로 표준 크기·기질 조회. */
@@ -43,12 +42,31 @@ export const searchPlaces = (region: string) =>
 export const planRoute = (req: RoutePlanRequest) =>
   apiPost<RoutePlanResponse>('/map/route-planner/plan', req);
 
-/** C1 대화형 동선 플래너 — 대화 기록을 보내 Gemini와 멀티턴으로 코스를 좁힌다. */
-export const chatRoute = (messages: ChatMessage[], petSize = 'medium', petBreed?: string) =>
+/** C1 대화형 동선 플래너 — 대화 기록 + 누적 상태(plan)를 보내 핑퐁으로 여정을 채운다. */
+export const chatRoute = (
+  messages: ChatMessage[], petSize = 'medium', petBreed?: string, petTraits?: string,
+  plan?: TripPlan | null,
+) =>
   apiPost<RouteChatResponse>('/map/route-planner/chat', {
     messages,
+    plan: plan ?? null,
     pet_size: petSize,
     pet_breed: petBreed ?? null,
+    pet_traits: petTraits ?? null,
+  });
+
+/** 사용자가 고른 N곳을 출발점 기준 최적 순서로 재배열한 코스. */
+export const optimizeRoute = (
+  stops: { name: string; category: string; latitude: number; longitude: number }[],
+  petSize = 'medium',
+  start?: { lat: number; lng: number },
+) =>
+  apiPost<RoutePlanResponse>('/map/route-planner/optimize', {
+    region: '전주',
+    pet_size: petSize,
+    start_lat: start?.lat ?? null,
+    start_lng: start?.lng ?? null,
+    stops,
   });
 
 /** C5 입장 판정 — 시설×반려동물 규칙 기반 판정. */
@@ -60,6 +78,10 @@ export const cohortRecommendation = (size: string, limit = 4) =>
   apiGet<CohortPlace[]>(
     `/map/cohort-recommendation?size=${encodeURIComponent(size)}&limit=${limit}`,
   );
+
+/** 발자국 — 반려동물이 실제로 다녀온 시설(방문기록 기반 실좌표). */
+export const getVisitedPlaces = (petId: number) =>
+  apiGet<VisitedPlace[]>(`/map/visited-place?pet_id=${petId}`);
 
 // ── 둘러보기(E) ──
 /** E1/E2 축제 캘린더·리스트. */
@@ -109,28 +131,18 @@ export const getItineraries = (petId: number) =>
 export const getReservations = (petId: number) =>
   apiGet<Reservation[]>(`/trips/reservation?pet_id=${petId}`);
 
-// ── 꾸미기(F) ──
-/** F1/F4 꾸미기 템플릿 갤러리. */
-export const getDecorationTemplates = () =>
-  apiGet<DecorationTemplate[]>('/creative/decoration-template');
-
-// ── 브이로그(G) ──
-/** G 강아지 시점 브이로그(클립 포함). */
-export const getVlogs = (petId: number) =>
-  apiGet<Vlog[]>(`/creative/vlog?pet_id=${petId}`);
-
-// ── 커뮤니티(H) ──
-/** H1/H2 코스 후기 피드. */
-export const getCommunityPosts = () =>
-  apiGet<CommunityPost[]>('/community/community-post');
-
-/** H5 연말 결산. */
-export const getYearSummary = (petId: number) =>
-  apiGet<YearSummary[]>(`/community/year-summary?pet_id=${petId}`);
-
-/** H4 수집 스탬프(펫 패스포트). */
+/** 수집 스탬프(펫 패스포트 도감). */
 export const getPetStamps = (petId: number) =>
   apiGet<PetStamp[]>(`/users/pet-stamp?pet_id=${petId}`);
+
+/** 시설상세 '후기' 탭 — 시설(id 또는 이름)별 보호자 후기. */
+export const getReviews = (opts: { facilityId?: number; placeName?: string } = {}) => {
+  const p = new URLSearchParams();
+  if (opts.facilityId != null) p.set('facility_id', String(opts.facilityId));
+  if (opts.placeName) p.set('place_name', opts.placeName);
+  const q = p.toString();
+  return apiGet<Review[]>(`/map/review${q ? `?${q}` : ''}`);
+};
 
 /** 이동약자 배려 — 펫 동반 ∩ 무장애 교차 시설(실 배리어프리 DB). */
 export const searchInclusive = (region: string, petSize = 'large', features: string[] = []) =>

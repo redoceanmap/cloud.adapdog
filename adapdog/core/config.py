@@ -25,6 +25,15 @@ PETPLACE_API_ENDPOINT = os.getenv("PETPLACE_API_ENDPOINT")        # 예: https:/
 PETPLACE_API_SERVICE_KEY = os.getenv("PETPLACE_API_SERVICE_KEY")  # 공공데이터포털 일반 인증키(Decoding)
 PETPLACE_API_MAX_ROWS = int(os.getenv("PETPLACE_API_MAX_ROWS", "3000"))
 
+# 전국 시티투어 코스와 함께하는 맛집 정보 (data.go.kr 15124908 → 한국문화정보원 kcisa).
+# 동선 속 식당/맛집 추천에 사용. 호출 시 areaNm은 '시도명'(예: 전라북도)으로 줘야 한다(시군구명은 빈 응답).
+# 키가 비어 있으면 맛집 추천 없이 동작한다(생략 폴백).
+RESTAURANT_API_ENDPOINT = os.getenv(
+    "RESTAURANT_API_ENDPOINT", "https://api.kcisa.kr/openapi/API_CNV_063/request"
+)
+RESTAURANT_API_SERVICE_KEY = os.getenv("RESTAURANT_API_SERVICE_KEY")  # 문화공공데이터광장(culture.go.kr) 인증키(UUID)
+RESTAURANT_API_MAX_ROWS = int(os.getenv("RESTAURANT_API_MAX_ROWS", "1000"))
+
 # data.go.kr 일반 인증키 — 승인된 KTO API 4종 공통. 인제스트가 API 데이터를 DB에 적재할 때 사용.
 DATA_GO_KR_SERVICE_KEY = os.getenv("DATA_GO_KR_SERVICE_KEY")
 

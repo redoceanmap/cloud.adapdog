@@ -8,12 +8,19 @@ from fastapi import Depends
 from core.config import GEMINI_API_KEY, GEMINI_MODEL, TRAIL_CSV_PATH
 from map.adapter.outbound.repositories.route_planner_repository import (
     CsvTrailRepository,
+    LodgingRepository,
+    RouteLegsRepository,
     RuleBasedRoutePlannerAgent,
 )
 from map.app.ports.input.cohort_recommendation_use_case import CohortRecommendationUseCase
 from map.app.ports.input.pet_place_use_case import PetPlaceUseCase
 from map.app.ports.input.route_planner_use_case import RoutePlannerUseCase
-from map.app.ports.output.route_planner_port import RoutePlannerAgentPort, TrailPort
+from map.app.ports.output.route_planner_port import (
+    LodgingPort,
+    RouteLegsPort,
+    RoutePlannerAgentPort,
+    TrailPort,
+)
 from map.app.use_cases.route_planner_interactor import RoutePlannerInteractor
 from map.dependencies.cohort_recommendation_provider import get_cohort_recommendation_use_case
 from map.dependencies.pet_place_provider import get_pet_place_use_case
@@ -44,8 +51,22 @@ def get_route_planner_agent(
     return RuleBasedRoutePlannerAgent(pet_place=pet_place, trail_port=trail_port)
 
 
+def get_lodging_port(
+    pet_place: PetPlaceUseCase = Depends(get_pet_place_use_case),
+) -> LodgingPort:
+    """펫 동반 숙소 — 기존 pet_place 시설 데이터를 재사용(숙박류만 추출)."""
+    return LodgingRepository(pet_place=pet_place)
+
+
+def get_route_legs_port() -> RouteLegsPort:
+    """자차 경유지 — 서울→전주 루트 시드(Mock). 무상태 → 매 요청 생성 비용 무시 가능."""
+    return RouteLegsRepository()
+
+
 def get_route_planner_use_case(
     agent: RoutePlannerAgentPort = Depends(get_route_planner_agent),
     cohort: CohortRecommendationUseCase = Depends(get_cohort_recommendation_use_case),
+    lodging: LodgingPort = Depends(get_lodging_port),
+    legs: RouteLegsPort = Depends(get_route_legs_port),
 ) -> RoutePlannerUseCase:
-    return RoutePlannerInteractor(agent=agent, cohort=cohort)
+    return RoutePlannerInteractor(agent=agent, cohort=cohort, lodging=lodging, legs=legs)

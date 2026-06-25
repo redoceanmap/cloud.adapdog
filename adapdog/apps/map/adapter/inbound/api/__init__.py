@@ -27,9 +27,11 @@ def _build_map_router():
     from map.adapter.inbound.api.v1.festival_router import festival_router
     from map.adapter.inbound.api.v1.pet_place_router import pet_place_router
     from map.adapter.inbound.api.v1.policy_card_router import policy_card_router
+    from map.adapter.inbound.api.v1.review_router import review_router
     from map.adapter.inbound.api.v1.route_planner_router import route_planner_router
     from map.adapter.inbound.api.v1.safety_alert_router import safety_alert_router
     from map.adapter.inbound.api.v1.stamp_spot_router import stamp_spot_router
+    from map.adapter.inbound.api.v1.visited_place_router import visited_place_router
     from map.adapter.inbound.api.v1.walking_trail_router import walking_trail_router
 
     router = APIRouter(prefix="/map", tags=["map"])
@@ -44,4 +46,6 @@ def _build_map_router():
     router.include_router(audio_guide_router)
     router.include_router(walking_trail_router)
     router.include_router(stamp_spot_router)
+    router.include_router(visited_place_router)
+    router.include_router(review_router)
     return router

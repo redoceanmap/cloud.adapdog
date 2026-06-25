@@ -77,6 +77,31 @@ class RouteStopDto:
     longitude: float
     distance_from_prev_km: float = 0.0
     similarity: int = 0  # 닮은친구% — 같은 크기 코호트의 방문 인기도
+    reason: str = ""     # 왜 이 장소 — 규칙 기반 한 줄(반려견 특징 반영)
+    source: str = ""     # 출처 태그(예: 한국문화정보원 펫동반 문화시설)
+
+
+@dataclass(frozen=True)
+class LodgingDto:
+    """목적지 펫 동반 숙소(숙박 계획 시 자동 추천)."""
+
+    name: str
+    category: str
+    latitude: float
+    longitude: float
+    source: str = ""
+
+
+@dataclass(frozen=True)
+class StopoverDto:
+    """자차 이동 시 출발→목적지 경로상의 경유지(펫 동반 명소·휴게)."""
+
+    name: str
+    category: str
+    latitude: float
+    longitude: float
+    reason: str = ""
+    source: str = ""
 
 
 @dataclass(frozen=True)
@@ -88,11 +113,26 @@ class RoutePlanResponse:
     summary: str
     stops: list[RouteStopDto]
     recommended_trails: list[TrailDto] = field(default_factory=list)
+    lodging: list[LodgingDto] = field(default_factory=list)         # 숙박 계획 시 추천 숙소
+    stopovers: list[StopoverDto] = field(default_factory=list)      # 자차 경유지(서울→전주)
+
+
+@dataclass(frozen=True)
+class TripPlanDto:
+    """대화형 플래너의 누적 상태(요청·응답 왕복용). 도메인 TripPlan의 직렬화 표현."""
+
+    origin: str
+    destination: Optional[str]
+    transport: str   # TransportMode 값(ktx/bus/car/unset)
+    lodging: str     # LodgingOption 값(overnight/daytrip/unset)
+    stage: str       # PlannerStage 값(다음에 채울 단계)
 
 
 @dataclass(frozen=True)
 class RouteChatResponse:
-    """대화형 동선 플래너 응답 — AI 답변 + (코스 확정 시) 추천 코스."""
+    """대화형 동선 플래너 응답 — AI 답변 + 누적 상태 + 빠른 선택칩 + (확정 시) 추천 코스."""
 
     reply: str
+    plan: TripPlanDto
+    suggestions: list[str] = field(default_factory=list)
     course: Optional[RoutePlanResponse] = None

@@ -32,12 +32,42 @@ class ChatMessageSchema(BaseModel):
     content: str = Field(..., description="메시지 본문")
 
 
+class OptimizeStopSchema(BaseModel):
+    """최적 경로 요청의 한 정류장(사용자가 추천 동선에서 선택한 곳)."""
+
+    name: str
+    category: str = ""
+    latitude: float
+    longitude: float
+
+
+class RouteOptimizeSchema(BaseModel):
+    """사용자가 고른 N곳을 출발점 기준 최적 순서로 재배열하는 요청."""
+
+    region: str = Field("전주", description="코스 지역 라벨")
+    pet_size: str = Field("medium", description="반려견 크기 (small / medium / large)")
+    start_lat: Optional[float] = Field(None, description="출발점 위도(내 위치). 없으면 첫 정류장에서 시작")
+    start_lng: Optional[float] = Field(None, description="출발점 경도")
+    stops: list[OptimizeStopSchema] = Field(..., description="선택한 정류장들(순서 무관)")
+
+
+class TripPlanSchema(BaseModel):
+    """대화형 플래너의 누적 상태 — 클라이언트가 직전 응답의 plan을 그대로 다시 보낸다(서버 무상태)."""
+
+    origin: str = Field("서울", description="출발지(데모 고정: 서울)")
+    destination: Optional[str] = Field(None, description="목적지(예: 전주). 미정이면 null")
+    transport: str = Field("unset", description="이동수단 ktx / bus / car / unset")
+    lodging: str = Field("unset", description="숙박 overnight / daytrip / unset")
+
+
 class RouteChatSchema(BaseModel):
-    """대화형 AI 펫 동선 플래너 요청 — 멀티턴(서버 무상태, 클라이언트가 기록 전달)."""
+    """대화형 AI 펫 동선 플래너 요청 — 멀티턴(서버 무상태, 클라이언트가 기록+상태 전달)."""
 
     messages: list[ChatMessageSchema] = Field(..., description="대화 기록(시간순). 마지막이 최신 사용자 메시지")
+    plan: Optional[TripPlanSchema] = Field(None, description="직전 응답의 누적 상태(없으면 신규 대화)")
     pet_size: str = Field("medium", description="반려견 크기 (small / medium / large)")
     pet_breed: Optional[str] = Field(None, description="견종 (선택)")
+    pet_traits: Optional[str] = Field(None, description="반려견 특징 요약(활동성향·사회성·체질) — AI가 기억해 추천에 반영")
 
     model_config = {
         "json_schema_extra": {

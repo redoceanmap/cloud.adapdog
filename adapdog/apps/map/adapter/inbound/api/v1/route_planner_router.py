@@ -3,7 +3,11 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 
 from core.introduction import IntroductionSchema
-from map.adapter.inbound.api.schemas.route_planner_schema import RouteChatSchema, RoutePlannerSchema
+from map.adapter.inbound.api.schemas.route_planner_schema import (
+    RouteChatSchema,
+    RouteOptimizeSchema,
+    RoutePlannerSchema,
+)
 from map.app.dtos.route_planner_dto import RouteChatResponse, RoutePlanResponse
 from map.app.ports.input.route_planner_use_case import RoutePlannerUseCase
 from map.dependencies.route_planner_provider import get_route_planner_use_case
@@ -17,6 +21,15 @@ async def plan_route(
     use_case: RoutePlannerUseCase = Depends(get_route_planner_use_case),
 ) -> RoutePlanResponse:
     return await use_case.plan_route(schema)
+
+
+@route_planner_router.post("/optimize")
+async def optimize_route(
+    schema: RouteOptimizeSchema,
+    use_case: RoutePlannerUseCase = Depends(get_route_planner_use_case),
+) -> RoutePlanResponse:
+    """사용자가 선택한 N곳을 출발점 기준 최적 순서로 재배열한 코스를 반환."""
+    return await use_case.optimize(schema)
 
 
 @route_planner_router.post("/chat")

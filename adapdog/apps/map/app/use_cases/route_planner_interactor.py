@@ -1,22 +1,41 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from core.introduction import Introduction
-from map.adapter.inbound.api.schemas.route_planner_schema import RouteChatSchema, RoutePlannerSchema
+from map.adapter.inbound.api.schemas.route_planner_schema import (
+    RouteChatSchema,
+    RouteOptimizeSchema,
+    RoutePlannerSchema,
+)
 from map.app.dtos.route_planner_dto import (
     AgentCoursePlan,
-    ChatMessage,
     CourseBrief,
+    LodgingDto,
+    PlannedStop,
     RouteChatResponse,
     RoutePlanResponse,
     RouteStopDto,
+    StopoverDto,
+    TripPlanDto,
 )
 from map.app.ports.input.cohort_recommendation_use_case import CohortRecommendationUseCase
 from map.app.ports.input.route_planner_use_case import RoutePlannerUseCase
-from map.app.ports.output.route_planner_port import RoutePlannerAgentPort
+from map.app.ports.output.route_planner_port import (
+    LodgingPort,
+    RouteLegsPort,
+    RoutePlannerAgentPort,
+)
+from map.domain.entities.pet_place_entity import PetFriendlyPlace
+from map.domain.entities.route_planner_entity import TripPlan
 from map.domain.value_objects.cohort_recommendation_vo import Cohort
 from map.domain.value_objects.pet_place_vo import Coordinate, PetSize
+from map.domain.value_objects.route_planner_vo import (
+    LodgingOption,
+    PlannerStage,
+    TransportMode,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +49,17 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
     재사용하는 패턴과 동일 — 시설 인기도 집계는 코호트 슬라이스의 책임이다).
     """
 
-    def __init__(self, agent: RoutePlannerAgentPort, cohort: CohortRecommendationUseCase) -> None:
+    def __init__(
+        self,
+        agent: RoutePlannerAgentPort,
+        cohort: CohortRecommendationUseCase,
+        lodging: LodgingPort,
+        legs: RouteLegsPort,
+    ) -> None:
         self.agent = agent
         self.cohort = cohort
+        self.lodging = lodging
+        self.legs = legs
 
     async def plan_route(self, schema: RoutePlannerSchema) -> RoutePlanResponse:
         pet_size = PetSize.from_raw(schema.pet_size)
@@ -48,28 +75,119 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
         return await self._assemble_course(schema.region, pet_size, plan)
 
     async def chat(self, schema: RouteChatSchema) -> RouteChatResponse:
+        """대화 핑퐁 — 누적 TripPlan을 복원해 단계(목적지→이동수단→숙박→코스)를 진행한다.
+
+        상태 전이는 규칙(도메인 TripPlan.next_stage)으로 결정론적이고, 슬롯이 다 차면
+        에이전트로 코스를 생성한다. 데모 입력엔 일관된 결과가 나온다.
+        """
         pet_size = PetSize.from_raw(schema.pet_size)
-        messages = [ChatMessage(role=m.role, content=m.content) for m in schema.messages]
-        logger.info("[RoutePlannerInteractor] chat | turns=%d pet_size=%s", len(messages), pet_size.value)
+        plan = _restore_plan(schema.plan)
+        latest = _latest_user_message(schema)
+        logger.info("[RoutePlannerInteractor] chat | stage=%s msg=%r", plan.next_stage().value, latest)
 
-        turn = await self.agent.chat(messages, pet_size, schema.pet_breed)
+        # 1) 최신 메시지로 채울 수 있는 슬롯을 모두 채운다(한 번에 여러 개 말해도 수용).
+        plan = _apply_message(plan, latest)
+        stage = plan.next_stage()
 
-        course = None
-        if turn.plan and turn.plan.stops:
-            course = await self._assemble_course(turn.region or "", pet_size, turn.plan)
-        return RouteChatResponse(reply=turn.reply, course=course)
+        # 2) 아직 물을 게 남았으면 질문 + 빠른 선택칩만 돌려준다(코스 미생성).
+        if stage is not PlannerStage.READY:
+            reply, suggestions = _ask(stage, plan)
+            return RouteChatResponse(reply=reply, plan=_to_plan_dto(plan), suggestions=suggestions)
+
+        # 3) 슬롯이 다 찼으면 코스를 생성한다(이동수단·숙박 분기 반영).
+        course = await self._build_course(plan, pet_size, schema.pet_breed, schema.pet_traits)
+        reply = _ready_reply(plan, course)
+        return RouteChatResponse(reply=reply, plan=_to_plan_dto(plan), suggestions=[], course=course)
+
+    async def _build_course(
+        self, plan: TripPlan, pet_size: PetSize, pet_breed, pet_traits
+    ) -> RoutePlanResponse:
+        """확정된 TripPlan으로 전주 코스 + (숙박 시)숙소 + (자차 시)경유지를 조립한다.
+
+        코스(LLM)·숙소·경유지·코호트 인기도는 서로 독립이므로 동시에 조회한다(병렬화).
+        """
+        region = plan.destination or "전주"
+        days = 2 if plan.lodging is LodgingOption.OVERNIGHT else 1
+        brief = CourseBrief(region=region, days=days, pet_size=pet_size, pet_breed=pet_breed)
+
+        async def _lodging_task() -> list[LodgingDto]:
+            if plan.lodging is not LodgingOption.OVERNIGHT:
+                return []
+            return [_to_lodging_dto(p) for p in await self.lodging.find_lodging(region, pet_size)]
+
+        async def _stopover_task() -> list[StopoverDto]:
+            if plan.transport is not TransportMode.CAR:
+                return []
+            return [_to_stopover_dto(p) for p in await self.legs.stopovers(plan.origin, region, pet_size)]
+
+        agent_plan, lodging, stopovers, recommendations = await asyncio.gather(
+            self.agent.plan(brief),
+            _lodging_task(),
+            _stopover_task(),
+            self.cohort.recommend(Cohort(size=pet_size), action_type="visit", limit=500),
+        )
+
+        return await self._assemble_course(
+            region, pet_size, agent_plan, pet_traits, lodging, stopovers, recommendations
+        )
+
+    async def optimize(self, schema: RouteOptimizeSchema) -> RoutePlanResponse:
+        """선택한 정류장들을 출발점(내 위치)에서 최근접 이웃 순으로 재배열해 최적 코스를 만든다."""
+        pet_size = PetSize.from_raw(schema.pet_size)
+        stops = [
+            PlannedStop(i + 1, s.name, s.category, s.latitude, s.longitude)
+            for i, s in enumerate(schema.stops)
+        ]
+        logger.info("[RoutePlannerInteractor] optimize | %d곳 → 최적순서", len(stops))
+        start = (
+            Coordinate(schema.start_lat, schema.start_lng)
+            if schema.start_lat is not None and schema.start_lng is not None
+            else None
+        )
+        ordered = self._order_nearest(start, stops)
+        plan = AgentCoursePlan(
+            stops=ordered,
+            narrative=f"선택한 {len(ordered)}곳을 출발 지점에서 가까운 순으로 최적 동선을 짰어요.",
+        )
+        return await self._assemble_course(schema.region, pet_size, plan)
+
+    @staticmethod
+    def _order_nearest(start, stops: list[PlannedStop]) -> list[PlannedStop]:
+        """출발점(없으면 첫 정류장)에서 최근접 이웃 그리디로 방문 순서를 정한다(TSP 휴리스틱)."""
+        if not stops:
+            return []
+        remaining = list(stops)
+        cur = start or Coordinate(stops[0].latitude, stops[0].longitude)
+        ordered: list[PlannedStop] = []
+        while remaining:
+            nxt = min(remaining, key=lambda s: cur.distance_km_to(Coordinate(s.latitude, s.longitude)))
+            remaining.remove(nxt)
+            ordered.append(nxt)
+            cur = Coordinate(nxt.latitude, nxt.longitude)
+        return ordered
 
     async def _assemble_course(
-        self, region: str, pet_size: PetSize, plan: AgentCoursePlan
+        self,
+        region: str,
+        pet_size: PetSize,
+        plan: AgentCoursePlan,
+        pet_traits: str | None = None,
+        lodging: list[LodgingDto] | None = None,
+        stopovers: list[StopoverDto] | None = None,
+        recommendations=None,
     ) -> RoutePlanResponse:
-        """에이전트 동선 계획 → 응답 DTO(이동거리·닮은친구% 부여). plan_route·chat 공용."""
+        """에이전트 동선 계획 → 응답 DTO(이동거리·닮은친구%·추천이유·출처). plan_route·chat 공용.
+
+        recommendations(코호트 인기도)를 미리 받으면 재조회하지 않는다(병렬 호출 최적화).
+        """
         # 직전 정류장으로부터의 이동 거리(km). 첫 정류장은 0.
         coords = [Coordinate(s.latitude, s.longitude) for s in plan.stops]
         prev_km = [0.0] + [round(coords[i - 1].distance_km_to(coords[i]), 2) for i in range(1, len(coords))]
 
         # 닮은친구% — 같은 크기 코호트가 시설에 남긴 방문 인기도. 기록이 있으면 실측,
         # 없으면 순서 기반 보수 추정(데이터가 쌓일수록 실측으로 수렴).
-        recommendations = await self.cohort.recommend(Cohort(size=pet_size), action_type="visit", limit=500)
+        if recommendations is None:
+            recommendations = await self.cohort.recommend(Cohort(size=pet_size), action_type="visit", limit=500)
         score_by_facility = {r.facility_id: r.score for r in recommendations}
         max_score = max(score_by_facility.values(), default=1)
         similarities = [
@@ -80,7 +198,10 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
         ]
 
         stops = [
-            RouteStopDto(i + 1, s.name, s.category, s.latitude, s.longitude, prev_km[i], similarities[i])
+            RouteStopDto(
+                i + 1, s.name, s.category, s.latitude, s.longitude, prev_km[i], similarities[i],
+                reason=_stop_reason(s.category, pet_traits), source=_SOURCE_TAG,
+            )
             for i, s in enumerate(plan.stops)
         ]
         total_km = round(sum(prev_km), 2)
@@ -92,9 +213,136 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
             summary=plan.narrative,
             stops=stops,
             recommended_trails=plan.trails,
+            lodging=lodging or [],
+            stopovers=stopovers or [],
         )
 
     async def introduce_myself(self) -> Introduction:
         intro = await self.agent.introduce_myself()
         intro.trail.append("interactor")
         return intro
+
+
+# ── 대화 상태머신 헬퍼(순수 함수) ──────────────────────────────────────────────────
+_SOURCE_TAG = "한국문화정보원 펫동반 문화시설"
+_SOURCE_TAG_TRAVEL = "한국관광공사 반려동물 동반여행"
+
+# 데모는 전주 중심. 대화에서 목적지를 뽑는 최소 힌트(서버 무상태 — 추측은 보수적으로).
+_REGION_HINTS = ("전주", "강릉", "경주", "제주", "여수", "부산", "속초", "통영", "남원", "군산")
+
+
+def _extract_region(text: str) -> str | None:
+    for h in _REGION_HINTS:
+        if h in text:
+            return h
+    return None
+
+
+def _latest_user_message(schema: RouteChatSchema) -> str:
+    for m in reversed(schema.messages):
+        if m.role == "user":
+            return m.content
+    return ""
+
+
+def _safe_transport(value: str | None) -> TransportMode:
+    try:
+        return TransportMode(value) if value else TransportMode.UNSET
+    except ValueError:
+        return TransportMode.UNSET
+
+
+def _safe_lodging(value: str | None) -> LodgingOption:
+    try:
+        return LodgingOption(value) if value else LodgingOption.UNSET
+    except ValueError:
+        return LodgingOption.UNSET
+
+
+def _restore_plan(sp) -> TripPlan:
+    """요청에 동봉된 직전 상태(TripPlanSchema|None) → 도메인 TripPlan 복원."""
+    if sp is None:
+        return TripPlan()
+    return TripPlan(
+        origin=sp.origin or "서울",
+        destination=sp.destination or None,
+        transport=_safe_transport(sp.transport),
+        lodging=_safe_lodging(sp.lodging),
+    )
+
+
+def _apply_message(plan: TripPlan, latest: str) -> TripPlan:
+    """최신 메시지로 아직 비어 있는 슬롯을 모두 채운다(한 턴에 여러 개 말해도 수용)."""
+    destination = plan.destination or _extract_region(latest)
+    transport = plan.transport
+    if transport is TransportMode.UNSET:
+        transport = TransportMode.from_raw(latest)
+    lodging = plan.lodging
+    if lodging is LodgingOption.UNSET:
+        lodging = LodgingOption.from_raw(latest)
+    return TripPlan(origin=plan.origin, destination=destination, transport=transport, lodging=lodging)
+
+
+def _ask(stage: PlannerStage, plan: TripPlan) -> tuple[str, list[str]]:
+    """단계별 질문 + 빠른 선택칩(결정론적 — 데모 안정)."""
+    if stage is PlannerStage.ASK_DESTINATION:
+        return ("어디로 떠나고 싶으세요? 가고 싶은 지역을 알려주세요.", ["전주"])
+    if stage is PlannerStage.ASK_TRANSPORT:
+        return (
+            f"{plan.origin}에서 {plan.destination}까지 어떻게 갈까요?",
+            ["KTX", "고속버스", "자차"],
+        )
+    # ASK_LODGING
+    return (f"{plan.destination}에서 1박 하실 건가요, 당일치기인가요?", ["1박 할래요", "당일치기"])
+
+
+def _ready_reply(plan: TripPlan, course: RoutePlanResponse) -> str:
+    """코스 확정 시 사용자에게 보일 한 마디 — 이동수단·경유지·숙소 맥락 + 코스 요약."""
+    bits = [f"{plan.transport.label}로 {plan.destination}까지 가는 일정으로 코스를 짰어요."]
+    if plan.transport is TransportMode.CAR and course.stopovers:
+        names = ", ".join(s.name for s in course.stopovers[:2])
+        bits.append(f"가는 길엔 {names} 같은 경유지를 넣었어요.")
+    if plan.lodging is LodgingOption.OVERNIGHT and course.lodging:
+        bits.append(f"체리와 묵을 수 있는 숙소 {len(course.lodging)}곳도 함께 추천했어요.")
+    if course.summary:
+        bits.append(course.summary)
+    return " ".join(b for b in bits if b)
+
+
+def _to_plan_dto(plan: TripPlan) -> TripPlanDto:
+    return TripPlanDto(
+        origin=plan.origin,
+        destination=plan.destination,
+        transport=plan.transport.value,
+        lodging=plan.lodging.value,
+        stage=plan.next_stage().value,
+    )
+
+
+def _to_lodging_dto(p: PetFriendlyPlace) -> LodgingDto:
+    return LodgingDto(
+        name=p.name, category=p.category,
+        latitude=p.coordinate.latitude, longitude=p.coordinate.longitude,
+        source=_SOURCE_TAG_TRAVEL,
+    )
+
+
+def _to_stopover_dto(p: PetFriendlyPlace) -> StopoverDto:
+    return StopoverDto(
+        name=p.name, category=p.category,
+        latitude=p.coordinate.latitude, longitude=p.coordinate.longitude,
+        reason="가는 길에 체리와 쉬어가기 좋아요", source=_SOURCE_TAG_TRAVEL,
+    )
+
+
+def _stop_reason(category: str, pet_traits: str | None) -> str:
+    """왜 이 장소 — 반려견 특징을 반영한 규칙 기반 한 줄."""
+    traits = pet_traits or ""
+    cat = category or ""
+    if "더위" in traits and any(k in cat for k in ("공원", "야외", "산책", "둘레", "호수", "정원", "수목")):
+        return "그늘·야외가 있어 더위 타는 체리에게 좋아요"
+    if "관절" in traits:
+        return "평지 위주라 관절 부담이 적어요"
+    if any(k in traits for k in ("겁", "낯가림")):
+        return "비교적 한적해 겁 많은 아이도 편해요"
+    return "체리가 동반 입장할 수 있는 곳이에요"
