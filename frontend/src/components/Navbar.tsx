@@ -33,9 +33,11 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { href: "#features", label: "기능" },
-    { href: "#sensory-map", label: "감각 지도" },
-    { href: "#flow", label: "이용 방법" },
+    { href: "#ai-planner", label: "AI 플래너" },
+    { href: "#ai-voice", label: "음성·응급" },
+    { href: "#scenarios", label: "시나리오" },
+    { href: "#features", label: "차별점" },
+    { href: "#download", label: "다운로드" },
   ];
 
   return (

@@ -1,10 +1,10 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
-import VisualHooks from "@/components/VisualHooks";
-import SensoryMap from "@/components/SensoryMap";
-import FlowSection from "@/components/FlowSection";
-import Features from "@/components/Features";
-import CTA from "@/components/CTA";
+import AIPlannerSection from "@/components/AIPlannerSection";
+import AIVoiceEmergencySection from "@/components/AIVoiceEmergencySection";
+import HackathonScenariosSection from "@/components/HackathonScenariosSection";
+import DifferentiatorsSection from "@/components/DifferentiatorsSection";
+import AppStoreCTA from "@/components/AppStoreCTA";
 import Footer from "@/components/Footer";
 
 export default function Home() {
@@ -13,11 +13,11 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
-        <VisualHooks />
-        <SensoryMap />
-        <FlowSection />
-        <Features />
-        <CTA />
+        <AIPlannerSection />
+        <AIVoiceEmergencySection />
+        <HackathonScenariosSection />
+        <DifferentiatorsSection />
+        <AppStoreCTA />
       </main>
       <Footer />
     </>

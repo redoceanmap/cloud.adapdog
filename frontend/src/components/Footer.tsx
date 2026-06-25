@@ -13,15 +13,21 @@ export default function Footer() {
             <span className="font-bold text-brown">발자국</span>
           </div>
 
-          <div className="flex gap-6 text-sm text-brown-light">
+          <div className="flex flex-wrap gap-4 md:gap-6 text-sm text-brown-light justify-center">
+            <a href="#ai-planner" className="hover:text-sage transition-colors">
+              AI 플래너
+            </a>
+            <a href="#ai-voice" className="hover:text-sage transition-colors">
+              음성·응급
+            </a>
+            <a href="#scenarios" className="hover:text-sage transition-colors">
+              시나리오
+            </a>
             <a href="#features" className="hover:text-sage transition-colors">
-              기능
+              차별점
             </a>
-            <a href="#sensory-map" className="hover:text-sage transition-colors">
-              감각 지도
-            </a>
-            <a href="#flow" className="hover:text-sage transition-colors">
-              이용 방법
+            <a href="#download" className="hover:text-sage transition-colors">
+              다운로드
             </a>
             <Link href="/login" className="hover:text-sage transition-colors">
               로그인

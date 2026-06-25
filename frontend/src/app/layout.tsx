@@ -9,10 +9,10 @@ const noto = Noto_Sans_KR({
 });
 
 export const metadata: Metadata = {
-  title: "발자국 | 반려동물 동반 여행 플랫폼",
+  title: "발자국 | 강아지와 함께하는 AI 여행 플래너",
   description:
-    "내 강아지가 주인공인 여행 크로니클. AI 페르소나, 감각 지도, 여행 브이로그까지 — 반려동물과 함께하는 특별한 여행을 시작하세요.",
-  keywords: ["반려동물", "여행", "강아지", "AI", "발자국", "펫프렌들리"],
+    "강아지와 함께하는 여행, AI가 다 짜드려요. 반려동물 정보 기반 맞춤 필터링과 자차 경로 추천까지 — 발자국 앱으로 시작하세요.",
+  keywords: ["반려동물", "여행", "강아지", "AI", "발자국", "펫프렌들리", "여행 플래너"],
 };
 
 export default function RootLayout({
