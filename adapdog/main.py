@@ -40,13 +40,14 @@ async def _prewarm_course_cache() -> None:
     import urllib.request
 
     await asyncio.sleep(2)  # 서버가 요청을 받기 시작할 때까지 잠깐 대기
+    port = os.getenv("PORT", "8000")  # 배포 환경(레일웨이 등)은 동적 포트를 주입한다.
     for days in (2, 1):  # 1박(2일)·당일치기(1일) 둘 다 워밍
         try:
             body = json.dumps(
                 {"region": "전주", "days": days, "pet_size": "large", "pet_breed": "골든 리트리버"}
             ).encode()
             req = urllib.request.Request(
-                "http://127.0.0.1:8000/api/map/route-planner/plan",
+                f"http://127.0.0.1:{port}/api/map/route-planner/plan",
                 data=body, headers={"Content-Type": "application/json"},
             )
             await asyncio.to_thread(lambda: urllib.request.urlopen(req, timeout=30).read())
@@ -85,11 +86,6 @@ app.include_router(trips_router, prefix="/api")
 app.include_router(care_router, prefix="/api")
 
 
-@app.get("/")
-def read_root():
-    return {"message": "발자국 API", "docs": "/docs"}
-
-
 @app.get("/api/health")
 def health_check():
     """프론트 연결 상태 점검용 헬스 엔드포인트(운영 관심사 → composition root에 둠)."""
@@ -99,6 +95,35 @@ def health_check():
         "storage": "db" if DATABASE_URL else "memory",
         "time": datetime.now(timezone.utc).isoformat(),
     }
+
+
+# ── 프론트엔드 정적 서빙(단일 서비스 배포) ──────────────────────────────
+# 빌드된 Vite dist를 같은 오리진에서 서빙한다. /api/* 는 위 라우터가, 그 외 GET 은 SPA 가 처리.
+# dist 가 없으면(로컬 백엔드 단독 실행) JSON 루트로 폴백한다.
+FRONTEND_DIST = os.getenv("FRONTEND_DIST", os.path.join(os.path.dirname(__file__), "static"))
+
+if os.path.isdir(FRONTEND_DIST):
+    from fastapi import HTTPException
+    from fastapi.responses import FileResponse
+    from fastapi.staticfiles import StaticFiles
+
+    _assets_dir = os.path.join(FRONTEND_DIST, "assets")
+    if os.path.isdir(_assets_dir):
+        app.mount("/assets", StaticFiles(directory=_assets_dir), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def spa_fallback(full_path: str):
+        # API 경로 오타는 404 로 정직하게 응답(SPA index 로 가리지 않음).
+        if full_path.startswith("api/"):
+            raise HTTPException(status_code=404)
+        candidate = os.path.join(FRONTEND_DIST, full_path)
+        if full_path and os.path.isfile(candidate):
+            return FileResponse(candidate)
+        return FileResponse(os.path.join(FRONTEND_DIST, "index.html"))
+else:
+    @app.get("/")
+    def read_root():
+        return {"message": "발자국 API", "docs": "/docs"}
 
 
 if __name__ == "__main__":

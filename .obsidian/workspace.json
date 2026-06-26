@@ -185,6 +185,7 @@
   },
   "active": "a016361f5c23e45c",
   "lastOpenFiles": [
+    "Dockerfile",
     "www/dist/assets/index-CwZNMEea.js",
     "adapdog/alembic/versions/__pycache__/a1c2d3e4f5b6_add_city_park_and_restaurant_recommended.cpython-313.pyc",
     "adapdog/scripts/__pycache__/ingest_city_parks.cpython-313.pyc",
@@ -196,7 +197,6 @@
     "adapdog/alembic/versions/a1c2d3e4f5b6_add_city_park_and_restaurant_recommended.py",
     "adapdog/scripts/ingest_city_parks.py",
     "_docs/공모전_신청서_작성가이드.md",
-    "adapdog/apps/map/adapter/outbound/repositories/city_park_repository.py",
     "_docs/발자국_TASK_대화형플래너.md",
     "_docs/발자국_활용데이터_목록.md",
     "_docs/발자국_ERD.md",

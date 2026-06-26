@@ -1,0 +1,19 @@
+# 빌드 컨텍스트 슬림화 — csv/ 는 런타임에 필요하므로 제외하지 않는다.
+**/node_modules
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+www/dist
+venv/
+.venv/
+.git
+.DS_Store
+**/.DS_Store
+.obsidian
+_docs
+# 비밀은 이미지에 굽지 않는다 — 레일웨이 환경변수로 주입.
+adapdog/.env
+adapdog/.env.*
+!adapdog/.env.example
