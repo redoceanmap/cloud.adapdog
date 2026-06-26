@@ -45,6 +45,24 @@ function mapCourse(course: RoutePlanResponse | null): Place[] {
   } as Place & { latitude: number; longitude: number }));
 }
 
+// 여정 타임라인 카드 클릭 → 상세 팝업용 Place 매핑. 코스 정류장(L)·코리도어 경유지(S) 모두 포함(슬라이스 없이 전체).
+function mapItinPlaces(course: RoutePlanResponse | null): Place[] {
+  if (!course) return [];
+  const mk = (
+    s: { name: string; category: string; latitude: number; longitude: number; reason?: string; source?: string; is_mock?: boolean },
+    key: string, day: string, gi: number,
+  ): Place => ({
+    key, name: s.name, cat: s.category, rating: '', price: '', hours: '', loc: s.category,
+    day, time: '', icon: liveIcon(s.category), grad: GRADS[gi % GRADS.length], label: s.name,
+    desc: s.reason || '', badges: [], entry: '', entryNote: '', source: s.source || '한국문화정보원 펫동반 문화시설',
+    mx: 50, my: 50, popular: [],
+    latitude: s.latitude, longitude: s.longitude, isMock: !!s.is_mock,
+  } as Place & { latitude: number; longitude: number });
+  const stops = (course.stops ?? []).map((s, i) => mk(s, 'L' + i, `${i + 1}번째 코스`, i));
+  const stopovers = (course.stopovers ?? []).map((s, i) => mk(s, 'S' + i, '경유지', i));
+  return [...stops, ...stopovers];
+}
+
 // 시내 코스 핀이 ~40m 이내로 겹치면 번호 핀이 포개져 안 보인다.
 // 이미 찍은 핀과 너무 가까운 핀을 인덱스 기반 작은 원형으로 미세 분산(좌표 약 35~45m).
 function declutterPins<T extends { lat: number; lng: number }>(pts: T[]): T[] {
@@ -133,6 +151,20 @@ export default function App() {
   const effectiveCourse = useMemo(() => withCourseEdits(liveCourse, courseRemoved, courseAdded, lodgingSwaps), [liveCourse, courseRemoved, courseAdded, lodgingSwaps]);
   // 백엔드 course → Place 형태 매핑(지도/패널 공용, lat/lng 정규화)
   const items = useMemo(() => mapCourse(effectiveCourse), [effectiveCourse]);
+
+  // 여정 타임라인 카드 클릭 → 상세 팝업(코스 정류장·경유지 공통). 플래너 전환 없이 여정 위 오버레이로 표시.
+  const itinPlaces = useMemo(() => mapItinPlaces(effectiveCourse), [effectiveCourse]);
+  const [itinKey, setItinKey] = useState<string | null>(null);
+  const itinPlace = itinKey ? itinPlaces.find((p) => p.key === itinKey) ?? null : null;
+  const [itinReviews, setItinReviews] = useState<Review[]>([]);
+  useEffect(() => {
+    if (!itinPlace) { setItinReviews([]); return; }
+    let live = true;
+    getReviews({ placeName: itinPlace.name }).then((r) => live && setItinReviews(r)).catch(() => live && setItinReviews([]));
+    return () => { live = false; };
+  }, [itinPlace?.name]);
+  // 여정 탭을 벗어나면 팝업을 닫는다(재진입 시 자동 재오픈 방지).
+  useEffect(() => { if (view !== 'itinerary') setItinKey(null); }, [view]);
 
   const c = items.find((p) => p.key === focusPlace) ?? items[0] ?? FALLBACK_PLACE;
   const tCode = ({ ktx: 'KTX', bus: 'BUS', car: 'CAR', unset: null } as const)[livePlan?.transport ?? 'unset'];
@@ -453,7 +485,29 @@ export default function App() {
           )}
 
           {view === 'explore' && <Explore onText={handleUserText} hasCourse={!!effectiveCourse} courseNames={effectiveCourse?.stops.map((s) => s.name) ?? []} days={Math.max(1, (livePlan?.nights ?? 0) + 1, ...(effectiveCourse?.stops.map((s) => s.day ?? 1) ?? [1]))} onAdd={addCourseStop} onRemove={removeCourseStop} />}
-          {view === 'itinerary' && <Itinerary liveCourse={effectiveCourse} region={region} anchor={isJeonju ? null : destAnchor} tCode={tCode} nights={livePlan?.nights ?? 0} transport={transportLabel(tCode)} ready={ready} onStop={(k) => { app.setView('planner'); setFocus(k); }} onEmergency={() => { setEmg(true); setEmgStep('entry'); }} onRemove={removeCourseStop} />}
+          {view === 'itinerary' && (
+            <>
+              <Itinerary liveCourse={effectiveCourse} region={region} anchor={isJeonju ? null : destAnchor} tCode={tCode} nights={livePlan?.nights ?? 0} transport={transportLabel(tCode)} ready={ready} onStop={(k) => setItinKey(k)} onEmergency={() => { setEmg(true); setEmgStep('entry'); }} onRemove={removeCourseStop} />
+              {itinPlace && (
+                <div onClick={() => setItinKey(null)} style={css(`position:fixed; inset:0; z-index:120; background:rgba(15,18,40,.45); display:flex; align-items:${isMobile ? 'stretch' : 'center'}; justify-content:center; ${isMobile ? '' : 'padding:24px;'}`)}>
+                  <div className="sc" onClick={(e) => e.stopPropagation()} style={css(`display:flex; flex-direction:column; overflow-y:auto; background:var(--panel-2); box-shadow:var(--shadow); ${isMobile ? 'width:100%; height:100%;' : 'width:min(440px,94vw); max-height:90vh; border-radius:22px;'}`)}>
+                    <LiveDetail
+                      stop={itinPlace} region={region} hasCourse={itinPlaces.length > 0}
+                      inCourse={!!effectiveCourse?.stops.some((s) => s.name === itinPlace.name)}
+                      reviews={itinReviews}
+                      onAdd={() => {
+                        const cc = itinPlace as Place & { latitude: number; longitude: number };
+                        if (effectiveCourse?.stops.some((s) => s.name === cc.name)) { removeCourseStop(cc.name); pushAi(`${cc.name}을(를) 코스에서 뺐어요.`); }
+                        else { addCourseStop({ name: cc.name, category: cc.cat, latitude: cc.latitude, longitude: cc.longitude }); pushAi(`${cc.name}을(를) 코스에 담았어요.`); }
+                        setItinKey(null);
+                      }}
+                      onClose={() => setItinKey(null)} onItin={() => setItinKey(null)}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
           {view === 'dog' && <Dog />}
 
           {/* GLOBAL CHAT BAR — 플래너 외 모든 탭(둘러보기·여정·내 강아지) 중앙 하단에서 AI와 계속 대화 */}
@@ -573,8 +627,11 @@ function Itinerary({ liveCourse, region, anchor, tCode, nights, transport, ready
     reason: '대형견 체리는 장거리 이동이 부담돼요. 2시간마다 휴식·급수, 차내 환기를 챙겨주세요.',
   });
   if (tCode === 'CAR') {
-    const stopovers = (liveCourse?.stopovers ?? []).map((s) => ({ name: s.name, sub: s.category, reason: s.reason, badges: [] as string[] }));
-    for (const m of stopovers) nodes.push({ tone: 'stopover', icon: 'pets', title: m.name, sub: m.sub, reason: m.reason, badges: m.badges });
+    // 코리도어 경유지 — 카드 클릭 시 상세 팝업(키 'S'+i, 부모 itinPlaces의 경유지 인덱스와 일치).
+    (liveCourse?.stopovers ?? []).forEach((s, i) => nodes.push({
+      tone: 'stopover', icon: 'pets', title: s.name, sub: s.category, reason: s.reason, badges: [],
+      onClick: () => onStop('S' + i),
+    }));
   } else {
     for (const t of journeyTransit(tCode)) nodes.push({ tone: 'transit', icon: t.icon || 'train', title: t.name, sub: `${transport} 이동 · 도착` });
   }
