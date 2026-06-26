@@ -88,3 +88,45 @@ class CsvAnimalHospitalRepository(AnimalHospitalPort):
             message=f"응급 동물병원 안내(행안부 표준데이터 {len(self._load())}곳). 연동 정상!",
             trail=["repository"],
         )
+
+
+# ── 3NF DB 구현 (system of record) ────────────────────────────────────────────
+class DbAnimalHospitalRepository(AnimalHospitalPort):
+    """3NF Postgres DB(animal_hospital)에서 동물병원을 조회. 좌표는 적재 시 WGS84로 변환됨."""
+
+    async def find(self, region: Optional[str], open_only: bool) -> list[AnimalHospital]:
+        from sqlalchemy import select
+
+        from core.database import session as dbs
+        from map.adapter.outbound.mappers.animal_hospital_mapper import AnimalHospitalMapper
+        from map.adapter.outbound.orm.animal_hospital_orm import AnimalHospitalOrm
+
+        factory = dbs.async_session_factory
+        if factory is None:
+            dbs.init_engine()
+            factory = dbs.async_session_factory
+        if factory is None:
+            logger.warning("[DbAnimalHospitalRepository] DB 미초기화 → 빈 결과")
+            return []
+
+        region = (region or "").strip()
+        stmt = select(AnimalHospitalOrm)
+        if region:
+            stmt = stmt.where(AnimalHospitalOrm.road_address.like(f"%{region}%"))
+        if open_only:
+            stmt = stmt.where(AnimalHospitalOrm.is_open.is_(True))
+
+        async with factory() as s:
+            rows = (await s.execute(stmt)).scalars().all()
+        result = [AnimalHospitalMapper.to_entity(r) for r in rows]
+        logger.info("[DbAnimalHospitalRepository] find | region=%s open_only=%s matched=%d",
+                    region, open_only, len(result))
+        return result
+
+    async def introduce_myself(self) -> Introduction:
+        return Introduction(
+            context="map",
+            feature="animal_hospital",
+            message="응급 동물병원 안내(3NF DB). 연동 정상!",
+            trail=["repository"],
+        )

@@ -4,7 +4,11 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 from core.introduction import Introduction
-from map.app.dtos.route_planner_dto import RouteChatResponse, RoutePlanResponse
+from map.app.dtos.route_planner_dto import (
+    RouteChatResponse,
+    RoutePlanResponse,
+    SwapAlternativesResponse,
+)
 
 if TYPE_CHECKING:
     from map.adapter.inbound.api.schemas.route_planner_schema import (
@@ -12,6 +16,7 @@ if TYPE_CHECKING:
         RouteOptimizeSchema,
         RoutePlannerSchema,
         RouteRecommendSchema,
+        SwapStopSchema,
     )
 
 
@@ -36,6 +41,11 @@ class RoutePlannerUseCase(ABC):
     @abstractmethod
     async def optimize(self, schema: "RouteOptimizeSchema") -> RoutePlanResponse:
         """사용자가 선택한 정류장들을 출발점 기준 최적 순서로 재배열한다."""
+        ...
+
+    @abstractmethod
+    async def swap(self, schema: "SwapStopSchema") -> SwapAlternativesResponse:
+        """특정 정류장 자리에 갈 같은 종류의 다른 펫동반 후보를 거리순으로 추천한다."""
         ...
 
     @abstractmethod

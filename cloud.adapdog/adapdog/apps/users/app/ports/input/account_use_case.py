@@ -15,8 +15,8 @@ class AccountUseCase(ABC):
         ...
 
     @abstractmethod
-    async def login(self, email: str, password: str) -> str:
-        """자격 증명을 확인하고 access token을 반환한다."""
+    async def login(self, email: str, password: str) -> tuple[Account, str]:
+        """자격 증명을 확인하고 (회원, access token)을 반환한다."""
         ...
 
     @abstractmethod

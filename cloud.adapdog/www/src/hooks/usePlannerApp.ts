@@ -1,9 +1,8 @@
 // 시안 DCLogic 을 React 훅으로 포팅 — 앱 전체 상태 + 액션(대화/포커스/음성/테마/반응형).
-// dataMode: 'demo'(큐레이션 reducePlan) ⇄ 'live'(백엔드 /chat 실 AI·실데이터).
+// 실데이터 전용: 백엔드 /chat(실 AI) + /recommend + 코스 직접 편집(추가/제외/스왑).
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { reducePlan, INITIAL_PLAN, type TripPlan } from '../lib/places';
-import { chatRoute, recommendRoute, searchPlaces } from '../api/endpoints';
-import type { RoutePlanResponse, TripPlan as BackendPlan, PetPlace } from '../api/types';
+import { chatRoute, recommendRoute, searchPlaces, swapStop } from '../api/endpoints';
+import type { RoutePlanResponse, TripPlan as BackendPlan, PetPlace, Alternative, LodgingPlace } from '../api/types';
 
 // 채팅 자연어에서 코스 편집 의도(추가/제외)를 파싱. 매치되면 백엔드 재생성 없이 클라이언트 편집.
 function parseCourseEdit(
@@ -36,17 +35,61 @@ function parseCourseEdit(
 // 추천 의도 — "다른 걸로", "카페 추천", "너무 힘들 것 같아" 등 대안을 원하는 발화.
 const RECOMMEND_INTENT = /추천|다른|대신|뭐가|좋을|힘들|지치|지칠|쉬어|쉴|어때|골라|바꿔줘|말고/;
 
+// 백엔드 _stop_kind 미러 — 업종 카테고리 → 스왑 종류(cafe/culture/outdoor).
+function stopKindOf(category: string): string {
+  const c = category || '';
+  if (c.includes('카페')) return 'cafe';
+  if (/박물관|미술관|전시|문화원|문예|공연|극장|전당|회관|과학관|유산/.test(c)) return 'culture';
+  return 'outdoor';
+}
+
+// 발화에서 스왑 대상 종류를 추정(식당·맛집은 1차 범위 밖이라 제외).
+function kindFromText(t: string): string | null {
+  if (/숙소|숙박|게스트하우스|게하|호텔|펜션|민박|리조트|스테이|모텔/.test(t)) return 'lodging';
+  if (/카페/.test(t)) return 'cafe';
+  if (/박물관|미술관|전시/.test(t)) return 'culture';
+  if (/공원|산책|둘레|호수|정원|수목|산림/.test(t)) return 'outdoor';
+  return null;
+}
+
+// 스왑 의도 파싱 — 카테고리어 + (다른|말고|대신|바꿔)가 함께 있으면 그 자리의 다른 곳 추천 의도.
+// kind가 lodging이면 숙소 후보(lodgingStops)에서, 그 외는 코스 정류장(courseStops)에서 대상을 찾는다.
+// target = "X 말고"의 X가 매칭되면 그곳, 아니면 해당 kind의 첫 후보.
+function parseSwapIntent(
+  text: string, courseStops: CourseAddStop[], lodgingStops: CourseAddStop[] = [],
+): { target: CourseAddStop; kind: string } | null {
+  const t = text.trim();
+  if (!/다른|말고|대신|바꿔|바꾸|교체/.test(t)) return null;
+  const kind = kindFromText(t);
+  if (!kind) return null;
+  const pool = kind === 'lodging' ? lodgingStops : courseStops;
+  const norm = (s: string) => s.replace(/\s+/g, '');
+  let target: CourseAddStop | undefined;
+  const m = t.match(/(.+?)\s*(?:말고|대신|은|는)/);
+  if (m) {
+    const nq = norm(m[1].replace(/[^가-힣a-zA-Z0-9 ]/g, '').trim());
+    if (nq) target = pool.find((s) => { const nn = norm(s.name); return nn.includes(nq) || nq.includes(nn); });
+  }
+  if (!target) target = kind === 'lodging' ? pool[0] : pool.find((s) => stopKindOf(s.category) === kind);
+  if (!target) return null;
+  return { target, kind };
+}
+
 export interface CourseAddStop {
   name: string;
   category: string;
   latitude: number;
   longitude: number;
+  day?: number;          // 여정 슬롯 보존용(스왑 교체 시 원래 자리 유지)
+  time_slot?: string;    // morning/lunch/afternoon/dinner
+  clock?: string;        // 기준 시각 "HH:MM"
+  is_meal?: boolean;     // 식사 정류장 여부
 }
 
 export type View = 'planner' | 'explore' | 'itinerary' | 'dog';
 export type DetailTab = 'overview' | 'policy' | 'location' | 'review';
 export type MobilePanel = 'chat' | 'detail' | 'map';
-export type EmgStep = 'entry' | 'result' | 'list';
+export type EmgStep = 'entry' | 'chat' | 'result' | 'list';
 
 export interface Msg {
   role: 'user' | 'ai';
@@ -55,13 +98,30 @@ export interface Msg {
 }
 
 const INITIAL_MESSAGES: Msg[] = [
-  { role: 'user', text: '체리랑 전주 1박 여행 코스 짜줘 🐶' },
-  { role: 'ai', text: '좋아요! 골든리트리버 체리(대형견·더위 취약)에게 맞춰 전주 1박 펫 동반 코스를 짰어요. 입장 가능 여부·그늘·이동약자 배려까지 확인했고, KTX로 전주역까지 직행이에요. 오른쪽 지도에서 장소를 눌러 자세히 볼 수 있어요.', doc: true },
-  { role: 'ai', text: '더 넣거나 빼고 싶은 곳이 있으면 말해줘요. 예) "축제 넣어줘", "오목대 빼줘", "자차로 바꿔"' },
+  { role: 'ai', text: '안녕하세요! 🐾 전주 펫 동반 공공데이터로 체리(골든리트리버·대형견·더위 취약)에게 맞는 코스를 짜드려요. 어디로 갈지 말해줘요. 예) "전주로 갈거야"' },
 ];
+const INITIAL_SUGGESTIONS = ['전주로 갈거야', 'KTX', '1박 할래요'];
 
 export function usePlannerApp() {
   const [dark, setDark] = useState(false);
+  const toggleDark = useCallback(() => {
+    setDark((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('pawprint-planner-dark', next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('pawprint-planner-dark') === '1') setDark(true);
+    } catch {
+      /* ignore */
+    }
+  }, []);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 900);
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>('chat');
   const [view, setView] = useState<View>('planner');
@@ -70,22 +130,21 @@ export function usePlannerApp() {
   const [input, setInput] = useState('');
   const [listening, setListening] = useState(false);
   const [messages, setMessages] = useState<Msg[]>(INITIAL_MESSAGES);
-  const [suggestions, setSuggestions] = useState<string[]>(['축제 넣어줘', '맛집 추가', '자차로 바꿔', '여행 시작']);
-  const [plan, setPlan] = useState<TripPlan>(INITIAL_PLAN);
+  const [suggestions, setSuggestions] = useState<string[]>(INITIAL_SUGGESTIONS);
   const [emg, setEmg] = useState(false);
   const [emgStep, setEmgStep] = useState<EmgStep>('entry');
-  // 실데이터 모드
-  const [dataMode, setDataMode] = useState<'demo' | 'live'>('demo');
+  // 실데이터 코스
   const [liveCourse, setLiveCourse] = useState<RoutePlanResponse | null>(null);
   // 코스 직접 편집(둘러보기/여정에서 추가·제외) — 실데이터 코스 위에 얹는 클라이언트 오버라이드.
   const [courseRemoved, setCourseRemoved] = useState<string[]>([]);
   const [courseAdded, setCourseAdded] = useState<CourseAddStop[]>([]);
+  // 숙소 스왑 오버라이드 — 기존 숙소명 → 교체할 숙소(코스 lodging에 얹어 여정·지도에 반영).
+  const [lodgingSwaps, setLodgingSwaps] = useState<Record<string, LodgingPlace>>({});
   const [livePlan, setLivePlan] = useState<BackendPlan | null>(null);
   const [liveLoading, setLiveLoading] = useState(false);
   const voiceOn = useRef(true);
   const [voiceEnabled, setVoiceEnabled] = useState(true); // UI 표시용(voiceOn ref와 동기)
   const listeningRef = useRef(false);
-  const modeRef = useRef<'demo' | 'live'>('demo');
   const liveLoadingRef = useRef(false);
   const livePlanRef = useRef<BackendPlan | null>(null);
   const messagesRef = useRef<Msg[]>(messages);
@@ -98,10 +157,14 @@ export function usePlannerApp() {
   const liveCourseRef = useRef<RoutePlanResponse | null>(null);
   const courseAddedRef = useRef<CourseAddStop[]>([]);
   const courseRemovedRef = useRef<string[]>([]);
+  const lodgingSwapsRef = useRef<Record<string, LodgingPlace>>({});
   const placePoolRef = useRef<PetPlace[]>([]);
+  // 진행 중 스왑 상태 — 대상 정류장·종류·다음 페이지 offset·현재 제시한 대안들('○○로 바꾸기' 칩 매칭용).
+  const swapStateRef = useRef<{ target: CourseAddStop; kind: string; offset: number; alternatives: Alternative[] } | null>(null);
   useEffect(() => { liveCourseRef.current = liveCourse; }, [liveCourse]);
   useEffect(() => { courseAddedRef.current = courseAdded; }, [courseAdded]);
   useEffect(() => { courseRemovedRef.current = courseRemoved; }, [courseRemoved]);
+  useEffect(() => { lodgingSwapsRef.current = lodgingSwaps; }, [lodgingSwaps]);
   useEffect(() => { placePoolRef.current = placePool; }, [placePool]);
   useEffect(() => { searchPlaces('전주').then(setPlacePool).catch(() => setPlacePool([])); }, []);
 
@@ -166,6 +229,11 @@ export function usePlannerApp() {
     setCourseRemoved((r) => (r.includes(name) ? r : [...r, name]));
   }, []);
 
+  // 숙소 교체 — 기존 숙소명(fromName) 자리에 새 숙소(to)를 얹는다(여정 취침·지도 도착핀에 반영).
+  const addLodgingSwap = useCallback((fromName: string, to: LodgingPlace) => {
+    setLodgingSwaps((m) => ({ ...m, [fromName]: to }));
+  }, []);
+
   // 실데이터: 백엔드 /chat 핑퐁(누적 BackendPlan 왕복).
   const liveSend = useCallback(
     async (t: string) => {
@@ -193,6 +261,8 @@ export function usePlannerApp() {
           setLiveCourse(res.course);
           setCourseRemoved([]); // 새 코스가 생성되면 직접 편집 초기화
           setCourseAdded([]);
+          setLodgingSwaps({});
+          swapStateRef.current = null;
         }
         setDetailTab('overview');
         speak(res.reply);
@@ -239,89 +309,142 @@ export function usePlannerApp() {
     [speak],
   );
 
+  // 실데이터: 백엔드 /swap — 대상 정류장 자리의 같은 종류 다른 펫동반 후보를 거리순으로 받아 칩으로 제시.
+  const swapSend = useCallback(
+    async (target: CourseAddStop, kind: string, offset = 0) => {
+      if (liveLoadingRef.current) return;
+      liveLoadingRef.current = true;
+      setLiveLoading(true);
+      setInput('');
+      setSuggestions([]);
+      try {
+        // 숙소 스왑은 대상 숙소만 제외(백엔드가 대상명을 제외하므로 빈 목록 → 나머지 펫동반 숙소가 대안).
+        // 코스 정류장 스왑은 현재 코스 전체를 제외(중복 방지).
+        const exclude = kind === 'lodging'
+          ? []
+          : [
+              ...(liveCourseRef.current?.stops.map((s) => s.name) ?? []),
+              ...courseAddedRef.current.map((s) => s.name),
+            ].filter((n) => !courseRemovedRef.current.includes(n));
+        const res = await swapStop({
+          region: liveCourseRef.current?.region ?? '전주',
+          stop_name: target.name, stop_category: target.category,
+          stop_lat: target.latitude, stop_lng: target.longitude,
+          kind, exclude_names: exclude, offset,
+          pet_size: 'large', pet_breed: '골든 리트리버', pet_traits: '대형견, 활동 활발, 사회성 좋음, 체질 더위 취약',
+        });
+        swapStateRef.current = { target, kind, offset: res.next_offset, alternatives: res.alternatives };
+        pushAi(res.reply); speak(res.reply);
+        const chips = [
+          ...res.alternatives.map((a) => `${a.name}로 바꾸기`),
+          ...(res.has_more ? ['더 멀리 추천'] : []),
+        ];
+        setSuggestions(chips);
+      } catch {
+        pushAi('대안을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+      } finally {
+        liveLoadingRef.current = false;
+        setLiveLoading(false);
+      }
+    },
+    [pushAi, speak],
+  );
+
   const handleUserText = useCallback(
     (raw: string) => {
       const t = String(raw || '').trim();
       if (!t) return;
-      if (modeRef.current === 'live') {
-        // 코스가 이미 있으면 자연어 추가/제외를 클라이언트 편집으로 처리(백엔드 재생성·초기화 방지).
-        const course = liveCourseRef.current;
-        if (course) {
-          const stops: CourseAddStop[] = [
-            ...course.stops.map((s) => ({ name: s.name, category: s.category, latitude: s.latitude, longitude: s.longitude })),
-            ...courseAddedRef.current,
-          ].filter((s) => !courseRemovedRef.current.includes(s.name));
-          const names = stops.map((s) => s.name);
-          const edit = parseCourseEdit(t, names, placePoolRef.current);
-          const wantsRec = RECOMMEND_INTENT.test(t);
-          // 단순 편집(추천 의도 없음) → 즉시 클라 편집.
-          if (edit && !wantsRec) {
-            setInput('');
-            setSuggestions([]);
+      // 코스가 이미 있으면 자연어 추가/제외를 클라이언트 편집으로 처리(백엔드 재생성·초기화 방지).
+      const course = liveCourseRef.current;
+      if (course) {
+        const stops: CourseAddStop[] = [
+          ...course.stops.map((s) => ({
+            name: s.name, category: s.category, latitude: s.latitude, longitude: s.longitude,
+            day: s.day, time_slot: s.time_slot, clock: s.clock, is_meal: s.is_meal,
+          })),
+          ...courseAddedRef.current,
+        ].filter((s) => !courseRemovedRef.current.includes(s.name));
+        // 숙소 후보(적용된 교체 반영) — 숙소 스왑 대상 매칭/추천용.
+        const lodgingStops: CourseAddStop[] = (course.lodging ?? []).map((l) => {
+          const sw = lodgingSwapsRef.current[l.name];
+          const cur = sw ?? l;
+          return { name: cur.name, category: cur.category, latitude: cur.latitude, longitude: cur.longitude };
+        });
+
+        // 0) 진행 중 스왑 — 대안 칩 선택('○○로 바꾸기') → 교체 적용, '더 멀리 추천' → 다음 페이지.
+        const sw = swapStateRef.current;
+        if (sw) {
+          const pick = sw.alternatives.find((a) => t === `${a.name}로 바꾸기` || t === `${a.name}으로 바꾸기`);
+          if (pick) {
+            setInput(''); setSuggestions([]);
             setMessages((m) => [...m, { role: 'user', text: t }]);
-            if (edit.action === 'add') {
-              addCourseStop({ name: edit.place.name, category: edit.place.category, latitude: edit.place.latitude, longitude: edit.place.longitude });
-              const reply = `${edit.place.name}을(를) 코스에 추가했어요. 여정에서 확인해보세요.`;
-              pushAi(reply); speak(reply);
+            if (sw.kind === 'lodging') {
+              // 숙소 교체 — lodging 오버라이드(여정 취침·지도 도착핀이 새 숙소로 바뀐다).
+              addLodgingSwap(sw.target.name, {
+                name: pick.name, category: pick.category, latitude: pick.latitude, longitude: pick.longitude,
+                source: '한국관광공사 반려동물 동반여행',
+              });
             } else {
-              removeCourseStop(edit.name);
-              const reply = `${edit.name}을(를) 코스에서 뺐어요.`;
-              pushAi(reply); speak(reply);
+              removeCourseStop(sw.target.name);
+              addCourseStop({
+                name: pick.name, category: pick.category, latitude: pick.latitude, longitude: pick.longitude,
+                day: sw.target.day, time_slot: sw.target.time_slot, clock: sw.target.clock, is_meal: false,
+              });
             }
+            const reply = `${sw.target.name} 대신 ${pick.name}로 바꿨어요. 여정에 반영했어요.`;
+            pushAi(reply); speak(reply);
+            swapStateRef.current = null;
             return;
           }
-          // 추천 의도 → 명시적 "제외"가 같이 있으면 먼저 빼고, 그 코스를 분석해 추천(재생성 X).
-          if (wantsRec) {
-            let analyzed = stops;
-            if (edit && edit.action === 'remove') {
-              removeCourseStop(edit.name);
-              analyzed = stops.filter((s) => s.name !== edit.name);
-            }
-            recommendSend(t, analyzed);
+          if (t === '더 멀리 추천') {
+            setMessages((m) => [...m, { role: 'user', text: t }]);
+            swapSend(sw.target, sw.kind, sw.offset);
             return;
           }
         }
-        liveSend(t);
-        return;
-      }
-      const { plan: next, reply, sugg, focus } = reducePlan(plan, t);
-      setMessages((m) => [...m, { role: 'user', text: t }, { role: 'ai', text: reply }]);
-      setPlan(next);
-      setSuggestions(sugg);
-      setInput('');
-      setDetailTab('overview');
-      if (focus) setFocusPlace(focus);
-      speak(reply);
-    },
-    [plan, speak, liveSend, recommendSend, addCourseStop, removeCourseStop, pushAi],
-  );
 
-  // 데모 ⇄ 실데이터 토글 — 채팅 초기화.
-  const toggleMode = useCallback(() => {
-    const next = modeRef.current === 'demo' ? 'live' : 'demo';
-    modeRef.current = next;
-    setDataMode(next);
-    setInput('');
-    try {
-      window.speechSynthesis.cancel();
-    } catch {
-      /* noop */
-    }
-    if (next === 'live') {
-      livePlanRef.current = null;
-      setLivePlan(null);
-      setLiveCourse(null);
-      setCourseRemoved([]);
-      setCourseAdded([]);
-      setMessages([{ role: 'ai', text: '실데이터 모드예요 🛰️ 전주 펫 동반 공공데이터로 코스를 짜드려요. 어디로 갈지 말해줘요. 예) "전주로 갈거야"' }]);
-      setSuggestions(['전주로 갈거야', 'KTX', '1박 할래요']);
-    } else {
-      setMessages(INITIAL_MESSAGES);
-      setSuggestions(['축제 넣어줘', '맛집 추가', '자차로 바꿔', '여행 시작']);
-      setPlan(INITIAL_PLAN);
-      setFocusPlace('village');
-    }
-  }, []);
+        // 1) 새 스왑 의도("○○ 카페 말고 다른 카페" / "○○ 숙소 말고 다른 숙소") → 그 자리의 같은 종류 대안 제시.
+        const swap = parseSwapIntent(t, stops, lodgingStops);
+        if (swap) {
+          setMessages((m) => [...m, { role: 'user', text: t }]);
+          swapSend(swap.target, swap.kind, 0);
+          return;
+        }
+
+        const names = stops.map((s) => s.name);
+        const edit = parseCourseEdit(t, names, placePoolRef.current);
+        const wantsRec = RECOMMEND_INTENT.test(t);
+        // 단순 편집(추천 의도 없음) → 즉시 클라 편집.
+        if (edit && !wantsRec) {
+          setInput('');
+          setSuggestions([]);
+          setMessages((m) => [...m, { role: 'user', text: t }]);
+          if (edit.action === 'add') {
+            addCourseStop({ name: edit.place.name, category: edit.place.category, latitude: edit.place.latitude, longitude: edit.place.longitude });
+            const reply = `${edit.place.name}을(를) 코스에 추가했어요. 여정에서 확인해보세요.`;
+            pushAi(reply); speak(reply);
+          } else {
+            removeCourseStop(edit.name);
+            const reply = `${edit.name}을(를) 코스에서 뺐어요.`;
+            pushAi(reply); speak(reply);
+          }
+          return;
+        }
+        // 추천 의도 → 명시적 "제외"가 같이 있으면 먼저 빼고, 그 코스를 분석해 추천(재생성 X).
+        if (wantsRec) {
+          let analyzed = stops;
+          if (edit && edit.action === 'remove') {
+            removeCourseStop(edit.name);
+            analyzed = stops.filter((s) => s.name !== edit.name);
+          }
+          recommendSend(t, analyzed);
+          return;
+        }
+      }
+      liveSend(t);
+    },
+    [speak, liveSend, recommendSend, swapSend, addCourseStop, removeCourseStop, addLodgingSwap, pushAi],
+  );
 
   const startVoice = useCallback(() => {
     if (listeningRef.current) return;
@@ -371,19 +494,15 @@ export function usePlannerApp() {
       /* noop */
     }
     setInput('');
-    if (modeRef.current === 'live') {
-      livePlanRef.current = null;
-      setLivePlan(null);
-      setLiveCourse(null);
-      setCourseRemoved([]);
-      setCourseAdded([]);
-      setMessages([{ role: 'ai', text: '실데이터 모드예요 🛰️ 어디로 갈지 말해줘요. 예) "전주로 갈거야"' }]);
-      setSuggestions(['전주로 갈거야', 'KTX', '1박 할래요']);
-      return;
-    }
-    setMessages([{ role: 'ai', text: '안녕하세요! 🐾 체리와 어디로 떠날까요? 지역과 이동수단을 말해주면 펫 동반 코스를 짜드려요.' }]);
-    setSuggestions(['전주 갈래', 'KTX로', '당일치기']);
-    setPlan({ destination: null, transport: null, lodging: null, stopovers: [], itinerary: [], status: 'DRAFTING' });
+    livePlanRef.current = null;
+    swapStateRef.current = null;
+    setLivePlan(null);
+    setLiveCourse(null);
+    setCourseRemoved([]);
+    setCourseAdded([]);
+    setLodgingSwaps({});
+    setMessages(INITIAL_MESSAGES);
+    setSuggestions(INITIAL_SUGGESTIONS);
   }, []);
 
   const go = useCallback((v: View) => {
@@ -392,17 +511,17 @@ export function usePlannerApp() {
   }, []);
 
   return {
-    dark, setDark,
+    dark, setDark, toggleDark,
     isMobile, mobilePanel, setMobilePanel,
     view, go, setView,
     detailTab, setDetailTab,
     focusPlace, setFocus,
     input, setInput,
     listening,
-    messages, suggestions, plan,
+    messages, suggestions,
     emg, setEmg, emgStep, setEmgStep,
-    dataMode, toggleMode, liveCourse, livePlan, liveLoading,
-    courseRemoved, courseAdded, addCourseStop, removeCourseStop, pushAi,
+    liveCourse, livePlan, liveLoading,
+    courseRemoved, courseAdded, lodgingSwaps, addCourseStop, removeCourseStop, pushAi,
     handleUserText, startVoice, resetChat,
     voiceEnabled, toggleVoice,
   };

@@ -42,11 +42,20 @@ class TripPlan:
     origin: str = "서울"
     destination: Optional[str] = None
     transport: TransportMode = TransportMode.UNSET
+    departure_time: Optional[str] = None  # 서울 출발시각 "HH:MM" — 도착·식사시간 자동계산용.
     lodging: LodgingOption = LodgingOption.UNSET
     nights: int = 0  # 묵는 박 수(0=당일치기). OVERNIGHT일 때 1 이상.
+    # 선택 슬롯(READY 게이트엔 미포함) — 대화에서 자연스럽게 추출되면 숙소 선택·동선·설명에 반영.
+    lodging_pref: Optional[str] = None   # 숙소 취향·위치(예: "한옥마을 근처", "전주역 근처", 예약한 숙소명)
+    interests: Optional[str] = None       # 여행 스타일·관심사(예: "맛집·카페", "문화·역사", "자연·힐링")
+    pet_mobility: Optional[str] = None    # 이동 성향(예: "도보 위주", "광역 OK") — 동선 여유·범위 조정
 
     def next_stage(self) -> PlannerStage:
-        """다음에 채울 슬롯을 결정한다(목적지→이동수단→숙박→완성)."""
+        """다음에 채울 필수 슬롯을 결정한다(목적지→이동수단→숙박→완성).
+
+        시나리오 분석: 자연스러운 대화는 출발시각을 묻지 않는다(기본 오전 출발 가정).
+        출발시각은 사용자가 말하면 받되 게이트는 아니다 — 코스 생성 최소 조건은 목적지·이동수단·숙박.
+        """
         if not self.destination:
             return PlannerStage.ASK_DESTINATION
         if self.transport is TransportMode.UNSET:

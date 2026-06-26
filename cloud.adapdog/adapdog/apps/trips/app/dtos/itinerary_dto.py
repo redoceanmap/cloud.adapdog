@@ -4,6 +4,24 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
+class ItineraryStopInput:
+    order: int
+    name: str
+    category: str
+    latitude: float
+    longitude: float
+
+
+@dataclass(frozen=True)
+class SaveItineraryInput:
+    pet_id: int
+    title: str
+    region: str
+    prompt_text: str
+    stops: list[ItineraryStopInput]
+
+
+@dataclass(frozen=True)
 class ItineraryStopDto:
     """경유지 DTO (Itinerary DTO에 중첩)."""
 

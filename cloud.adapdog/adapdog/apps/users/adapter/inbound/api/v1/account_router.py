@@ -5,10 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from core.introduction import IntroductionSchema
 from users.adapter.inbound.api.schemas.account_schema import (
     AccountSchema,
+    LoginResponse,
     LoginSchema,
     SignupResponse,
     SignupSchema,
-    TokenSchema,
 )
 from users.adapter.inbound.api.schemas.pet_schema import PetSchema
 from users.app.ports.input.account_use_case import AccountUseCase
@@ -17,8 +17,9 @@ from users.app.use_cases.account_interactor import (
     EmailAlreadyExistsError,
     InvalidCredentialsError,
 )
-from users.dependencies.account_provider import get_account_use_case
+from users.dependencies.account_provider import get_account_use_case, get_current_account
 from users.dependencies.pet_provider import get_pet_use_case
+from users.domain.entities.account_entity import Account
 
 account_router = APIRouter(prefix="/account", tags=["account"])
 
@@ -60,15 +61,24 @@ async def signup(
 async def login(
     body: LoginSchema,
     account_use_case: AccountUseCase = Depends(get_account_use_case),
-) -> TokenSchema:
-    """이메일·비밀번호로 로그인하고 access token을 발급한다."""
+) -> LoginResponse:
+    """이메일·비밀번호로 로그인하고 access token과 회원 정보를 발급한다."""
     try:
-        token = await account_use_case.login(body.email, body.password)
+        account, token = await account_use_case.login(body.email, body.password)
     except InvalidCredentialsError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="이메일 또는 비밀번호가 올바르지 않습니다"
         )
-    return TokenSchema(access_token=token)
+    return LoginResponse(
+        access_token=token,
+        account=AccountSchema(id=account.id, email=account.email, nickname=account.nickname),
+    )
+
+
+@account_router.get("/me")
+async def get_me(account: Account = Depends(get_current_account)) -> AccountSchema:
+    """현재 로그인한 회원 정보(닉네임 포함)."""
+    return AccountSchema(id=account.id, email=account.email, nickname=account.nickname)
 
 
 @account_router.get("/myself", tags=["자기소개 (연동 검증)"])

@@ -15,6 +15,24 @@ class ItineraryStopResponseSchema(BaseModel):
     longitude: float
 
 
+class ItineraryStopCreateSchema(BaseModel):
+    order: int
+    name: str
+    category: str = ""
+    latitude: float
+    longitude: float
+
+
+class ItineraryCreateSchema(BaseModel):
+    """코스 저장 요청."""
+
+    pet_id: int
+    title: str
+    region: str
+    prompt_text: str = ""
+    stops: list[ItineraryStopCreateSchema]
+
+
 class ItineraryResponseSchema(BaseModel):
     """저장된 코스 응답 스키마 (adapter 계층 — API 표현). DTO와 분리해 계층 경계를 지킨다."""
 

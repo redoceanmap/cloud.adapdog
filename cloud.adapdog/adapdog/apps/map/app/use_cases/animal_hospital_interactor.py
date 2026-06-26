@@ -19,13 +19,30 @@ class AnimalHospitalInteractor(AnimalHospitalUseCase):
     def __init__(self, hospitals: AnimalHospitalPort) -> None:
         self.hospitals = hospitals
 
+    async def _find_hospitals(
+        self,
+        region: str | None,
+        open_only: bool,
+        origin: Coordinate | None,
+    ) -> list[AnimalHospital]:
+        found = await self.hospitals.find(region=region, open_only=open_only)
+        if found:
+            return found
+        if open_only:
+            found = await self.hospitals.find(region=region, open_only=False)
+        if found:
+            return found
+        if region and origin is not None:
+            found = await self.hospitals.find(region=None, open_only=open_only)
+        return found
+
     async def nearby(self, schema: AnimalHospitalSchema) -> AnimalHospitalListResponse:
-        found = await self.hospitals.find(region=schema.region, open_only=schema.open_only)
         origin = (
             Coordinate(schema.latitude, schema.longitude)
             if schema.latitude is not None and schema.longitude is not None
             else None
         )
+        found = await self._find_hospitals(schema.region, schema.open_only, origin)
 
         def distance(h: AnimalHospital) -> float:
             return origin.distance_km_to(h.coordinate) if origin else 0.0

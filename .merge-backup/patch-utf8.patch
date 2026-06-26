@@ -1,0 +1,792 @@
+diff --git a/cloud.adapdog/adapdog/.env.example b/cloud.adapdog/adapdog/.env.example
+index 4ed732d..899438b 100644
+--- a/cloud.adapdog/adapdog/.env.example
++++ b/cloud.adapdog/adapdog/.env.example
+@@ -39,3 +39,7 @@ DOG_API_KEY=your-thedogapi-key-here
+ 
+ # ?? ?꾧뎅湲멸?愿묒젙蹂?CSV 寃쎈줈 (?좏깮, 湲곕낯媛믪? ../csv/ ?먮룞?먯깋) ?????????
+ # TRAIL_CSV_PATH=/abs/path/to/?꾧뎅湲멸?愿묒젙蹂댄몴以?곗씠??csv
++
++# ?? ?ㅼ씠踰?寃??API (developers.naver.com ??吏??룹옣??寃?? ???????????
++# NAVER_SEARCH_CLIENT_ID=your-naver-search-client-id
++# NAVER_SEARCH_CLIENT_SECRET=your-naver-search-client-secret
+diff --git a/cloud.adapdog/adapdog/apps/map/app/use_cases/route_planner_interactor.py b/cloud.adapdog/adapdog/apps/map/app/use_cases/route_planner_interactor.py
+index e631f9c..b9f5bc0 100644
+--- a/cloud.adapdog/adapdog/apps/map/app/use_cases/route_planner_interactor.py
++++ b/cloud.adapdog/adapdog/apps/map/app/use_cases/route_planner_interactor.py
+@@ -2,6 +2,7 @@ from __future__ import annotations
+ 
+ import asyncio
+ import logging
++import re
+ 
+ from core.introduction import Introduction
+ from map.adapter.inbound.api.schemas.route_planner_schema import (
+@@ -107,7 +108,10 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
+         異붿쿇 ?μ냼瑜?'?뗢뿃 異붽?' 移⑹쑝濡쒕쭔 ?쒖떆?쒕떎(?ъ슜?먭? ??븯硫??대씪媛 肄붿뒪???뷀븳??."""
+         pet_size = PetSize.from_raw(schema.pet_size)
+         plan = _restore_plan(schema.plan)
+-        region = plan.destination or "?꾩＜"
++        region = plan.destination
++        if not region:
++            reply, suggestions = _ask(PlannerStage.ASK_DESTINATION, plan)
++            return RouteChatResponse(reply=reply, plan=_to_plan_dto(plan), suggestions=suggestions)
+         messages = [ChatMessage(role=m.role, content=m.content) for m in schema.messages]
+         current = [CourseStopRef(name=s.name, category=s.category) for s in schema.current_course]
+         logger.info("[RoutePlannerInteractor] recommend | region=%s course=%d", region, len(current))
+@@ -126,7 +130,9 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
+ 
+         肄붿뒪(LLM)쨌?숈냼쨌寃쎌쑀吏쨌肄뷀샇???멸린?꾨뒗 ?쒕줈 ?낅┰?대?濡??숈떆??議고쉶?쒕떎(蹂묐젹??.
+         """
+-        region = plan.destination or "?꾩＜"
++        region = plan.destination
++        if not region:
++            raise ValueError("紐⑹쟻吏媛 ?뺥빐吏吏 ?딆븯?듬땲??")
+         # 諛??????쇱닔(N諛뺤씠硫?N+1??. ?뱀씪移섍린??1??
+         days = plan.nights + 1 if plan.lodging is LodgingOption.OVERNIGHT else 1
+         brief = CourseBrief(region=region, days=days, pet_size=pet_size, pet_breed=pet_breed, transport=plan.transport)
+@@ -258,8 +264,12 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
+ _SOURCE_TAG = "?쒓뎅臾명솕?뺣낫???ル룞諛?臾명솕?쒖꽕"
+ _SOURCE_TAG_TRAVEL = "?쒓뎅愿愿묎났??諛섎젮?숇Ъ ?숇컲?ы뻾"
+ 
+-# ?곕え???꾩＜ 以묒떖. ??붿뿉??紐⑹쟻吏瑜?戮묐뒗 理쒖냼 ?뚰듃(?쒕쾭 臾댁긽????異붿륫? 蹂댁닔?곸쑝濡?.
+-_REGION_HINTS = ("?꾩＜", "媛뺣쫱", "寃쎌＜", "?쒖＜", "?ъ닔", "遺??, "?띿큹", "?듭쁺", "?⑥썝", "援곗궛")
++# ??붿뿉??紐⑹쟻吏瑜?戮묐뒗 ?뚰듃(湲?紐⑸줉 ?곗꽑 留ㅼ묶).
++_REGION_HINTS = (
++    "?꾩＜", "媛뺣쫱", "?쒖슱", "遺??, "?援?, "?몄쿇", "愿묒＜", "???, "?몄궛", "?몄쥌",
++    "?섏썝", "?띿큹", "寃쎌＜", "?ъ닔", "?듭쁺", "異섏쿇", "媛??, "?묓룊", "?ы빆", "?덈룞",
++    "援곗궛", "紐⑺룷", "?쒖쿇", "?⑥썝", "?쒖＜",
++)
+ 
+ # ?대룞?섎떒蹂??꾩＜ ?꾩갑 吏?????ш린??媛源뚯슫 ?쒖쑝濡?肄붿뒪瑜??쒖옉?쒕떎(?대젮??泥?肄붿뒪).
+ _ARRIVAL_BY_TRANSPORT = {
+@@ -270,9 +280,30 @@ _ARRIVAL_BY_TRANSPORT = {
+ 
+ 
+ def _extract_region(text: str) -> str | None:
++    t = text.strip()
++    if not t:
++        return None
+     for h in _REGION_HINTS:
+-        if h in text:
++        if h in t:
+             return h
++    return _extract_freeform_region(t)
++
++
++def _extract_freeform_region(text: str) -> str | None:
++    """怨좎젙 紐⑸줉???놁뼱??'?몄쿇', '?몄쿇?쇰줈 媛덇쾶' 媛숈? 吏???낅젰??諛쏅뒗??"""
++    if TransportMode.from_raw(text) is not TransportMode.UNSET:
++        return None
++    if LodgingOption.nights_from_raw(text) is not None:
++        return None
++
++    m = re.search(r"([媛-??{2,10})\s*(?:?쇰줈|濡???源뚯?)?\s*(?:媛?媛|?ы뻾)", text)
++    if m:
++        return m.group(1)
++
++    m = re.match(r"^([媛-??{2,10})$", text.strip())
++    if m:
++        return m.group(1)
++
+     return None
+ 
+ 
+@@ -332,7 +363,7 @@ def _apply_message(plan: TripPlan, latest: str) -> TripPlan:
+ def _ask(stage: PlannerStage, plan: TripPlan) -> tuple[str, list[str]]:
+     """?④퀎蹂?吏덈Ц + 鍮좊Ⅸ ?좏깮移?寃곗젙濡좎쟻 ???곕え ?덉젙)."""
+     if stage is PlannerStage.ASK_DESTINATION:
+-        return ("?대뵒濡??좊굹怨??띠쑝?몄슂? 媛怨??띠? 吏??쓣 ?뚮젮二쇱꽭??", ["?꾩＜"])
++        return ("?대뵒濡??좊굹怨??띠쑝?몄슂? 媛怨??띠? 吏??쓣 ?뚮젮二쇱꽭??", [])
+     if stage is PlannerStage.ASK_TRANSPORT:
+         return (
+             f"{plan.origin}?먯꽌 {plan.destination}源뚯? ?대뼸寃?媛덇퉴??",
+diff --git a/cloud.adapdog/adapdog/apps/trips/adapter/inbound/api/schemas/itinerary_schema.py b/cloud.adapdog/adapdog/apps/trips/adapter/inbound/api/schemas/itinerary_schema.py
+index 61c8d11..d825053 100644
+--- a/cloud.adapdog/adapdog/apps/trips/adapter/inbound/api/schemas/itinerary_schema.py
++++ b/cloud.adapdog/adapdog/apps/trips/adapter/inbound/api/schemas/itinerary_schema.py
+@@ -15,6 +15,24 @@ class ItineraryStopResponseSchema(BaseModel):
+     longitude: float
+ 
+ 
++class ItineraryStopCreateSchema(BaseModel):
++    order: int
++    name: str
++    category: str = ""
++    latitude: float
++    longitude: float
++
++
++class ItineraryCreateSchema(BaseModel):
++    """肄붿뒪 ????붿껌."""
++
++    pet_id: int
++    title: str
++    region: str
++    prompt_text: str = ""
++    stops: list[ItineraryStopCreateSchema]
++
++
+ class ItineraryResponseSchema(BaseModel):
+     """??λ맂 肄붿뒪 ?묐떟 ?ㅽ궎留?(adapter 怨꾩링 ??API ?쒗쁽). DTO? 遺꾨━??怨꾩링 寃쎄퀎瑜?吏?⑤떎."""
+ 
+diff --git a/cloud.adapdog/adapdog/apps/trips/adapter/inbound/api/v1/itinerary_router.py b/cloud.adapdog/adapdog/apps/trips/adapter/inbound/api/v1/itinerary_router.py
+index de9a429..d3f8729 100644
+--- a/cloud.adapdog/adapdog/apps/trips/adapter/inbound/api/v1/itinerary_router.py
++++ b/cloud.adapdog/adapdog/apps/trips/adapter/inbound/api/v1/itinerary_router.py
+@@ -2,9 +2,13 @@ from __future__ import annotations
+ 
+ from typing import Optional
+ 
+-from fastapi import APIRouter, Depends
++from fastapi import APIRouter, Depends, HTTPException
+ 
+-from trips.adapter.inbound.api.schemas.itinerary_schema import ItineraryResponseSchema
++from trips.adapter.inbound.api.schemas.itinerary_schema import (
++    ItineraryCreateSchema,
++    ItineraryResponseSchema,
++)
++from trips.app.dtos.itinerary_dto import ItineraryStopInput, SaveItineraryInput
+ from trips.app.ports.input.itinerary_use_case import ItineraryUseCase
+ from trips.dependencies.itinerary_provider import get_itinerary_use_case
+ 
+@@ -19,3 +23,32 @@ async def list_itineraries(
+     """C(肄붿뒪??? ??λ맂 異붿쿇 肄붿뒪 ??諛섎젮?숇Ъ(?좏깮)濡?議고쉶."""
+     itineraries = await use_case.list_itineraries(pet_id)
+     return [ItineraryResponseSchema.from_dto(it) for it in itineraries]
++
++
++@itinerary_router.post("", status_code=201)
++async def save_itinerary(
++    body: ItineraryCreateSchema,
++    use_case: ItineraryUseCase = Depends(get_itinerary_use_case),
++) -> ItineraryResponseSchema:
++    """梨꾪똿?쇰줈 留뚮뱺 肄붿뒪瑜???ν븳??"""
++    if not body.stops:
++        raise HTTPException(status_code=400, detail="??ν븷 ?μ냼媛 ?놁뒿?덈떎.")
++    saved = await use_case.save_itinerary(
++        SaveItineraryInput(
++            pet_id=body.pet_id,
++            title=body.title,
++            region=body.region,
++            prompt_text=body.prompt_text,
++            stops=[
++                ItineraryStopInput(
++                    order=s.order,
++                    name=s.name,
++                    category=s.category,
++                    latitude=s.latitude,
++                    longitude=s.longitude,
++                )
++                for s in body.stops
++            ],
++        ),
++    )
++    return ItineraryResponseSchema.from_dto(saved)
+diff --git a/cloud.adapdog/adapdog/apps/trips/adapter/outbound/repositories/itinerary_repository.py b/cloud.adapdog/adapdog/apps/trips/adapter/outbound/repositories/itinerary_repository.py
+index afb1de7..2cb934e 100644
+--- a/cloud.adapdog/adapdog/apps/trips/adapter/outbound/repositories/itinerary_repository.py
++++ b/cloud.adapdog/adapdog/apps/trips/adapter/outbound/repositories/itinerary_repository.py
+@@ -1,7 +1,9 @@
+ from __future__ import annotations
+ 
++from datetime import date
+ from typing import Optional
+ 
++from trips.app.dtos.itinerary_dto import SaveItineraryInput
+ from trips.app.ports.output.itinerary_port import ItineraryPort
+ from trips.domain.entities.itinerary_entity import Itinerary, ItineraryStop
+ 
+@@ -44,7 +46,36 @@ class MockItineraryRepository(ItineraryPort):
+         ),
+     )
+ 
++    _next_id = 100
++    _saved: list[Itinerary] = []
++
+     async def find_itineraries(self, pet_id: Optional[int]) -> list[Itinerary]:
++        all_rows = list(self._DATA) + list(self._saved)
+         if pet_id is not None:
+-            return [it for it in self._DATA if it.pet_id == pet_id]
+-        return list(self._DATA)
++            return [it for it in all_rows if it.pet_id == pet_id]
++        return all_rows
++
++    async def save_itinerary(self, data: SaveItineraryInput) -> Itinerary:
++        MockItineraryRepository._next_id += 1
++        stops = [
++            ItineraryStop(
++                order=s.order,
++                name=s.name,
++                category=s.category,
++                latitude=s.latitude,
++                longitude=s.longitude,
++            )
++            for s in data.stops
++        ]
++        row = Itinerary(
++            id=MockItineraryRepository._next_id,
++            pet_id=data.pet_id,
++            title=data.title,
++            region=data.region,
++            prompt_text=data.prompt_text,
++            is_saved=True,
++            created_at=date.today().isoformat(),
++            stops=stops,
++        )
++        MockItineraryRepository._saved.append(row)
++        return row
+diff --git a/cloud.adapdog/adapdog/apps/trips/app/dtos/itinerary_dto.py b/cloud.adapdog/adapdog/apps/trips/app/dtos/itinerary_dto.py
+index c5926f4..ed9d851 100644
+--- a/cloud.adapdog/adapdog/apps/trips/app/dtos/itinerary_dto.py
++++ b/cloud.adapdog/adapdog/apps/trips/app/dtos/itinerary_dto.py
+@@ -3,6 +3,24 @@ from __future__ import annotations
+ from dataclasses import dataclass
+ 
+ 
++@dataclass(frozen=True)
++class ItineraryStopInput:
++    order: int
++    name: str
++    category: str
++    latitude: float
++    longitude: float
++
++
++@dataclass(frozen=True)
++class SaveItineraryInput:
++    pet_id: int
++    title: str
++    region: str
++    prompt_text: str
++    stops: list[ItineraryStopInput]
++
++
+ @dataclass(frozen=True)
+ class ItineraryStopDto:
+     """寃쎌쑀吏 DTO (Itinerary DTO??以묒꺽)."""
+diff --git a/cloud.adapdog/adapdog/apps/trips/app/ports/input/itinerary_use_case.py b/cloud.adapdog/adapdog/apps/trips/app/ports/input/itinerary_use_case.py
+index 427ed9e..584525b 100644
+--- a/cloud.adapdog/adapdog/apps/trips/app/ports/input/itinerary_use_case.py
++++ b/cloud.adapdog/adapdog/apps/trips/app/ports/input/itinerary_use_case.py
+@@ -3,13 +3,17 @@ from __future__ import annotations
+ from abc import ABC, abstractmethod
+ from typing import Optional
+ 
+-from trips.app.dtos.itinerary_dto import ItineraryDto
++from trips.app.dtos.itinerary_dto import ItineraryDto, SaveItineraryInput
+ 
+ 
+ class ItineraryUseCase(ABC):
+-    """??λ맂 肄붿뒪 議고쉶 ?낅젰 ?ы듃."""
++    """??λ맂 肄붿뒪 議고쉶쨌????낅젰 ?ы듃."""
+ 
+     @abstractmethod
+     async def list_itineraries(self, pet_id: Optional[int] = None) -> list[ItineraryDto]:
+         """諛섎젮?숇Ъ(?좏깮)濡???λ맂 肄붿뒪瑜?議고쉶?쒕떎. pet_id媛 ?놁쑝硫??꾩껜."""
++
++    @abstractmethod
++    async def save_itinerary(self, data: SaveItineraryInput) -> ItineraryDto:
++        """梨꾪똿?쇰줈 留뚮뱺 肄붿뒪瑜???ν븳??"""
+         ...
+diff --git a/cloud.adapdog/adapdog/apps/trips/app/ports/output/itinerary_port.py b/cloud.adapdog/adapdog/apps/trips/app/ports/output/itinerary_port.py
+index c2e0005..7671f13 100644
+--- a/cloud.adapdog/adapdog/apps/trips/app/ports/output/itinerary_port.py
++++ b/cloud.adapdog/adapdog/apps/trips/app/ports/output/itinerary_port.py
+@@ -1,15 +1,21 @@
+ from __future__ import annotations
+ 
+ from abc import ABC, abstractmethod
+-from typing import Optional
++from typing import TYPE_CHECKING, Optional
+ 
+ from trips.domain.entities.itinerary_entity import Itinerary
+ 
++if TYPE_CHECKING:
++    from trips.app.dtos.itinerary_dto import SaveItineraryInput
++
+ 
+ class ItineraryPort(ABC):
+-    """??λ맂 肄붿뒪 議고쉶 異쒕젰 ?ы듃. 援ы쁽泥?mock/DB)??repository???붾떎."""
++    """??λ맂 肄붿뒪 議고쉶쨌???異쒕젰 ?ы듃. 援ы쁽泥?mock/DB)??repository???붾떎."""
+ 
+     @abstractmethod
+     async def find_itineraries(self, pet_id: Optional[int]) -> list[Itinerary]:
+         """諛섎젮?숇Ъ(?좏깮)濡???λ맂 肄붿뒪 ?꾨찓???뷀떚?곕? 議고쉶?쒕떎."""
+-        ...
++
++    @abstractmethod
++    async def save_itinerary(self, data: SaveItineraryInput) -> Itinerary:
++        """??肄붿뒪瑜???ν븳??"""
+diff --git a/cloud.adapdog/adapdog/apps/trips/app/use_cases/itinerary_interactor.py b/cloud.adapdog/adapdog/apps/trips/app/use_cases/itinerary_interactor.py
+index ad824c8..87ba563 100644
+--- a/cloud.adapdog/adapdog/apps/trips/app/use_cases/itinerary_interactor.py
++++ b/cloud.adapdog/adapdog/apps/trips/app/use_cases/itinerary_interactor.py
+@@ -3,7 +3,7 @@ from __future__ import annotations
+ import logging
+ from typing import Optional
+ 
+-from trips.app.dtos.itinerary_dto import ItineraryDto, ItineraryStopDto
++from trips.app.dtos.itinerary_dto import ItineraryDto, ItineraryStopDto, SaveItineraryInput
+ from trips.app.ports.input.itinerary_use_case import ItineraryUseCase
+ from trips.app.ports.output.itinerary_port import ItineraryPort
+ 
+@@ -41,3 +41,31 @@ class ItineraryInteractor(ItineraryUseCase):
+             )
+             for it in itineraries
+         ]
++
++    async def save_itinerary(self, data: SaveItineraryInput) -> ItineraryDto:
++        saved = await self.repository.save_itinerary(data)
++        logger.info(
++            "[ItineraryInteractor] save_itinerary | pet_id=%s region=%s stops=%d",
++            data.pet_id,
++            data.region,
++            len(data.stops),
++        )
++        return ItineraryDto(
++            id=saved.id,
++            pet_id=saved.pet_id,
++            title=saved.title,
++            region=saved.region,
++            prompt_text=saved.prompt_text,
++            is_saved=saved.is_saved,
++            created_at=saved.created_at,
++            stops=[
++                ItineraryStopDto(
++                    order=s.order,
++                    name=s.name,
++                    category=s.category,
++                    latitude=s.latitude,
++                    longitude=s.longitude,
++                )
++                for s in saved.stops
++            ],
++        )
+diff --git a/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/schemas/account_schema.py b/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/schemas/account_schema.py
+index aa6b826..1f3a992 100644
+--- a/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/schemas/account_schema.py
++++ b/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/schemas/account_schema.py
+@@ -27,6 +27,14 @@ class AccountSchema(BaseModel):
+     nickname: str
+ 
+ 
++class LoginResponse(BaseModel):
++    """濡쒓렇???묐떟: ?좏겙 + ?뚯썝 ?뺣낫."""
++
++    access_token: str
++    token_type: str = "bearer"
++    account: AccountSchema
++
++
+ class SignupSchema(BaseModel):
+     """?뚯썝媛???붿껌. ?щ엺 ?뺣낫??理쒖냼?뷀븯怨? 諛섎젮?숇Ъ???④퍡 ?깅줉?쒕떎."""
+ 
+diff --git a/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/schemas/pet_schema.py b/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/schemas/pet_schema.py
+index d200c8c..6cc387b 100644
+--- a/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/schemas/pet_schema.py
++++ b/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/schemas/pet_schema.py
+@@ -29,6 +29,16 @@ class PetRegisterSchema(BaseModel):
+     }
+ 
+ 
++class PetUpdateSchema(BaseModel):
++    """諛섎젮?숇Ъ ?꾨줈???섏젙(吏媛??ъ쭊쨌?뱀쭠 ??. ?꾨떖???꾨뱶留?媛깆떊?쒕떎."""
++
++    name: Optional[str] = Field(None, description="?대쫫")
++    breed: Optional[str] = Field(None, description="寃ъ쥌")
++    photo_url: Optional[str] = Field(None, description="袁몃? ?꾨줈???ъ쭊(data URL ?먮뒗 URL)")
++    birth_year: Optional[int] = Field(None, description="異쒖깮 ?곕룄")
++    features: Optional[str] = Field(None, description="?뱀쭠 JSON ?먮뒗 ?먯쑀 ?띿뒪??)
++
++
+ class PetSchema(BaseModel):
+     """諛섎젮?숇Ъ ?묐떟(?먮룞?꾩꽦???ш린쨌泥댁쭏쨌湲곗쭏 ?ы븿)."""
+ 
+diff --git a/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/v1/account_router.py b/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/v1/account_router.py
+index e0317e2..cc3b72b 100644
+--- a/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/v1/account_router.py
++++ b/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/v1/account_router.py
+@@ -6,9 +6,9 @@ from core.introduction import IntroductionSchema
+ from users.adapter.inbound.api.schemas.account_schema import (
+     AccountSchema,
+     LoginSchema,
++    LoginResponse,
+     SignupResponse,
+     SignupSchema,
+-    TokenSchema,
+ )
+ from users.adapter.inbound.api.schemas.pet_schema import PetSchema
+ from users.app.ports.input.account_use_case import AccountUseCase
+@@ -17,8 +17,9 @@ from users.app.use_cases.account_interactor import (
+     EmailAlreadyExistsError,
+     InvalidCredentialsError,
+ )
+-from users.dependencies.account_provider import get_account_use_case
++from users.dependencies.account_provider import get_account_use_case, get_current_account
+ from users.dependencies.pet_provider import get_pet_use_case
++from users.domain.entities.account_entity import Account
+ 
+ account_router = APIRouter(prefix="/account", tags=["account"])
+ 
+@@ -60,15 +61,25 @@ async def signup(
+ async def login(
+     body: LoginSchema,
+     account_use_case: AccountUseCase = Depends(get_account_use_case),
+-) -> TokenSchema:
++) -> LoginResponse:
+     """?대찓?셋룸퉬諛踰덊샇濡?濡쒓렇?명븯怨?access token??諛쒓툒?쒕떎."""
+     try:
+         token = await account_use_case.login(body.email, body.password)
++        account = await account_use_case.authenticate(token)
+     except InvalidCredentialsError:
+         raise HTTPException(
+             status_code=status.HTTP_401_UNAUTHORIZED, detail="?대찓???먮뒗 鍮꾨?踰덊샇媛 ?щ컮瑜댁? ?딆뒿?덈떎"
+         )
+-    return TokenSchema(access_token=token)
++    return LoginResponse(
++        access_token=token,
++        account=AccountSchema(id=account.id, email=account.email, nickname=account.nickname),
++    )
++
++
++@account_router.get("/me")
++async def my_account(account: Account = Depends(get_current_account)) -> AccountSchema:
++    """?꾩옱 濡쒓렇?명븳 ?뚯썝 ?뺣낫(?됰꽕????."""
++    return AccountSchema(id=account.id, email=account.email, nickname=account.nickname)
+ 
+ 
+ @account_router.get("/myself", tags=["?먭린?뚭컻 (?곕룞 寃利?"])
+diff --git a/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/v1/pet_persona_router.py b/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/v1/pet_persona_router.py
+index 3b96e7b..1228ce2 100644
+--- a/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/v1/pet_persona_router.py
++++ b/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/v1/pet_persona_router.py
+@@ -1,6 +1,8 @@
+ from __future__ import annotations
+ 
+-from fastapi import APIRouter, Depends, HTTPException
++from typing import Optional
++
++from fastapi import APIRouter, Depends
+ 
+ from users.adapter.inbound.api.schemas.pet_persona_schema import PetPersonaResponseSchema
+ from users.app.ports.input.pet_persona_use_case import PetPersonaUseCase
+@@ -9,13 +11,13 @@ from users.dependencies.pet_persona_provider import get_pet_persona_use_case
+ pet_persona_router = APIRouter(prefix="/pet-persona", tags=["pet_persona"])
+ 
+ 
+-@pet_persona_router.get("")
++@pet_persona_router.get("", response_model=Optional[PetPersonaResponseSchema])
+ async def get_persona(
+     pet_id: int,
+     use_case: PetPersonaUseCase = Depends(get_pet_persona_use_case),
+-) -> PetPersonaResponseSchema:
+-    """B ?섎Ⅴ?뚮굹 ??諛섎젮?숇Ъ???섎Ⅴ?뚮굹瑜?議고쉶(1:1). ?놁쑝硫?404."""
++) -> Optional[PetPersonaResponseSchema]:
++    """B ?섎Ⅴ?뚮굹 ??諛섎젮?숇Ъ???섎Ⅴ?뚮굹瑜?議고쉶(1:1). ?놁쑝硫?null."""
+     persona = await use_case.get_persona(pet_id)
+     if persona is None:
+-        raise HTTPException(status_code=404, detail="?섎Ⅴ?뚮굹媛 ?놁뒿?덈떎.")
++        return None
+     return PetPersonaResponseSchema.from_dto(persona)
+diff --git a/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/v1/pet_router.py b/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/v1/pet_router.py
+index 656d3c7..910ba3b 100644
+--- a/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/v1/pet_router.py
++++ b/cloud.adapdog/adapdog/apps/users/adapter/inbound/api/v1/pet_router.py
+@@ -1,9 +1,13 @@
+ from __future__ import annotations
+ 
+-from fastapi import APIRouter, Depends
++from fastapi import APIRouter, Depends, HTTPException
+ 
+ from core.introduction import IntroductionSchema
+-from users.adapter.inbound.api.schemas.pet_schema import PetRegisterSchema, PetSchema
++from users.adapter.inbound.api.schemas.pet_schema import (
++    PetRegisterSchema,
++    PetSchema,
++    PetUpdateSchema,
++)
+ from users.app.ports.input.pet_use_case import PetUseCase
+ from users.dependencies.account_provider import get_current_account
+ from users.dependencies.pet_provider import get_pet_use_case
+@@ -41,6 +45,29 @@ async def my_pets(
+     return [PetSchema.from_entity(p) for p in pets]
+ 
+ 
++@pet_router.patch("/{pet_id}")
++async def update_pet(
++    pet_id: int,
++    body: PetUpdateSchema,
++    account: Account = Depends(get_current_account),
++    use_case: PetUseCase = Depends(get_pet_use_case),
++) -> PetSchema:
++    """諛섎젮?숇Ъ ?꾨줈???섏젙 ??袁몃? ?ъ쭊쨌?뱀쭠쨌?대쫫 ???몄쬆 ?꾩슂)."""
++    try:
++        pet = await use_case.update_profile(
++            account.id,
++            pet_id,
++            name=body.name,
++            breed=body.breed,
++            photo_url=body.photo_url,
++            features=body.features,
++            birth_year=body.birth_year,
++        )
++    except LookupError:
++        raise HTTPException(status_code=404, detail="諛섎젮?숇Ъ??李얠쓣 ???놁뒿?덈떎.")
++    return PetSchema.from_entity(pet)
++
++
+ @pet_router.get("/myself", tags=["?먭린?뚭컻 (?곕룞 寃利?"])
+ async def introduce_myself(
+     use_case: PetUseCase = Depends(get_pet_use_case),
+diff --git a/cloud.adapdog/adapdog/apps/users/adapter/outbound/repositories/pet_repository.py b/cloud.adapdog/adapdog/apps/users/adapter/outbound/repositories/pet_repository.py
+index 2ebdb00..ce800ad 100644
+--- a/cloud.adapdog/adapdog/apps/users/adapter/outbound/repositories/pet_repository.py
++++ b/cloud.adapdog/adapdog/apps/users/adapter/outbound/repositories/pet_repository.py
+@@ -27,6 +27,15 @@ class InMemoryPetRepository(PetPort):
+     async def find_by_account(self, account_id: int) -> list[Pet]:
+         return [p for p in self._by_id.values() if p.account_id == account_id]
+ 
++    async def find_by_id(self, pet_id: int) -> Pet | None:
++        return self._by_id.get(pet_id)
++
++    async def update(self, pet: Pet) -> Pet:
++        if pet.id is None or pet.id not in self._by_id:
++            raise KeyError(f"pet {pet.id} not found")
++        self._by_id[pet.id] = pet
++        return pet
++
+ 
+ class DbPetRepository(PetPort):
+     """pet ?뚯씠釉?湲곕컲 援ы쁽 (3NF: 泥댁쭏? pet_trait??遺꾨━ ???."""
+@@ -57,3 +66,32 @@ class DbPetRepository(PetPort):
+             )).all():
+                 traits[pid].add(t)
+         return [PetMapper.to_entity(r, traits[r.id]) for r in rows]
++
++    async def find_by_id(self, pet_id: int) -> Pet | None:
++        async with dbs.get_session_factory()() as s:
++            row = await s.get(PetOrm, pet_id)
++            if row is None:
++                return None
++            trait_rows = (await s.execute(
++                select(PetTraitOrm.trait).where(PetTraitOrm.pet_id == pet_id)
++            )).scalars().all()
++        return PetMapper.to_entity(row, set(trait_rows))
++
++    async def update(self, pet: Pet) -> Pet:
++        if pet.id is None:
++            raise ValueError("pet id is required for update")
++        async with dbs.get_session_factory()() as s:
++            row = await s.get(PetOrm, pet.id)
++            if row is None:
++                raise KeyError(f"pet {pet.id} not found")
++            row.name = pet.name
++            row.breed = pet.breed
++            row.photo_url = pet.photo_url
++            row.size = pet.size.value
++            row.temperament = pet.temperament
++            row.birth_year = pet.birth_year
++            row.gender = pet.gender.value
++            row.features = pet.features
++            await s.commit()
++            await s.refresh(row)
++        return pet
+diff --git a/cloud.adapdog/adapdog/apps/users/app/ports/input/pet_use_case.py b/cloud.adapdog/adapdog/apps/users/app/ports/input/pet_use_case.py
+index f307de0..ae72066 100644
+--- a/cloud.adapdog/adapdog/apps/users/app/ports/input/pet_use_case.py
++++ b/cloud.adapdog/adapdog/apps/users/app/ports/input/pet_use_case.py
+@@ -28,6 +28,21 @@ class PetUseCase(ABC):
+     async def list_by_account(self, account_id: int) -> list[Pet]:
+         ...
+ 
++    @abstractmethod
++    async def update_profile(
++        self,
++        account_id: int,
++        pet_id: int,
++        *,
++        name: str | None = None,
++        breed: str | None = None,
++        photo_url: str | None = None,
++        features: str | None = None,
++        birth_year: int | None = None,
++    ) -> Pet:
++        """蹂몄씤 ?뚯쑀 諛섎젮?숇Ъ???꾨줈???ъ쭊쨌?뱀쭠 ?????섏젙?쒕떎."""
++        ...
++
+     @abstractmethod
+     async def introduce_myself(self) -> Introduction:
+         """??湲곕뒫???먭린?뚭컻(?곕룞 寃利?."""
+diff --git a/cloud.adapdog/adapdog/apps/users/app/ports/output/pet_port.py b/cloud.adapdog/adapdog/apps/users/app/ports/output/pet_port.py
+index c573a57..94a073d 100644
+--- a/cloud.adapdog/adapdog/apps/users/app/ports/output/pet_port.py
++++ b/cloud.adapdog/adapdog/apps/users/app/ports/output/pet_port.py
+@@ -18,6 +18,15 @@ class PetPort(ABC):
+     async def find_by_account(self, account_id: int) -> list[Pet]:
+         ...
+ 
++    @abstractmethod
++    async def find_by_id(self, pet_id: int) -> Pet | None:
++        ...
++
++    @abstractmethod
++    async def update(self, pet: Pet) -> Pet:
++        """id媛 ?덈뒗 諛섎젮?숇Ъ ?뺣낫瑜?媛깆떊?쒕떎."""
++        ...
++
+     async def introduce_myself(self) -> Introduction:
+         """?곕룞 寃利앹슜 ?먭린?뚭컻 ??repository 怨꾩링?먯꽌 異쒕컻?쒕떎(援ы쁽泥닿? ?곸냽)."""
+         return Introduction(
+diff --git a/cloud.adapdog/adapdog/apps/users/app/use_cases/pet_interactor.py b/cloud.adapdog/adapdog/apps/users/app/use_cases/pet_interactor.py
+index f2ed7b3..899cbf6 100644
+--- a/cloud.adapdog/adapdog/apps/users/app/use_cases/pet_interactor.py
++++ b/cloud.adapdog/adapdog/apps/users/app/use_cases/pet_interactor.py
+@@ -58,6 +58,44 @@ class PetInteractor(PetUseCase):
+     async def list_by_account(self, account_id: int) -> list[Pet]:
+         return await self.repository.find_by_account(account_id)
+ 
++    async def update_profile(
++        self,
++        account_id: int,
++        pet_id: int,
++        *,
++        name: str | None = None,
++        breed: str | None = None,
++        photo_url: str | None = None,
++        features: str | None = None,
++        birth_year: int | None = None,
++    ) -> Pet:
++        pet = await self.repository.find_by_id(pet_id)
++        if pet is None or pet.account_id != account_id:
++            raise LookupError(f"pet {pet_id} not found")
++
++        if name is not None:
++            pet.name = name.strip() or pet.name
++        if photo_url is not None:
++            pet.photo_url = photo_url
++        if features is not None:
++            pet.features = features
++        if birth_year is not None:
++            pet.birth_year = birth_year
++        if breed is not None:
++            profile = await self.breed_catalog.lookup(breed)
++            pet.breed = profile.breed
++            pet.size = profile.size
++            pet.traits = profile.traits
++            pet.temperament = profile.temperament
++
++        saved = await self.repository.update(pet)
++        logger.info(
++            "[PetInteractor] update_profile | account=%s pet_id=%s",
++            account_id,
++            pet_id,
++        )
++        return saved
++
+     async def introduce_myself(self) -> Introduction:
+         intro = await self.repository.introduce_myself()
+         intro.trail.append("interactor")
+diff --git a/cloud.adapdog/adapdog/core/config.py b/cloud.adapdog/adapdog/core/config.py
+index 4c6009e..01f6b84 100644
+--- a/cloud.adapdog/adapdog/core/config.py
++++ b/cloud.adapdog/adapdog/core/config.py
+@@ -56,6 +56,10 @@ KMA_WEATHER_ENDPOINT = os.getenv(
+ )
+ KMA_SERVICE_KEY = os.getenv("KMA_SERVICE_KEY") or DATA_GO_KR_SERVICE_KEY
+ 
++# ?ㅼ씠踰?寃??API (developers.naver.com ??吏??룹옣??寃??. 誘몄꽕????寃???대갚.
++NAVER_SEARCH_CLIENT_ID = os.getenv("NAVER_SEARCH_CLIENT_ID") or os.getenv("NAVER_CLIENT_ID")
++NAVER_SEARCH_CLIENT_SECRET = os.getenv("NAVER_SEARCH_CLIENT_SECRET") or os.getenv("NAVER_CLIENT_SECRET")
++
+ # ?꾧뎅湲멸?愿묒젙蹂??쒖??곗씠??CSV (?섎젅湲?異붿쿇??. 醫뚰몴 ?녿뒗 ?좏삎 肄붿뒪 ?곗씠??
+ _CSV_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "csv")
+ TRAIL_CSV_PATH = os.getenv("TRAIL_CSV_PATH", os.path.join(_CSV_DIR, "?꾧뎅湲멸?愿묒젙蹂댄몴以?곗씠??csv"))
+diff --git a/cloud.adapdog/adapdog/tests/test_users.py b/cloud.adapdog/adapdog/tests/test_users.py
+index 1168b66..ca09ab7 100644
+--- a/cloud.adapdog/adapdog/tests/test_users.py
++++ b/cloud.adapdog/adapdog/tests/test_users.py
+@@ -88,6 +88,23 @@ async def test_pet_register_optional_fields_default():
+     assert pet.birth_year is None and pet.features is None
+ 
+ 
++async def test_pet_update_profile_photo_and_features():
++    uc = _pet_interactor()
++    pet = await uc.register(
++        account_id=1, name="肄⑹씠", breed="?쒖툌", photo_url="http://x/k.jpg",
++    )
++    updated = await uc.update_profile(
++        1,
++        pet.id,
++        photo_url="data:image/jpeg;base64,abc",
++        features='{"intro":"?덈뀞!"}',
++        name="肄⑹씠2",
++    )
++    assert updated.name == "肄⑹씠2"
++    assert updated.photo_url.startswith("data:image")
++    assert updated.features == '{"intro":"?덈뀞!"}'
++
++
+ # ?? account ?몄쬆 ??????????????????????????????????????????????????????????????
+ async def test_signup_login_and_authenticate():
+     uc = _account_interactor()
+diff --git a/cloud.adapdog/www/src/App.tsx b/cloud.adapdog/www/src/App.tsx
+index 18dcf27..5d2d77d 100644
+--- a/cloud.adapdog/www/src/App.tsx
++++ b/cloud.adapdog/www/src/App.tsx
+@@ -103,7 +103,7 @@ const DARK: Record<string, string> = { bg: '#08080A', panel: '#101014', 'panel-2
+ 
+ export default function App() {
+   const app = usePlannerApp();
+-  const { dark, isMobile, mobilePanel, setMobilePanel, view, go, detailTab, setDetailTab, focusPlace, setFocus, input, setInput, listening, messages, suggestions, plan, emg, setEmg, emgStep, setEmgStep, handleUserText, startVoice, resetChat, setDark, dataMode, toggleMode, liveCourse, livePlan, liveLoading, voiceEnabled, toggleVoice, courseRemoved, courseAdded, addCourseStop, removeCourseStop, pushAi } = app;
++  const { dark, isMobile, mobilePanel, setMobilePanel, view, go, detailTab, setDetailTab, focusPlace, setFocus, input, setInput, listening, messages, suggestions, plan, emg, setEmg, emgStep, setEmgStep, handleUserText, startVoice, resetChat, toggleDark, dataMode, toggleMode, liveCourse, livePlan, liveLoading, voiceEnabled, toggleVoice, courseRemoved, courseAdded, addCourseStop, removeCourseStop, pushAi } = app;
+ 
+   const live = dataMode === 'live';
+ 
+@@ -249,7 +249,7 @@ export default function App() {
+             <div onClick={toggleVoice} title={voiceEnabled ? '?뚯꽦 ?덈궡 ?꾧린' : '?뚯꽦 ?덈궡 耳쒓린'} style={css(`width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:${voiceEnabled ? 'var(--accent)' : 'var(--muted)'}; background:${voiceEnabled ? 'var(--accent-soft)' : 'var(--chip)'};`)}>
+               <span className="msr" style={css('font-size:20px;')}>{voiceEnabled ? 'volume_up' : 'volume_off'}</span>
+             </div>
+-            <div onClick={() => setDark(!dark)} title="?뚮쭏" style={css('width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--muted); background:var(--chip);')}>
++            <div onClick={toggleDark} title="?뚮쭏" style={css('width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--muted); background:var(--chip);')}>
+               <span className="msr" style={css('font-size:20px;')}>{dark ? 'light_mode' : 'dark_mode'}</span>
+             </div>
+             <div style={css('width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; color:var(--muted); background:var(--chip); position:relative;')}>
+diff --git a/cloud.adapdog/www/src/hooks/usePlannerApp.ts b/cloud.adapdog/www/src/hooks/usePlannerApp.ts
+index a4d9145..21731e4 100644
+--- a/cloud.adapdog/www/src/hooks/usePlannerApp.ts
++++ b/cloud.adapdog/www/src/hooks/usePlannerApp.ts
+@@ -62,6 +62,24 @@ const INITIAL_MESSAGES: Msg[] = [
+ 
+ export function usePlannerApp() {
+   const [dark, setDark] = useState(false);
++  const toggleDark = useCallback(() => {
++    setDark((prev) => {
++      const next = !prev;
++      try {
++        localStorage.setItem('pawprint-planner-dark', next ? '1' : '0');
++      } catch {
++        /* ignore */
++      }
++      return next;
++    });
++  }, []);
++  useEffect(() => {
++    try {
++      if (localStorage.getItem('pawprint-planner-dark') === '1') setDark(true);
++    } catch {
++      /* ignore */
++    }
++  }, []);
+   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 900);
+   const [mobilePanel, setMobilePanel] = useState<MobilePanel>('chat');
+   const [view, setView] = useState<View>('planner');
+@@ -392,7 +410,7 @@ export function usePlannerApp() {
+   }, []);
+ 
+   return {
+-    dark, setDark,
++    dark, setDark, toggleDark,
+     isMobile, mobilePanel, setMobilePanel,
+     view, go, setView,
+     detailTab, setDetailTab,

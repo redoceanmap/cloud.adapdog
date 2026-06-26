@@ -33,6 +33,14 @@ export interface RouteStop {
   similarity: number;
   reason?: string;
   source?: string;
+  day?: number;                                 // 며칠째(1부터). 백엔드 생성 코스에만
+  time_slot?: 'morning' | 'lunch' | 'afternoon' | 'dinner';   // 시간대 블록. 백엔드 생성 코스에만
+  clock?: string;                               // 기준 시각 "HH:MM"
+  is_meal?: boolean;                            // 식사(음식점) 정류장 여부
+  image_url?: string | null;                    // 음식점 썸네일 URL
+  phone?: string | null;                        // 음식점 대표 전화
+  address?: string | null;                      // 음식점 주소
+  is_mock?: boolean;                            // 목업(MVP 데모용 예시) 정류장 여부
 }
 
 export interface LodgingPlace {
@@ -75,9 +83,13 @@ export interface TripPlan {
   origin: string;
   destination: string | null;
   transport: 'ktx' | 'bus' | 'car' | 'unset';
+  departure_time: string | null; // 서울 출발시각 "HH:MM"(미정이면 null)
   lodging: 'overnight' | 'daytrip' | 'unset';
   nights: number; // 묵는 박 수(0=당일치기)
-  stage: 'ask_destination' | 'ask_transport' | 'ask_lodging' | 'ready';
+  stage: 'ask_destination' | 'ask_transport' | 'ask_departure_time' | 'ask_lodging' | 'ready';
+  lodging_pref?: string | null; // 숙소 취향·위치(선택)
+  interests?: string | null;    // 여행 스타일(선택)
+  pet_mobility?: string | null; // 이동 성향(선택)
 }
 
 export interface RouteChatResponse {
@@ -85,6 +97,25 @@ export interface RouteChatResponse {
   plan: TripPlan;
   suggestions: string[];
   course: RoutePlanResponse | null;
+}
+
+/** 정류장 스왑 대안 — 같은 종류의 다른 펫동반 장소(대상과의 거리 포함). */
+export interface Alternative {
+  name: string;
+  category: string;
+  latitude: number;
+  longitude: number;
+  reason: string;
+  distance_km: number;
+}
+
+/** 정류장 스왑 응답 — 대상 자리에 갈 같은 종류 대안들(거리순) + 더 멀리 페이지 안내. */
+export interface SwapAlternativesResponse {
+  reply: string;
+  target_name: string;
+  alternatives: Alternative[];
+  next_offset: number;
+  has_more: boolean;
 }
 
 // ── 시설 후기(review) ──
@@ -220,6 +251,14 @@ export interface SymptomCheck {
   severity: string;
   is_diagnostic: boolean;
   created_at: string;
+}
+
+export interface SymptomTriageResult {
+  reply: string;
+  possible_conditions: string[];
+  urgency: 'low' | 'medium' | 'high';
+  advice: string;
+  is_diagnostic: boolean;
 }
 
 // ── 안전·위험 알리미(D 병원) ──

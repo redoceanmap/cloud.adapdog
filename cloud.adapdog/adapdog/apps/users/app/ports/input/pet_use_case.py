@@ -29,6 +29,21 @@ class PetUseCase(ABC):
         ...
 
     @abstractmethod
+    async def update_profile(
+        self,
+        account_id: int,
+        pet_id: int,
+        *,
+        name: str | None = None,
+        breed: str | None = None,
+        photo_url: str | None = None,
+        features: str | None = None,
+        birth_year: int | None = None,
+    ) -> Pet:
+        """반려동물 프로필을 수정한다."""
+        ...
+
+    @abstractmethod
     async def introduce_myself(self) -> Introduction:
         """이 기능의 자기소개(연동 검증)."""
         ...

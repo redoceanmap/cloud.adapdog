@@ -19,6 +19,14 @@ class TokenSchema(BaseModel):
     token_type: str = "bearer"
 
 
+class LoginResponse(BaseModel):
+    """로그인 응답 — 토큰과 회원 닉네임을 함께 반환."""
+
+    access_token: str
+    token_type: str = "bearer"
+    account: AccountSchema
+
+
 class AccountSchema(BaseModel):
     """회원 정보 응답(비밀번호 제외)."""
 

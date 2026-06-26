@@ -3,8 +3,12 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import AppScreenshot from "@/components/AppScreenshot";
+import { useAuthSession } from "@/lib/use-auth-session";
 
 export default function Hero() {
+  const { user, ready } = useAuthSession();
+  const authed = ready && !!user;
+
   return (
     <section className="relative min-h-screen flex items-center paw-pattern overflow-hidden pt-20">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -25,9 +29,19 @@ export default function Hero() {
           </div>
 
           <h1 className="text-4xl md:text-5xl lg:text-[3.25rem] font-extrabold leading-tight text-brown mb-6">
-            강아지와 함께하는 여행,
-            <br />
-            <span className="gradient-text">AI가 다 짜드려요</span>
+            {authed ? (
+              <>
+                안녕하세요 {user!.name}님!
+                <br />
+                <span className="gradient-text">강아지와 함께하는 여행 AI가 다 짜드려요</span>
+              </>
+            ) : (
+              <>
+                강아지와 함께하는 여행,
+                <br />
+                <span className="gradient-text">AI가 다 짜드려요</span>
+              </>
+            )}
           </h1>
 
           <p className="text-lg text-brown-light leading-relaxed mb-8 max-w-lg">

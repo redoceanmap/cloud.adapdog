@@ -97,8 +97,9 @@ async def test_signup_login_and_authenticate():
     me = await uc.authenticate(token)
     assert me.id == account.id
     # 로그인도 토큰을 발급
-    login_token = await uc.login("a@b.com", "secret123")
+    login_account, login_token = await uc.login("a@b.com", "secret123")
     assert login_token
+    assert login_account.nickname == "닉네임"
 
 
 async def test_signup_duplicate_email_rejected():

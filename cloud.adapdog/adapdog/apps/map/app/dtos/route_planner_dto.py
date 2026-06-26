@@ -59,6 +59,32 @@ class AgentCoursePlan:
 
 
 @dataclass(frozen=True)
+class CourseBuckets:
+    """리듬 채움용 후보 풀 — 업종별 분류(카페/야외/문화). 식사는 RestaurantPort가 별도.
+
+    코드가 하루 리듬(아침 산책→점심→카페→오후 명소→저녁)을 채울 때, 슬롯 성격에 맞는
+    실제 시설을 여기서 근접순으로 고른다(LLM이 안 고른 카페·공원도 확보).
+    """
+
+    cafe: list["PlannedStop"] = field(default_factory=list)
+    outdoor: list["PlannedStop"] = field(default_factory=list)
+    culture: list["PlannedStop"] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class ConversationTurn:
+    """LLM 주도 대화 결과 — 자연스러운 답변 + 추출한 슬롯(빈 것만 채움) + 빠른 선택칩.
+
+    slots는 {destination, transport, departure_time, nights, lodging, lodging_pref, interests}
+    중 새로 파악된 키만 담는다(인터랙터가 빈 슬롯에만 머지). reply가 비면 결정형 폴백으로.
+    """
+
+    reply: str = ""
+    slots: dict = field(default_factory=dict)
+    suggestions: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
 class ChatMessage:
     """대화 한 턴 (인터랙터 → 에이전트). role은 'user' | 'assistant'."""
 
@@ -89,6 +115,14 @@ class RouteStopDto:
     similarity: int = 0  # 닮은친구% — 같은 크기 코호트의 방문 인기도
     reason: str = ""     # 왜 이 장소 — 규칙 기반 한 줄(반려견 특징 반영)
     source: str = ""     # 출처 태그(예: 한국문화정보원 펫동반 문화시설)
+    day: int = 1                          # 며칠째(1부터)
+    time_slot: str = "morning"            # 시간대 블록(morning/lunch/dinner)
+    clock: str = ""                       # 기준 시각 "HH:MM"
+    is_meal: bool = False                 # 식사(음식점) 정류장 여부
+    is_mock: bool = False                 # 목업(MVP 데모용 예시) 정류장 여부
+    image_url: Optional[str] = None       # 음식점 썸네일 URL(있을 때)
+    phone: Optional[str] = None           # 음식점 대표 전화
+    address: Optional[str] = None         # 음식점 주소
 
 
 @dataclass(frozen=True)
@@ -134,9 +168,13 @@ class TripPlanDto:
     origin: str
     destination: Optional[str]
     transport: str   # TransportMode 값(ktx/bus/car/unset)
+    departure_time: Optional[str]  # 서울 출발시각 "HH:MM"(미정이면 None)
     lodging: str     # LodgingOption 값(overnight/daytrip/unset)
     nights: int      # 묵는 박 수(0=당일치기)
     stage: str       # PlannerStage 값(다음에 채울 단계)
+    lodging_pref: Optional[str] = None   # 숙소 취향·위치(선택)
+    interests: Optional[str] = None      # 여행 스타일(선택)
+    pet_mobility: Optional[str] = None   # 이동 성향(선택)
 
 
 @dataclass(frozen=True)
@@ -147,3 +185,26 @@ class RouteChatResponse:
     plan: TripPlanDto
     suggestions: list[str] = field(default_factory=list)
     course: Optional[RoutePlanResponse] = None
+
+
+@dataclass(frozen=True)
+class AlternativeDto:
+    """정류장 스왑 대안 — 같은 종류의 다른 펫동반 장소(좌표·이유·대상과의 거리)."""
+
+    name: str
+    category: str
+    latitude: float
+    longitude: float
+    reason: str
+    distance_km: float
+
+
+@dataclass(frozen=True)
+class SwapAlternativesResponse:
+    """정류장 스왑 응답 — 대상 자리에 갈 같은 종류 대안들(거리순) + 더 멀리 페이지 안내."""
+
+    reply: str
+    target_name: str
+    alternatives: list[AlternativeDto] = field(default_factory=list)
+    next_offset: int = 0
+    has_more: bool = False

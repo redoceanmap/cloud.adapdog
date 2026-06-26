@@ -5,6 +5,9 @@ import sys
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 # apps/ 를 import 경로에 추가 → bounded context를 `map.xxx` 로 임포트
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "apps"))
 
@@ -106,7 +109,11 @@ def health_check():
 if __name__ == "__main__":
     import uvicorn
 
-    if sys.platform == "win32":
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, loop="none")
+    uvicorn.run(
+        "main:app",
+        host="127.0.0.1",
+        port=8000,
+        loop="none",
+        reload=True,
+        reload_dirs=[os.path.dirname(__file__)],
+    )

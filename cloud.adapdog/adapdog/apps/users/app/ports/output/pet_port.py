@@ -18,6 +18,14 @@ class PetPort(ABC):
     async def find_by_account(self, account_id: int) -> list[Pet]:
         ...
 
+    @abstractmethod
+    async def find_by_id(self, pet_id: int) -> Pet | None:
+        ...
+
+    @abstractmethod
+    async def update(self, pet: Pet) -> Pet:
+        ...
+
     async def introduce_myself(self) -> Introduction:
         """연동 검증용 자기소개 — repository 계층에서 출발한다(구현체가 상속)."""
         return Introduction(

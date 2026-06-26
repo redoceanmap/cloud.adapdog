@@ -58,6 +58,44 @@ class PetInteractor(PetUseCase):
     async def list_by_account(self, account_id: int) -> list[Pet]:
         return await self.repository.find_by_account(account_id)
 
+    async def update_profile(
+        self,
+        account_id: int,
+        pet_id: int,
+        *,
+        name: str | None = None,
+        breed: str | None = None,
+        photo_url: str | None = None,
+        features: str | None = None,
+        birth_year: int | None = None,
+    ) -> Pet:
+        pet = await self.repository.find_by_id(pet_id)
+        if pet is None or pet.account_id != account_id:
+            raise LookupError(f"pet {pet_id} not found")
+
+        if name is not None:
+            pet.name = name.strip() or pet.name
+        if photo_url is not None:
+            pet.photo_url = photo_url
+        if features is not None:
+            pet.features = features
+        if birth_year is not None:
+            pet.birth_year = birth_year
+        if breed is not None:
+            profile = await self.breed_catalog.lookup(breed)
+            pet.breed = profile.breed
+            pet.size = profile.size
+            pet.traits = profile.traits
+            pet.temperament = profile.temperament
+
+        saved = await self.repository.update(pet)
+        logger.info(
+            "[PetInteractor] update_profile | account=%s pet_id=%s",
+            account_id,
+            pet_id,
+        )
+        return saved
+
     async def introduce_myself(self) -> Introduction:
         intro = await self.repository.introduce_myself()
         intro.trail.append("interactor")

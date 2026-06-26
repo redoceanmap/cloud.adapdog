@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR } from "next/font/google";
+import { Providers } from "./providers";
 import "./globals.css";
 
 const noto = Noto_Sans_KR({
@@ -22,8 +23,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" data-scroll-behavior="smooth" className={`${noto.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-warm-white text-foreground">
-        {children}
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="min-h-full flex flex-col bg-warm-white text-foreground transition-colors duration-300">
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

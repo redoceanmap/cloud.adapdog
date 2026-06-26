@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PawPrint } from "lucide-react";
 
 export default function Footer() {  return (
@@ -15,9 +16,9 @@ export default function Footer() {  return (
             <a href="#ai-planner" className="hover:text-sage transition-colors">
               AI 플래너
             </a>
-            <a href="#ai-voice" className="hover:text-sage transition-colors">
+            <Link href="/emergency" className="hover:text-sage transition-colors">
               음성·응급
-            </a>
+            </Link>
             <a href="#features" className="hover:text-sage transition-colors">
               차별점
             </a>

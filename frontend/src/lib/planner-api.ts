@@ -21,6 +21,89 @@ export interface ItineraryStop {
   longitude: number;
 }
 
+export interface RouteStop extends ItineraryStop {
+  distance_from_prev_km: number;
+  similarity: number;
+  reason?: string;
+  source?: string;
+  day?: number;
+  time_slot?: "morning" | "lunch" | "afternoon" | "dinner";
+  clock?: string;
+  is_meal?: boolean;
+  is_mock?: boolean;
+  image_url?: string | null;
+  phone?: string | null;
+  address?: string | null;
+}
+
+export interface RoutePlanResponse {
+  region: string;
+  pet_size: string;
+  stop_count: number;
+  total_distance_km: number;
+  summary: string;
+  stops: RouteStop[];
+  recommended_trails: unknown[];
+  lodging?: { name: string; category: string; latitude: number; longitude: number; source?: string }[];
+  stopovers?: { name: string; category: string; latitude: number; longitude: number; reason?: string; source?: string }[];
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface TripPlan {
+  origin: string;
+  destination: string | null;
+  transport: "ktx" | "bus" | "car" | "unset";
+  lodging: "overnight" | "daytrip" | "unset";
+  nights: number;
+  stage: "ask_destination" | "ask_transport" | "ask_lodging" | "ready";
+}
+
+export interface RouteChatResponse {
+  reply: string;
+  plan: TripPlan;
+  suggestions: string[];
+  course: RoutePlanResponse | null;
+}
+
+export interface PetPlace {
+  id: number;
+  name: string;
+  category: string;
+  latitude: number;
+  longitude: number;
+  allowed_sizes: string[];
+}
+
+export interface Review {
+  id: number;
+  facility_id: number;
+  place_name: string;
+  title: string;
+  body: string;
+  rating: number;
+  author: string;
+  source: string;
+}
+
+export interface EntryVerdictResult {
+  place_name: string;
+  pet_name: string;
+  verdict: "allowed" | "conditional" | "denied";
+  conditions: string[];
+  message: string;
+  alternatives?: {
+    name: string;
+    category: string;
+    latitude: number;
+    longitude: number;
+    distance_km: number;
+  }[];
+}
+
 export interface PlannerCourse {
   id: number;
   pet_id: number;
@@ -33,13 +116,22 @@ export interface PlannerCourse {
   summary?: string;
 }
 
-interface RoutePlanResponse {
+interface RoutePlanApiResponse {
   region: string;
   pet_size: string;
   stop_count: number;
   total_distance_km: number;
   summary: string;
   stops: ItineraryStop[];
+}
+
+export function petTraitsText(pet: Pet): string {
+  const parts = [
+    sizeLabel(pet.size),
+    ...pet.traits,
+    pet.temperament !== "정보 없음" ? pet.temperament : "",
+  ].filter(Boolean);
+  return parts.join(", ");
 }
 
 export async function fetchMyPets(): Promise<Pet[]> {
@@ -58,10 +150,84 @@ export async function fetchItineraries(petId: number): Promise<PlannerCourse[]> 
   return res.json() as Promise<PlannerCourse[]>;
 }
 
+export async function saveItinerary(
+  pet: Pet,
+  course: RoutePlanResponse,
+  options?: { title?: string; promptText?: string },
+): Promise<PlannerCourse> {
+  if (!course.stops.length) {
+    throw new Error("저장할 장소가 없습니다.");
+  }
+  const body = {
+    pet_id: pet.id,
+    title: options?.title ?? `${course.region} 펫 동반 코스`,
+    region: course.region,
+    prompt_text: options?.promptText ?? course.summary ?? "",
+    stops: course.stops.map((s) => ({
+      order: s.order,
+      name: s.name,
+      category: s.category,
+      latitude: s.latitude,
+      longitude: s.longitude,
+    })),
+  };
+  const res = await apiFetch("/trips/itinerary", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+  return res.json() as Promise<PlannerCourse>;
+}
+
+export async function updateItinerary(
+  itineraryId: number,
+  pet: Pet,
+  course: RoutePlanResponse,
+  options?: { title?: string; promptText?: string },
+): Promise<PlannerCourse> {
+  if (!course.stops.length) {
+    throw new Error("저장할 장소가 없습니다.");
+  }
+  const res = await apiFetch(`/trips/itinerary/${itineraryId}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      pet_id: pet.id,
+      title: options?.title ?? `${course.region} 펫 동반 코스`,
+      region: course.region,
+      prompt_text: options?.promptText ?? course.summary ?? "",
+      stops: course.stops.map((s) => ({
+        order: s.order,
+        name: s.name,
+        category: s.category,
+        latitude: s.latitude,
+        longitude: s.longitude,
+      })),
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+  return res.json() as Promise<PlannerCourse>;
+}
+
+export async function deleteItinerary(itineraryId: number): Promise<void> {
+  const res = await apiFetch(`/trips/itinerary/${itineraryId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+}
+
 export async function fetchRecommendedPlan(
   pet: Pet,
-  region = "전주",
+  region: string,
 ): Promise<PlannerCourse> {
+  if (!region.trim()) {
+    throw new Error("추천 코스를 만들 지역을 지정해 주세요.");
+  }
   const res = await apiFetch("/map/route-planner/plan", {
     method: "POST",
     body: JSON.stringify({
@@ -77,7 +243,7 @@ export async function fetchRecommendedPlan(
     throw new Error(await parseApiError(res));
   }
 
-  const plan = (await res.json()) as RoutePlanResponse;
+  const plan = (await res.json()) as RoutePlanApiResponse;
   return {
     id: 0,
     pet_id: pet.id,
@@ -91,11 +257,157 @@ export async function fetchRecommendedPlan(
   };
 }
 
+export async function chatRoute(
+  messages: ChatMessage[],
+  pet: Pet,
+  plan?: TripPlan | null,
+): Promise<RouteChatResponse> {
+  const res = await apiFetch("/map/route-planner/chat", {
+    method: "POST",
+    body: JSON.stringify({
+      messages,
+      plan: plan ?? null,
+      pet_size: pet.size,
+      pet_breed: pet.breed,
+      pet_traits: petTraitsText(pet),
+    }),
+    timeoutMs: 60_000,
+  });
+  if (!res.ok) throw new Error(await parseApiError(res));
+  return res.json() as Promise<RouteChatResponse>;
+}
+
+export async function recommendRoute(
+  messages: ChatMessage[],
+  currentCourse: { name: string; category: string; latitude: number; longitude: number }[],
+  pet: Pet,
+  plan?: TripPlan | null,
+): Promise<RouteChatResponse> {
+  const res = await apiFetch("/map/route-planner/recommend", {
+    method: "POST",
+    body: JSON.stringify({
+      messages,
+      current_course: currentCourse,
+      plan: plan ?? null,
+      pet_size: pet.size,
+      pet_breed: pet.breed,
+      pet_traits: petTraitsText(pet),
+    }),
+    timeoutMs: 45_000,
+  });
+  if (!res.ok) throw new Error(await parseApiError(res));
+  return res.json() as Promise<RouteChatResponse>;
+}
+
+export async function searchPlaces(region: string): Promise<PetPlace[]> {
+  const res = await apiFetch(`/map/pet-place/search?region=${encodeURIComponent(region)}`);
+  if (!res.ok) throw new Error(await parseApiError(res));
+  return res.json() as Promise<PetPlace[]>;
+}
+
+export interface Festival {
+  id: number;
+  name: string;
+  region: string;
+  start_date: string;
+  end_date: string;
+  pet_allowed: boolean;
+  source: string;
+}
+
+export interface WalkingTrail {
+  id: number;
+  name: string;
+  region: string;
+  distance_km: number;
+  difficulty: string;
+  duration: string;
+  description: string;
+  route_info?: string;
+}
+
+export async function fetchFestivals(region: string): Promise<Festival[]> {
+  const res = await apiFetch(`/map/festival?region=${encodeURIComponent(region)}`);
+  if (!res.ok) return [];
+  return res.json() as Promise<Festival[]>;
+}
+
+export async function fetchTrails(region: string): Promise<WalkingTrail[]> {
+  const res = await apiFetch(`/map/walking-trail?region=${encodeURIComponent(region)}`);
+  if (!res.ok) return [];
+  return res.json() as Promise<WalkingTrail[]>;
+}
+
+export async function checkEntry(
+  region: string,
+  placeName: string,
+  pet: Pet,
+): Promise<EntryVerdictResult> {
+  const res = await apiFetch("/map/entry-verdict/check", {
+    method: "POST",
+    body: JSON.stringify({
+      region,
+      place_name: placeName,
+      pet_name: pet.name,
+      pet_size: pet.size,
+    }),
+  });
+  if (!res.ok) throw new Error(await parseApiError(res));
+  return res.json() as Promise<EntryVerdictResult>;
+}
+
+export async function fetchReviews(placeName: string): Promise<Review[]> {
+  const res = await apiFetch(`/map/review?place_name=${encodeURIComponent(placeName)}`);
+  if (!res.ok) return [];
+  return res.json() as Promise<Review[]>;
+}
+
+export interface CareReminder {
+  id: number;
+  pet_id: number;
+  type: string;
+  label: string;
+  interval_min: number;
+  scheduled_time: string;
+  enabled: boolean;
+}
+
+export interface SafetyAlert {
+  region: string;
+  temperature_c: number;
+  condition: string;
+  risk_level: string;
+  reasons: string[];
+  hospital_count: number;
+  nearest_hospital: string | null;
+  nearest_hospital_km: number | null;
+}
+
+export async function fetchCareReminders(petId: number): Promise<CareReminder[]> {
+  const res = await apiFetch(`/care/care-reminder?pet_id=${petId}`);
+  if (!res.ok) return [];
+  return res.json() as Promise<CareReminder[]>;
+}
+
+export async function checkSafetyAlert(pet: Pet, region: string): Promise<SafetyAlert> {
+  const res = await apiFetch("/map/safety-alert/check", {
+    method: "POST",
+    body: JSON.stringify({
+      region,
+      pet_size: pet.size,
+      pet_breed: pet.breed,
+    }),
+  });
+  if (!res.ok) throw new Error(await parseApiError(res));
+  return res.json() as Promise<SafetyAlert>;
+}
+
 export function sizeLabel(size: string): string {
   const map: Record<string, string> = {
     small: "소형견",
     medium: "중형견",
     large: "대형견",
+    unknown: "크기 미정",
   };
   return map[size] ?? size;
 }

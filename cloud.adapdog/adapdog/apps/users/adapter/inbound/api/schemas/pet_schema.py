@@ -29,6 +29,16 @@ class PetRegisterSchema(BaseModel):
     }
 
 
+class PetUpdateSchema(BaseModel):
+    """반려동물 프로필 수정 요청(부분 갱신)."""
+
+    name: Optional[str] = None
+    breed: Optional[str] = None
+    photo_url: Optional[str] = None
+    birth_year: Optional[int] = None
+    features: Optional[str] = None
+
+
 class PetSchema(BaseModel):
     """반려동물 응답(자동완성된 크기·체질·기질 포함)."""
 

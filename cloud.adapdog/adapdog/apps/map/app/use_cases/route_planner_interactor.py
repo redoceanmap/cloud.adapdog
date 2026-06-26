@@ -9,11 +9,15 @@ from map.adapter.inbound.api.schemas.route_planner_schema import (
     RouteOptimizeSchema,
     RoutePlannerSchema,
     RouteRecommendSchema,
+    SwapStopSchema,
 )
 from map.app.dtos.route_planner_dto import (
     AgentCoursePlan,
+    AlternativeDto,
     ChatMessage,
+    ConversationTurn,
     CourseBrief,
+    CourseBuckets,
     CourseStopRef,
     LodgingDto,
     PlannedStop,
@@ -21,23 +25,33 @@ from map.app.dtos.route_planner_dto import (
     RoutePlanResponse,
     RouteStopDto,
     StopoverDto,
+    SwapAlternativesResponse,
     TripPlanDto,
 )
 from map.app.ports.input.cohort_recommendation_use_case import CohortRecommendationUseCase
+from map.app.ports.input.pet_place_use_case import PetPlaceUseCase
 from map.app.ports.input.route_planner_use_case import RoutePlannerUseCase
+from map.app.ports.output.city_park_port import CityParkPort
+from map.app.ports.output.restaurant_port import RestaurantPort
 from map.app.ports.output.route_planner_port import (
     LodgingPort,
     RouteLegsPort,
     RoutePlannerAgentPort,
 )
 from map.domain.entities.pet_place_entity import PetFriendlyPlace
+from map.domain.entities.restaurant_entity import Restaurant
 from map.domain.entities.route_planner_entity import TripPlan
 from map.domain.value_objects.cohort_recommendation_vo import Cohort
 from map.domain.value_objects.pet_place_vo import Coordinate, PetSize
 from map.domain.value_objects.route_planner_vo import (
     LodgingOption,
     PlannerStage,
+    SlotKind,
+    TimeSlot,
     TransportMode,
+    arrival_point,
+    departure_time_from_raw,
+    meal_schedule,
 )
 
 logger = logging.getLogger(__name__)
@@ -58,11 +72,17 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
         cohort: CohortRecommendationUseCase,
         lodging: LodgingPort,
         legs: RouteLegsPort,
+        restaurants: RestaurantPort,
+        parks: CityParkPort,
+        pet_place: PetPlaceUseCase,
     ) -> None:
         self.agent = agent
         self.cohort = cohort
         self.lodging = lodging
         self.legs = legs
+        self.restaurants = restaurants
+        self.parks = parks
+        self.pet_place = pet_place
 
     async def plan_route(self, schema: RoutePlannerSchema) -> RoutePlanResponse:
         pet_size = PetSize.from_raw(schema.pet_size)
@@ -78,29 +98,54 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
         return await self._assemble_course(schema.region, pet_size, plan)
 
     async def chat(self, schema: RouteChatSchema) -> RouteChatResponse:
-        """대화 핑퐁 — 누적 TripPlan을 복원해 단계(목적지→이동수단→숙박→코스)를 진행한다.
+        """대화 핑퐁 — LLM이 자연스럽게 묻고 슬롯을 추출하며, 필수 슬롯이 차면 코스를 생성한다.
 
-        상태 전이는 규칙(도메인 TripPlan.next_stage)으로 결정론적이고, 슬롯이 다 차면
-        에이전트로 코스를 생성한다. 데모 입력엔 일관된 결과가 나온다.
+        LLM 주도 대화(converse)로 답변·슬롯을 받고, 결정형 게이트(TripPlan.next_stage)로
+        코스 생성 시점을 안정적으로 통제한다. LLM이 비거나 실패하면 결정형 질문으로 폴백한다.
         """
         pet_size = PetSize.from_raw(schema.pet_size)
         plan = _restore_plan(schema.plan)
         latest = _latest_user_message(schema)
         logger.info("[RoutePlannerInteractor] chat | stage=%s msg=%r", plan.next_stage().value, latest)
 
-        # 1) 최신 메시지로 채울 수 있는 슬롯을 모두 채운다(한 번에 여러 개 말해도 수용).
+        # 1) 정규식 기준선으로 슬롯을 먼저 채우고(폴백 안전망), LLM으로 자연 답변+슬롯을 받아 머지.
+        #    LLM이 지어낸 목적지(few-shot 복붙 등)는 사용자가 실제로 말한 경우에만 수용(그라운딩).
         plan = _apply_message(plan, latest)
+        turn = await self._converse(schema, plan, pet_size)
+        slots = _ground_slots(turn.slots, schema)
+        plan = _merge_slots(plan, slots, latest)
         stage = plan.next_stage()
 
-        # 2) 아직 물을 게 남았으면 질문 + 빠른 선택칩만 돌려준다(코스 미생성).
+        # 2) 아직 필수 슬롯이 비면 LLM 답변(없으면 결정형 질문) + 빠른 선택칩만 돌려준다(코스 미생성).
         if stage is not PlannerStage.READY:
-            reply, suggestions = _ask(stage, plan)
+            if turn.reply:
+                reply, suggestions = turn.reply, turn.suggestions
+            else:
+                reply, suggestions = _ask(stage, plan)
             return RouteChatResponse(reply=reply, plan=_to_plan_dto(plan), suggestions=suggestions)
 
-        # 3) 슬롯이 다 찼으면 코스를 생성한다(이동수단·숙박 분기 반영).
+        # 3) 필수 슬롯이 찼으면 코스를 생성한다(이동수단·숙박·숙소·이동성향 반영).
         course = await self._build_course(plan, pet_size, schema.pet_breed, schema.pet_traits)
         reply = _ready_reply(plan, course)
         return RouteChatResponse(reply=reply, plan=_to_plan_dto(plan), suggestions=[], course=course)
+
+    async def _converse(self, schema: RouteChatSchema, plan: TripPlan, pet_size: PetSize) -> ConversationTurn:
+        """LLM 주도 대화 호출 — 실패하면 빈 턴(결정형 폴백)을 돌려준다."""
+        pet_profile = {"breed": schema.pet_breed, "size": pet_size.value, "traits": schema.pet_traits}
+        known = {
+            "origin": plan.origin, "destination": plan.destination,
+            "transport": plan.transport.value if plan.transport is not TransportMode.UNSET else None,
+            "departure_time": plan.departure_time,
+            "lodging": plan.lodging.value if plan.lodging is not LodgingOption.UNSET else None,
+            "nights": plan.nights or None,
+            "lodging_pref": plan.lodging_pref, "interests": plan.interests, "pet_mobility": plan.pet_mobility,
+        }
+        messages = [ChatMessage(role=m.role, content=m.content) for m in schema.messages]
+        try:
+            return await self.agent.converse(messages, pet_profile, known)
+        except Exception as e:  # noqa: BLE001 — 대화 실패 시 결정형 폴백(서비스 유지)
+            logger.warning("[RoutePlannerInteractor] converse 실패 → 결정형 폴백 | %s", e)
+            return ConversationTurn()
 
     async def recommend(self, schema: RouteRecommendSchema) -> RouteChatResponse:
         """현재 코스를 분석해 대화형 추천을 돌려준다 — 코스는 재생성하지 않고(course=None)
@@ -122,41 +167,46 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
     async def _build_course(
         self, plan: TripPlan, pet_size: PetSize, pet_breed, pet_traits
     ) -> RoutePlanResponse:
-        """확정된 TripPlan으로 전주 코스 + (숙박 시)숙소 + (자차 시)경유지를 조립한다.
+        """확정된 TripPlan으로 코스를 조립한다 — 숙소를 동선 중심에 두고 여행 리듬으로 채운다.
 
-        코스(LLM)·숙소·경유지·코호트 인기도는 서로 독립이므로 동시에 조회한다(병렬화).
+        코스 후보(LLM)·버킷·숙소·경유지·코호트 인기도는 서로 독립이므로 동시에 조회(병렬화).
+        숙소가 정해지면 그 좌표를 앵커로 삼아 하루 동선을 숙소 주변으로 모은다(가이드: 숙소 기준 거리).
         """
         region = plan.destination or "전주"
         # 박 수 → 일수(N박이면 N+1일). 당일치기는 1일.
         days = plan.nights + 1 if plan.lodging is LodgingOption.OVERNIGHT else 1
         brief = CourseBrief(region=region, days=days, pet_size=pet_size, pet_breed=pet_breed, transport=plan.transport)
+        # 더위 취약견이거나 도보 위주 성향이면 하루를 더 여유롭게(활동 수 축소).
+        relaxed = _is_heat_sensitive(pet_traits) or _prefers_walking(plan.pet_mobility)
 
-        async def _lodging_task() -> list[LodgingDto]:
+        async def _lodging_task() -> list[PetFriendlyPlace]:
             if plan.lodging is not LodgingOption.OVERNIGHT:
                 return []
-            return [_to_lodging_dto(p) for p in await self.lodging.find_lodging(region, pet_size)]
+            return await self.lodging.find_lodging(region, pet_size)
 
         async def _stopover_task() -> list[StopoverDto]:
             if plan.transport is not TransportMode.CAR:
                 return []
             return [_to_stopover_dto(p) for p in await self.legs.stopovers(plan.origin, region, pet_size)]
 
-        agent_plan, lodging, stopovers, recommendations = await asyncio.gather(
+        agent_plan, lodging_places, stopovers, recommendations, buckets = await asyncio.gather(
             self.agent.plan(brief),
             _lodging_task(),
             _stopover_task(),
             self.cohort.recommend(Cohort(size=pet_size), action_type="visit", limit=500),
+            self.agent.find_buckets(region, pet_size, plan.transport),
         )
 
-        # 이동수단별 도착 지점에서 동선을 시작 — KTX 전주역 / 버스 전주터미널 / 자차 한옥마을(주차).
-        # "내려서 첫 코스"가 자연스럽도록 도착점 최근접 순으로 재정렬(에이전트 선택은 유지, 순서만 조정).
-        start = _ARRIVAL_BY_TRANSPORT.get(plan.transport)
-        if start is not None and len(agent_plan.stops) > 1:
-            reordered = self._order_nearest(start, agent_plan.stops)
-            agent_plan = AgentCoursePlan(stops=reordered, narrative=agent_plan.narrative, trails=agent_plan.trails)
+        # 대표 숙소 선택(취향·위치 키워드 매칭, 없으면 첫 번째) → 동선 앵커. 숙소 없으면 도착점.
+        primary = _pick_primary_lodging(lodging_places, plan.lodging_pref)
+        anchor = primary.coordinate if primary else arrival_point(region, plan.transport)
+        lodging = _order_lodging(lodging_places, primary, days)
 
+        # 출발시각(미지정이면 오전 9시 가정)·이동수단으로 일자별 리듬 블록을 계산.
+        schedule = meal_schedule(plan.transport, plan.departure_time or "09:00", days, heat_sensitive=relaxed)
         return await self._assemble_course(
-            region, pet_size, agent_plan, pet_traits, lodging, stopovers, recommendations
+            region, pet_size, agent_plan, pet_traits, lodging, stopovers, recommendations,
+            schedule=schedule, transport=plan.transport, buckets=buckets, anchor=anchor,
         )
 
     async def optimize(self, schema: RouteOptimizeSchema) -> RoutePlanResponse:
@@ -194,6 +244,71 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
             cur = Coordinate(nxt.latitude, nxt.longitude)
         return ordered
 
+    async def swap(self, schema: SwapStopSchema) -> SwapAlternativesResponse:
+        """대상 정류장 자리에 갈 같은 종류의 다른 펫동반 후보를 거리순으로 추천한다('더 멀리'=offset 증가)."""
+        pet_size = PetSize.from_raw(schema.pet_size)
+        kind = schema.kind or _stop_kind(schema.stop_category)
+        near = Coordinate(schema.stop_lat, schema.stop_lng)
+        exclude = set(schema.exclude_names) | {schema.stop_name}
+        limit = 4
+        # 숙소 스왑은 펫 동반 숙소 풀(LodgingPort)에서, 그 외(카페/문화/야외)는 시설 풀에서 고른다.
+        # 둘 다 펫 동반 데이터만 쓰므로 동반 불가한 곳은 후보에 오르지 않는다. 한 곳 더 받아 has_more 판정.
+        if kind == "lodging":
+            picks = await self._lodging_alternatives(
+                schema.region, pet_size, near, exclude, schema.offset, limit + 1,
+            )
+        else:
+            picks = await self.agent.find_alternatives(
+                schema.region, pet_size, kind, near, exclude, schema.offset, limit + 1,
+            )
+        has_more = len(picks) > limit
+        picks = picks[:limit]
+        is_lodging = kind == "lodging"
+        alts = [
+            AlternativeDto(
+                name=p.name,
+                category=p.category,
+                latitude=p.latitude,
+                longitude=p.longitude,
+                reason=_lodging_reason() if is_lodging else _stop_reason(p.category, schema.pet_traits),
+                distance_km=round(near.distance_km_to(Coordinate(p.latitude, p.longitude)), 1),
+            )
+            for p in picks
+        ]
+        label = _KIND_LABEL.get(kind, "곳")
+        verb = "묵을" if is_lodging else "갈"
+        if alts:
+            more = " 마음에 안 들면 조금 더 멀리도 찾아볼게요." if has_more else ""
+            reply = f"'{schema.stop_name}' 대신 {verb} 만한 {label} {len(alts)}곳이에요.{more}"
+        else:
+            reply = f"'{schema.stop_name}' 근처에서 바꿀 만한 {label}를 더 찾지 못했어요."
+        logger.info(
+            "[RoutePlannerInteractor] swap | target=%s kind=%s offset=%d → %d곳(more=%s)",
+            schema.stop_name, kind, schema.offset, len(alts), has_more,
+        )
+        return SwapAlternativesResponse(
+            reply=reply,
+            target_name=schema.stop_name,
+            alternatives=alts,
+            next_offset=schema.offset + limit,
+            has_more=has_more,
+        )
+
+    async def _lodging_alternatives(
+        self, region: str, pet_size: PetSize, near: Coordinate,
+        exclude: set[str], offset: int, limit: int,
+    ) -> list[PlannedStop]:
+        """펫 동반 숙소 풀에서 near 기준 거리순으로 골라 offset 페이지를 반환(숙소 스왑용)."""
+        pool = await self.lodging.find_lodging(region, pet_size)
+        ranked = sorted(
+            (p for p in pool if p.name not in exclude),
+            key=lambda p: near.distance_km_to(p.coordinate),
+        )
+        return [
+            PlannedStop(p.id, p.name, p.category, p.coordinate.latitude, p.coordinate.longitude)
+            for p in ranked[offset: offset + limit]
+        ]
+
     async def _assemble_course(
         self,
         region: str,
@@ -203,50 +318,157 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
         lodging: list[LodgingDto] | None = None,
         stopovers: list[StopoverDto] | None = None,
         recommendations=None,
+        schedule: list[list[tuple[TimeSlot, str, SlotKind]]] | None = None,
+        transport: TransportMode = TransportMode.UNSET,
+        buckets: CourseBuckets | None = None,
+        anchor: Coordinate | None = None,
     ) -> RoutePlanResponse:
         """에이전트 동선 계획 → 응답 DTO(이동거리·닮은친구%·추천이유·출처). plan_route·chat 공용.
 
-        recommendations(코호트 인기도)를 미리 받으면 재조회하지 않는다(병렬 호출 최적화).
+        schedule(일자별 여행 리듬)가 있으면 슬롯 성격(식당/카페/명소/문화)대로 후보를 채워
+        "탐방 일색" 대신 식당→카페→명소 리듬을 만든다. 매일 숙소(anchor)에서 가까운 순으로 모은다.
+        schedule이 없으면(optimize 등) 단일 블록으로 정류장만 나열한다(기존 동작 유지).
         """
-        # 직전 정류장으로부터의 이동 거리(km). 첫 정류장은 0.
-        coords = [Coordinate(s.latitude, s.longitude) for s in plan.stops]
-        prev_km = [0.0] + [round(coords[i - 1].distance_km_to(coords[i]), 2) for i in range(1, len(coords))]
-
-        # 닮은친구% — 같은 크기 코호트가 시설에 남긴 방문 인기도. 기록이 있으면 실측,
-        # 없으면 순서 기반 보수 추정(데이터가 쌓일수록 실측으로 수렴).
         if recommendations is None:
             recommendations = await self.cohort.recommend(Cohort(size=pet_size), action_type="visit", limit=500)
         score_by_facility = {r.facility_id: r.score for r in recommendations}
         max_score = max(score_by_facility.values(), default=1)
-        # 닮은친구% — 같은 크기 코호트의 실제 방문 기록이 있을 때만 산출. 기록이 없으면 0
-        # (UI 미표기). 데이터 없는 곳에 가짜 내림차순 숫자를 붙이지 않는다(실데이터 원칙).
-        similarities = [
-            min(98, round(62 + score_by_facility[s.id] / max_score * 36))
-            if score_by_facility.get(s.id)
-            else 0
-            for s in plan.stops
-        ]
 
-        stops = [
-            RouteStopDto(
-                i + 1, s.name, s.category, s.latitude, s.longitude, prev_km[i], similarities[i],
-                reason=_stop_reason(s.category, pet_traits, score_by_facility.get(s.id, 0)),
-                source=_SOURCE_TAG,
-            )
-            for i, s in enumerate(plan.stops)
-        ]
-        total_km = round(sum(prev_km), 2)
-        return RoutePlanResponse(
-            region=region,
-            pet_size=pet_size.value,
-            stop_count=len(stops),
-            total_distance_km=total_km,
-            summary=plan.narrative,
-            stops=stops,
-            recommended_trails=plan.trails,
-            lodging=lodging or [],
-            stopovers=stopovers or [],
+        dtos: list[RouteStopDto] = []
+        prev: Coordinate | None = None
+
+        def _emit(name, category, lat, lng, slot, clock, day, is_meal, reason, source,
+                  similarity=0, image_url=None, phone=None, address=None, is_mock=False) -> None:
+            nonlocal prev
+            cur = Coordinate(lat, lng)
+            dist = round(prev.distance_km_to(cur), 2) if prev is not None else 0.0
+            prev = cur
+            dtos.append(RouteStopDto(
+                len(dtos) + 1, name, category, lat, lng, dist, similarity,
+                reason=reason, source=source, day=day, time_slot=slot.value, clock=clock,
+                is_meal=is_meal, is_mock=is_mock, image_url=image_url, phone=phone, address=address,
+            ))
+
+        def _sim(facility_id: int) -> int:
+            score = score_by_facility.get(facility_id, 0)
+            return min(98, round(62 + score / max_score * 36)) if score else 0
+
+        def _emit_sight(s: PlannedStop, slot: TimeSlot, clock: str, day: int) -> None:
+            source = _SOURCE_TAG_PARK if s.id >= _PARK_ID_BASE else _SOURCE_TAG
+            _emit(s.name, s.category, s.latitude, s.longitude, slot, clock, day, False,
+                  _stop_reason(s.category, pet_traits, score_by_facility.get(s.id, 0)),
+                  source, similarity=_sim(s.id))
+
+        # ── 단일 블록(optimize/plan_route) — 기존 동작: 정류장만 순서대로 나열 ──
+        if schedule is None:
+            for s in _dedup_stops(plan.stops):
+                _emit_sight(s, TimeSlot.MORNING, "", 1)
+            return _finalize(region, pet_size, plan, dtos, lodging, stopovers)
+
+        # ── 여행 리듬 — 슬롯 성격대로 후보를 채운다 ──
+        buckets = buckets or CourseBuckets()
+        place_pool = await self.pet_place.find_places(region)
+        arrival = arrival_point(region, transport, places=place_pool)
+        # 도시공원(산책)으로 야외 후보 보강 — 숙소(anchor)/도착점 인근에서 가까운 순.
+        park_center = anchor or arrival
+        park_stops: list[PlannedStop] = []
+        if park_center is not None:
+            parks = await self.parks.nearby(park_center, limit=8)
+            park_stops = [
+                PlannedStop(_PARK_ID_BASE + p.id, p.name, p.park_type,
+                            p.coordinate.latitude, p.coordinate.longitude)
+                for p in parks
+            ]
+        # 후보 풀: LLM이 고른 명소를 앞세우고 버킷·공원으로 보강(LLM이 안 고른 카페·공원도 확보).
+        outdoor_pool = _dedup_stops(
+            [s for s in plan.stops if _stop_kind(s.category) == "outdoor"] + buckets.outdoor + park_stops
         )
+        culture_pool = _dedup_stops([s for s in plan.stops if _stop_kind(s.category) == "culture"] + buckets.culture)
+        cafe_pool = list(buckets.cafe)
+        used_ids: set[int] = set()
+        used_meals: set[str] = set()
+        used_names: set[str] = set()  # 코스 전체 이름 중복 방지(식사·활동 풀이 달라 id로는 못 막음)
+
+        # 식사 후보는 입장 판정(entry-verdict)과 같은 pet_place 풀로 교차검증 — 우리 아이를 못 받는
+        # 식당(동반 불가/크기 미허용)은 코스에 넣지 않는다. entry-verdict의 '첫 이름매칭' 규칙을 그대로 따른다.
+        # 실데이터 보강 — pet_place의 '관광' 카테고리(여행지·명소 등)를 야외 후보로 합친다(긴 일정 채움).
+        # 펫케어 상점(동물병원·약국·용품·미용·숙박 등)은 코스에 부적합하므로 화이트리스트로만 받는다.
+        # p.id(실 시설 id)를 그대로 써서 닮은친구%·버킷 중복 제거가 정상 동작한다.
+        sight_stops = [
+            PlannedStop(p.id, p.name, p.category, p.coordinate.latitude, p.coordinate.longitude)
+            for p in place_pool
+            if any(h in (p.category or "") for h in _SIGHT_CATEGORIES)
+        ]
+        outdoor_pool = _dedup_stops(outdoor_pool + sight_stops)
+
+        def _meal_ok(name: str) -> bool:
+            p = next((p for p in place_pool if name in p.name), None)
+            return p is not None and p.accommodates(pet_size)
+
+        # 실데이터가 슬롯을 못 채울 때만 쓰는 라벨된 목업 폴백(MVP 전용). ref 인근에 결정적으로 배치.
+        mock_i = 0
+
+        def _emit_mock(pool, ref, slot, clock, day, is_meal) -> None:
+            nonlocal mock_i
+            base = ref or anchor or arrival
+            if base is None:
+                return
+            name, cat = pool[mock_i % len(pool)]
+            rounds = mock_i // len(pool)
+            if rounds:
+                name = f"{name} {rounds + 1}"  # 기본 이름 소진 시 번호로 유일성 보장(빈 슬롯 방지)
+            off = _MOCK_OFFSETS[mock_i % len(_MOCK_OFFSETS)]
+            mock_i += 1
+            if _norm_name(name) in used_names:
+                return
+            used_names.add(_norm_name(name))
+            reason = (
+                f"{slot.label} 식사로 들르기 좋은 펫 동반 예시 장소예요. · MVP 데모용 예시입니다(실데이터 아님)."
+                if is_meal else
+                "체리와 함께 쉬어가기 좋은 펫 동반 예시 장소예요. · MVP 데모용 예시입니다(실데이터 아님)."
+            )
+            _emit(name, cat, base.latitude + off[0], base.longitude + off[1],
+                  slot, clock, day, is_meal, reason, _MOCK_SOURCE, is_mock=True)
+
+        for di, day_blocks in enumerate(schedule, start=1):
+            prev = arrival if di == 1 else (anchor or arrival)  # Day1은 도착점, 이후는 숙소에서 출발
+            culture_today = 0
+            for slot, clock, kind in day_blocks:
+                ref = prev or anchor or arrival
+                if kind is SlotKind.MEAL:
+                    if ref is not None:
+                        # 인근 펫동반 식당 여러 곳 중 입장 판정상 우리 아이를 받는 가장 가까운 곳을 고른다.
+                        cands = await self.restaurants.nearby_meal(ref, frozenset(used_meals), 15, pet_size)
+                        r = next((c for c in cands if _meal_ok(c.name) and _norm_name(c.name) not in used_names), None)
+                        if r is not None:
+                            used_meals.add(r.name)
+                            used_names.add(_norm_name(r.name))
+                            _emit(r.name, r.category, r.coordinate.latitude, r.coordinate.longitude,
+                                  slot, clock, di, True, _meal_reason(r, slot, region), _SOURCE_TAG_RESTAURANT,
+                                  image_url=r.image_url, phone=r.phone, address=r.address)
+                        else:
+                            _emit_mock(_MOCK_MEALS, ref, slot, clock, di, True)  # 실 식당 없음 → 라벨된 예시
+                    continue
+                if kind is SlotKind.CAFE:
+                    pick = _take_nearest(cafe_pool, used_ids, ref, used_names)
+                elif kind is SlotKind.CULTURE:
+                    # 박물관 하루 1개 상한 — 넘으면 야외 명소로 대체해 실내 일색을 막는다.
+                    if culture_today >= 1:
+                        pick = _take_nearest(outdoor_pool, used_ids, ref, used_names)
+                    else:
+                        pick = _take_nearest(culture_pool, used_ids, ref, used_names) or _take_nearest(outdoor_pool, used_ids, ref, used_names)
+                        if pick and _stop_kind(pick.category) == "culture":
+                            culture_today += 1
+                else:  # OUTDOOR
+                    pick = _take_nearest(outdoor_pool, used_ids, ref, used_names) or _take_nearest(culture_pool, used_ids, ref, used_names)
+                if pick is not None:
+                    used_ids.add(pick.id)
+                    used_names.add(_norm_name(pick.name))
+                    _emit_sight(pick, slot, clock, di)
+                else:  # 실데이터 풀 고갈 → 종류에 맞는 라벨된 예시로 채움
+                    _emit_mock(_MOCK_CAFES if kind is SlotKind.CAFE else _MOCK_SIGHTS, ref, slot, clock, di, False)
+
+        return _finalize(region, pet_size, plan, dtos, lodging, stopovers)
 
     async def introduce_myself(self) -> Introduction:
         intro = await self.agent.introduce_myself()
@@ -257,23 +479,195 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
 # ── 대화 상태머신 헬퍼(순수 함수) ──────────────────────────────────────────────────
 _SOURCE_TAG = "한국문화정보원 펫동반 문화시설"
 _SOURCE_TAG_TRAVEL = "한국관광공사 반려동물 동반여행"
+_SOURCE_TAG_RESTAURANT = "전주시 음식점 공공데이터"
+_SOURCE_TAG_PARK = "전국 도시공원 표준데이터"
+# 공원 PlannedStop id 오프셋 — 시설 id(코호트 키)와 겹치지 않게 큰 베이스를 더한다.
+_PARK_ID_BASE = 8_000_000
 
-# 데모는 전주 중심. 대화에서 목적지를 뽑는 최소 힌트(서버 무상태 — 추측은 보수적으로).
-_REGION_HINTS = ("전주", "강릉", "경주", "제주", "여수", "부산", "속초", "통영", "남원", "군산")
+# 실데이터 보강 — pet_place의 '관광' 카테고리만 야외 후보로 받는다(펫케어 상점 제외 화이트리스트).
+_SIGHT_CATEGORIES = (
+    "여행지", "관광", "명소", "공원", "정원", "수목", "산림", "호수", "유원지",
+    "해수욕", "폭포", "계곡", "둘레", "전망", "테마",
+)
 
-# 이동수단별 전주 도착 지점 — 여기서 가까운 순으로 코스를 시작한다(내려서 첫 코스).
-_ARRIVAL_BY_TRANSPORT = {
-    TransportMode.KTX: Coordinate(35.8503, 127.1602),   # 전주역
-    TransportMode.BUS: Coordinate(35.8345, 127.1292),   # 전주고속버스터미널
-    TransportMode.CAR: Coordinate(35.8150, 127.1530),   # 한옥마을(주차 후 시작)
+# 실데이터가 부족한 슬롯을 채우는 MVP 데모용 예시(목업) — 반드시 라벨로 명시한다(실데이터 아님).
+_MOCK_SOURCE = "예시 데이터 · MVP 전용(실데이터 아님)"
+_MOCK_MEALS = [
+    ("멍과 함께 식당", "식당"), ("댕댕이 백반", "식당"), ("반려애(愛) 한상", "식당"),
+    ("펫프렌즈 비스트로", "식당"), ("강아지환영 국수", "식당"), ("우리집 댕댕밥상", "식당"),
+    ("산책길 브런치", "식당"), ("동반 가능 한정식", "식당"),
+]
+_MOCK_CAFES = [
+    ("도그 가든 카페", "카페"), ("멍멍 라운지", "카페"), ("펫테라스 커피", "카페"),
+    ("산책 후 한잔", "카페"), ("바둑이 베이커리카페", "카페"), ("햇살 좋은 펫카페", "카페"),
+]
+_MOCK_SIGHTS = [
+    ("반려동물 산책 정원", "공원"), ("펫 어드벤처 파크", "테마파크"), ("강아지 놀이터 광장", "공원"),
+    ("멍멍 포토존 전망대", "전망대"), ("댕댕 숲길 산책로", "산책로"), ("애견 운동장 들판", "공원"),
+    ("반려견 호숫가 산책로", "산책로"), ("펫 프렌들리 수목원", "수목원"),
+]
+# 목업 좌표 분산용 결정적 오프셋(도 단위 ~수백m) — 지도에서 한 점에 뭉치지 않게.
+_MOCK_OFFSETS = [
+    (0.004, 0.004), (-0.005, 0.003), (0.003, -0.006), (-0.004, -0.004),
+    (0.006, 0.001), (-0.002, 0.006), (0.001, -0.005), (-0.006, -0.002),
+]
+
+
+def _finalize(
+    region: str, pet_size: PetSize, plan: AgentCoursePlan, dtos: list[RouteStopDto],
+    lodging: list[LodgingDto] | None, stopovers: list[StopoverDto] | None,
+) -> RoutePlanResponse:
+    """조립된 정류장 → 최종 응답 DTO(총 이동거리 합산)."""
+    dtos = _dedup_route_dtos(dtos)
+    total_km = round(sum(d.distance_from_prev_km for d in dtos), 2)
+    return RoutePlanResponse(
+        region=region, pet_size=pet_size.value, stop_count=len(dtos),
+        total_distance_km=total_km, summary=plan.narrative, stops=dtos,
+        recommended_trails=plan.trails, lodging=lodging or [], stopovers=stopovers or [],
+    )
+
+
+def _dedup_route_dtos(dtos: list[RouteStopDto]) -> list[RouteStopDto]:
+    """이름 기준 중복 정류장 제거 후 순서·이동거리를 다시 계산한다."""
+    seen: set[str] = set()
+    kept: list[RouteStopDto] = []
+    for d in dtos:
+        key = (d.name or "").strip().replace(" ", "")
+        if key in seen:
+            continue
+        seen.add(key)
+        kept.append(d)
+    if len(kept) == len(dtos):
+        return dtos
+    out: list[RouteStopDto] = []
+    prev: Coordinate | None = None
+    for d in kept:
+        cur = Coordinate(d.latitude, d.longitude)
+        dist = round(prev.distance_km_to(cur), 2) if prev is not None else 0.0
+        prev = cur
+        out.append(RouteStopDto(
+            len(out) + 1, d.name, d.category, d.latitude, d.longitude, dist, d.similarity,
+            reason=d.reason, source=d.source, day=d.day, time_slot=d.time_slot, clock=d.clock,
+            is_meal=d.is_meal, is_mock=d.is_mock, image_url=d.image_url, phone=d.phone, address=d.address,
+        ))
+    return out
+
+
+# 리듬 채움 분류 — 카페/문화(실내)/야외. 레포지토리와 동일 기준(계층 분리 위해 인터랙터에도 둠).
+_CULTURE_HINTS = ("박물관", "미술관", "전시", "문화원", "문예", "공연", "극장", "전당", "회관", "과학관", "유산")
+
+
+def _stop_kind(category: str) -> str:
+    c = category or ""
+    if "카페" in c:
+        return "cafe"
+    if any(h in c for h in _CULTURE_HINTS):
+        return "culture"
+    return "outdoor"
+
+
+# 스왑 추천 멘트용 종류 라벨.
+_KIND_LABEL = {"cafe": "카페", "culture": "문화·전시 장소", "outdoor": "공원·산책 코스", "lodging": "숙소"}
+
+
+def _lodging_reason() -> str:
+    """숙소 스왑 대안의 추천 이유 — 펫 동반 숙소(대형견 체리 동반 가능) 근거 한 줄."""
+    return "반려동물 동반 가능 숙소라 대형견 체리와 함께 묵을 수 있어요(객실 동반 조건·보증금은 예약 시 확인)."
+
+
+def _dedup_stops(stops: list[PlannedStop]) -> list[PlannedStop]:
+    """id·이름 기준 중복 제거(순서 유지) — LLM 선택 + 버킷 합칠 때."""
+    seen_ids: set[int] = set()
+    seen_names: set[str] = set()
+    out: list[PlannedStop] = []
+    for s in stops:
+        name_key = (s.name or "").strip().replace(" ", "")
+        if s.id in seen_ids or name_key in seen_names:
+            continue
+        seen_ids.add(s.id)
+        seen_names.add(name_key)
+        out.append(s)
+    return out
+
+
+def _norm_name(n: str) -> str:
+    """이름 정규화(공백 제거) — 풀이 달라 id로 못 막는 교차 중복을 이름 기준으로 막는다."""
+    return "".join((n or "").split())
+
+
+def _take_nearest(
+    pool: list[PlannedStop], used_ids: set[int], ref: Coordinate | None,
+    used_names: set[str] = frozenset(),
+) -> PlannedStop | None:
+    """후보 풀에서 미사용 중 기준점(ref)에 가장 가까운 정류장 하나(없으면 None).
+
+    used_ids(같은 풀 중복)뿐 아니라 used_names(코스 전체 이름 중복)도 제외한다.
+    """
+    cands = [s for s in pool if s.id not in used_ids and _norm_name(s.name) not in used_names]
+    if not cands:
+        return None
+    if ref is None:
+        return cands[0]
+    return min(cands, key=lambda s: ref.distance_km_to(Coordinate(s.latitude, s.longitude)))
+
+
+# 숙소 취향·위치 키워드 → 숙소명/카테고리 부분일치 동의어.
+_LODGING_KEYWORD_SYNS = {
+    "한옥": ("한옥",), "한옥마을": ("한옥",), "펜션": ("펜션",), "호텔": ("호텔",),
+    "게스트": ("게스트",), "전주역": ("역",), "덕진": ("덕진",),
 }
 
 
+def _pick_primary_lodging(places: list[PetFriendlyPlace], pref: str | None) -> PetFriendlyPlace | None:
+    """대표 숙소 — 취향·위치 키워드와 매칭되는 곳, 없으면 첫 번째."""
+    if not places:
+        return None
+    if pref:
+        kws = [s for kw, syns in _LODGING_KEYWORD_SYNS.items() if kw in pref for s in syns]
+        kws.append(pref)
+        for p in places:
+            text = f"{p.name} {p.category}"
+            if any(k and k in text for k in kws):
+                return p
+    return places[0]
+
+
+def _order_lodging(places: list[PetFriendlyPlace], primary: PetFriendlyPlace | None, days: int) -> list[LodgingDto]:
+    """대표 숙소를 맨 앞에 둔 숙소 DTO 목록(프론트가 날짜별 lodging[d-1]로 사용)."""
+    if not places:
+        return []
+    ordered = ([primary] if primary else []) + [p for p in places if p is not primary]
+    return [_to_lodging_dto(p) for p in ordered]
+
+
+def _is_heat_sensitive(pet_traits: str | None) -> bool:
+    return bool(pet_traits and ("더위" in pet_traits or "heat" in pet_traits.lower()))
+
+
+def _prefers_walking(pet_mobility: str | None) -> bool:
+    """도보 위주 성향 — 차 이동 불편·예민·노견 등 무리 없는 동선을 원하는 신호."""
+    return bool(pet_mobility and any(k in pet_mobility for k in ("도보", "걷", "불편", "예민", "노견", "최소")))
+
+
+def _meal_reason(r: Restaurant, slot: TimeSlot, region: str) -> str:
+    """식사 정류장 한 줄 — 시간대 + 업태 + 펫동반 여부."""
+    base = f"{slot.label} 식사로 들르기 좋은 {region} {r.category}예요."
+    if r.pet_friendly:
+        return base + " 반려동물 동반 가능 매장으로 등록돼 체리와 함께 들어갈 수 있어요."
+    return base + " 테라스·동반 가능 여부는 매장에 확인하세요."
+
+# 데모는 전주 중심이나, 대화에서 목적지를 뽑는 힌트는 전국 주요 여행지로 둔다(시나리오 커버리지).
+# 서울은 출발지 고정값이라 목적지 힌트에서 제외한다(목적지로 오인 방지).
+_REGION_HINTS = (
+    "전주", "강릉", "경주", "제주", "여수", "부산", "속초", "통영", "남원", "군산",
+    "가평", "춘천", "담양", "양평", "포항", "안동", "목포", "순천",
+)
+
+
 def _extract_region(text: str) -> str | None:
-    for h in _REGION_HINTS:
-        if h in text:
-            return h
-    return None
+    # 본문에서 가장 뒤(=가장 최근 언급)에 나온 지역. "전주말고 부산"이면 부산(바꾼 곳)을 고른다.
+    found = [(text.rfind(h), h) for h in _REGION_HINTS if h in text]
+    return max(found)[1] if found else None
 
 
 def _latest_user_message(schema: RouteChatSchema) -> str:
@@ -305,17 +699,85 @@ def _restore_plan(sp) -> TripPlan:
         origin=sp.origin or "서울",
         destination=sp.destination or None,
         transport=_safe_transport(sp.transport),
+        departure_time=getattr(sp, "departure_time", None) or None,
         lodging=_safe_lodging(sp.lodging),
         nights=max(0, sp.nights or 0),
+        lodging_pref=getattr(sp, "lodging_pref", None) or None,
+        interests=getattr(sp, "interests", None) or None,
+        pet_mobility=getattr(sp, "pet_mobility", None) or None,
+    )
+
+
+def _ground_slots(slots: dict, schema: RouteChatSchema) -> dict:
+    """LLM 슬롯 사후 검증 — 사용자가 실제로 말하지 않은 목적지는 버린다(few-shot 복붙·환각 차단).
+
+    목적지는 코스 지역을 좌우하므로 반드시 사용자 발화에 근거해야 한다(약한 모델이 예시의
+    지역명을 베끼는 것을 코드 레벨에서 막는다). 취향·이동성향 등은 요약이라 그대로 둔다.
+    """
+    if not slots:
+        return slots
+    dest = slots.get("destination")
+    if dest:
+        user_text = " ".join(m.content for m in schema.messages if m.role == "user")
+        if str(dest) not in user_text:
+            slots = {k: v for k, v in slots.items() if k != "destination"}
+    return slots
+
+
+def _merge_slots(plan: TripPlan, slots: dict, latest: str = "") -> TripPlan:
+    """LLM이 추출한 슬롯을 빈 슬롯에만 머지한다(이미 정해진 값은 덮어쓰지 않음).
+
+    예외 — 목적지: 사용자가 이번 발화에서 새 목적지를 말했으면 갱신한다(대화 중 변경 허용).
+    `_ground_slots`가 사용자가 실제 말한 목적지만 통과시키고, 여기에 '최신 발화에 등장' 조건을
+    더해 과거 지역 echo로 인한 오염을 막는다(비힌트 도시는 이 LLM 경로로 변경된다).
+    """
+    if not slots:
+        return plan
+    new_dest = slots.get("destination") or None
+    if new_dest and new_dest in latest:
+        destination = new_dest
+    else:
+        destination = plan.destination or new_dest
+    transport = plan.transport
+    if transport is TransportMode.UNSET and slots.get("transport"):
+        transport = _safe_transport(str(slots["transport"]))
+        if transport is TransportMode.UNSET:  # "자차" 같은 자연어면 정규식 추출로 보강
+            transport = TransportMode.from_raw(str(slots["transport"]))
+    departure_time = plan.departure_time or (slots.get("departure_time") or None)
+    lodging = plan.lodging
+    nights = plan.nights
+    if lodging is LodgingOption.UNSET:
+        raw_nights = slots.get("nights")
+        raw_lodging = slots.get("lodging")
+        if raw_nights is not None:
+            try:
+                nights = max(0, int(raw_nights))
+                lodging = LodgingOption.DAYTRIP if nights == 0 else LodgingOption.OVERNIGHT
+            except (TypeError, ValueError):
+                pass
+        elif raw_lodging in ("overnight", "daytrip"):
+            lodging = LodgingOption(raw_lodging)
+            nights = 0 if lodging is LodgingOption.DAYTRIP else max(1, plan.nights)
+    return TripPlan(
+        origin=plan.origin, destination=destination, transport=transport,
+        departure_time=departure_time, lodging=lodging, nights=nights,
+        lodging_pref=plan.lodging_pref or (slots.get("lodging_pref") or None),
+        interests=plan.interests or (slots.get("interests") or None),
+        pet_mobility=plan.pet_mobility or (slots.get("pet_mobility") or None),
     )
 
 
 def _apply_message(plan: TripPlan, latest: str) -> TripPlan:
-    """최신 메시지로 아직 비어 있는 슬롯을 모두 채운다(한 턴에 여러 개 말해도 수용)."""
-    destination = plan.destination or _extract_region(latest)
+    """최신 메시지로 아직 비어 있는 슬롯을 모두 채운다(한 턴에 여러 개 말해도 수용).
+
+    목적지는 예외 — 이번 발화에 지역이 있으면 기존 값을 덮어쓴다(대화 중 목적지 변경 허용).
+    결정형 substring 매칭이라 사용자가 실제로 친 도시만 잡으므로 환각 위험은 없다.
+    """
+    destination = _extract_region(latest) or plan.destination
     transport = plan.transport
     if transport is TransportMode.UNSET:
         transport = TransportMode.from_raw(latest)
+    departure_time = plan.departure_time or departure_time_from_raw(latest)
     lodging = plan.lodging
     nights = plan.nights
     if lodging is LodgingOption.UNSET:
@@ -325,7 +787,7 @@ def _apply_message(plan: TripPlan, latest: str) -> TripPlan:
             lodging = LodgingOption.DAYTRIP if parsed == 0 else LodgingOption.OVERNIGHT
     return TripPlan(
         origin=plan.origin, destination=destination, transport=transport,
-        lodging=lodging, nights=nights,
+        departure_time=departure_time, lodging=lodging, nights=nights,
     )
 
 
@@ -338,6 +800,11 @@ def _ask(stage: PlannerStage, plan: TripPlan) -> tuple[str, list[str]]:
             f"{plan.origin}에서 {plan.destination}까지 어떻게 갈까요?",
             ["KTX", "고속버스", "자차"],
         )
+    if stage is PlannerStage.ASK_DEPARTURE_TIME:
+        return (
+            f"{plan.origin}에서 몇 시에 출발하세요? 도착시간에 맞춰 아침·점심·저녁 코스를 짜드릴게요.",
+            ["오전 7시", "오전 9시", "오전 일찍"],
+        )
     # ASK_LODGING — 몇 박 묵을지는 사용자가 직접 고른다(당일치기 포함).
     return (
         f"{plan.destination}에서 며칠 묵으실 건가요? 당일치기도 가능해요.",
@@ -346,16 +813,32 @@ def _ask(stage: PlannerStage, plan: TripPlan) -> tuple[str, list[str]]:
 
 
 def _ready_reply(plan: TripPlan, course: RoutePlanResponse) -> str:
-    """코스 확정 시 사용자에게 보일 한 마디 — 이동수단·경유지·숙소 맥락 + 코스 요약."""
+    """코스 확정 시 사전 브리핑 — 출발·이동 → 가는 길 배려 → 숙소 체크인 → 스타일 동선 → 수정 안내.
+
+    시나리오 STEP7의 감성 브리핑 구조를 따른다(고정 문구 복붙이 아니라 상태 기반 조립).
+    """
     stay = f"{plan.nights}박 {plan.nights + 1}일" if plan.lodging is LodgingOption.OVERNIGHT else "당일치기"
-    bits = [f"{plan.transport.label}로 {plan.destination}까지 가는 {stay} 일정으로 코스를 짰어요."]
+    bits = [f"{plan.origin}에서 {plan.transport.label}로 출발하는 {stay} {plan.destination} 여행 플랜을 짰어요."]
+
     if plan.transport is TransportMode.CAR and course.stopovers:
         names = ", ".join(s.name for s in course.stopovers[:2])
-        bits.append(f"가는 길엔 {names} 같은 경유지를 넣었어요.")
+        bits.append(f"가는 길엔 {names} 같은 경유지를 넣어 체리가 쉬어갈 수 있게 했어요.")
+
     if plan.lodging is LodgingOption.OVERNIGHT and course.lodging:
-        bits.append(f"체리와 묵을 수 있는 숙소 {len(course.lodging)}곳도 함께 추천했어요.")
-    if course.summary:
-        bits.append(course.summary)
+        lodge = course.lodging[0].name
+        bits.append(f"{plan.destination} 도착 후엔 {lodge}에 먼저 체크인해 체리도 적응할 시간을 두고, 숙소를 중심으로 동선을 짰어요.")
+
+    if _prefers_walking(plan.pet_mobility):
+        bits.append("체리가 차 이동을 힘들어하는 만큼 숙소 반경 도보 위주로 무리 없이 구성했어요.")
+
+    style = plan.interests
+    rhythm = "끼니때 식당, 식사 뒤엔 카페에서 쉬고, 오후엔 명소를 둘러보는 여유로운 리듬"
+    if style:
+        bits.append(f"{style} 위주로 {rhythm}으로 담았어요.")
+    else:
+        bits.append(f"{rhythm}으로 담았어요.")
+
+    bits.append("보시고 빼거나 바꾸고 싶은 코스가 있으면 편하게 말씀해 주세요!")
     return " ".join(b for b in bits if b)
 
 
@@ -364,9 +847,13 @@ def _to_plan_dto(plan: TripPlan) -> TripPlanDto:
         origin=plan.origin,
         destination=plan.destination,
         transport=plan.transport.value,
+        departure_time=plan.departure_time,
         lodging=plan.lodging.value,
         nights=plan.nights,
         stage=plan.next_stage().value,
+        lodging_pref=plan.lodging_pref,
+        interests=plan.interests,
+        pet_mobility=plan.pet_mobility,
     )
 
 
@@ -382,8 +869,20 @@ def _to_stopover_dto(p: PetFriendlyPlace) -> StopoverDto:
     return StopoverDto(
         name=p.name, category=p.category,
         latitude=p.coordinate.latitude, longitude=p.coordinate.longitude,
-        reason="가는 길에 체리와 쉬어가기 좋아요", source=_SOURCE_TAG_TRAVEL,
+        reason=_stopover_reason(p.category, p.name), source=_SOURCE_TAG_TRAVEL,
     )
+
+
+def _stopover_reason(category: str, name: str) -> str:
+    """경유지 한 줄 — 휴게소/공원/문화 등 성격에 맞게(가는 길의 실제 쓸모를 설명)."""
+    text = f"{category or ''} {name or ''}"
+    if "휴게" in text:
+        return "가는 길에 화장실·급수 들르며 체리 배변·다리 풀기 좋은 휴게 포인트예요."
+    if any(k in text for k in ("공원", "호수", "정원", "수목", "둘레", "해변", "숲")):
+        return "탁 트인 야외라 장거리 이동 중 체리가 목줄 산책으로 기분 전환하기 좋아요."
+    if any(k in text for k in ("박물관", "미술관", "전시", "문화", "유적", "사찰")):
+        return "잠깐 들러 둘러보기 좋은 곳이라 이동 중 쉬어가는 코스로 넣었어요."
+    return "가는 길에 잠시 들러 체리와 쉬어가기 좋은 경유지예요."
 
 
 def _stop_reason(category: str, pet_traits: str | None, cohort_visits: int = 0) -> str:

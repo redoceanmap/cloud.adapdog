@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from core.introduction import IntroductionSchema
-from users.adapter.inbound.api.schemas.pet_schema import PetRegisterSchema, PetSchema
+from users.adapter.inbound.api.schemas.pet_schema import (
+    PetRegisterSchema,
+    PetSchema,
+    PetUpdateSchema,
+)
 from users.app.ports.input.pet_use_case import PetUseCase
 from users.dependencies.account_provider import get_current_account
 from users.dependencies.pet_provider import get_pet_use_case
@@ -39,6 +43,29 @@ async def my_pets(
     """내 반려동물 목록(인증 필요)."""
     pets = await use_case.list_by_account(account.id)
     return [PetSchema.from_entity(p) for p in pets]
+
+
+@pet_router.patch("/{pet_id}")
+async def update_pet(
+    pet_id: int,
+    body: PetUpdateSchema,
+    account: Account = Depends(get_current_account),
+    use_case: PetUseCase = Depends(get_pet_use_case),
+) -> PetSchema:
+    """반려동물 프로필 수정 — 사진·특징·이름 등(인증 필요)."""
+    try:
+        pet = await use_case.update_profile(
+            account.id,
+            pet_id,
+            name=body.name,
+            breed=body.breed,
+            photo_url=body.photo_url,
+            features=body.features,
+            birth_year=body.birth_year,
+        )
+    except LookupError:
+        raise HTTPException(status_code=404, detail="반려동물을 찾을 수 없습니다.")
+    return PetSchema.from_entity(pet)
 
 
 @pet_router.get("/myself", tags=["자기소개 (연동 검증)"])

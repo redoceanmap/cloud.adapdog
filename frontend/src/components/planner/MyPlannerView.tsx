@@ -1,71 +1,37 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import PlannerWorkbench from "@/components/planner/PlannerWorkbench";
-import { loadAuthUser } from "@/lib/auth";
-import { verifyAuth } from "@/lib/auth-api";
+import { useAuthSession } from "@/lib/use-auth-session";
 import type { Pet, PlannerCourse } from "@/lib/planner-api";
-import {
-  fetchItineraries,
-  fetchMyPets,
-  fetchRecommendedPlan,
-} from "@/lib/planner-api";
+import { deleteItinerary, fetchItineraries, fetchMyPets } from "@/lib/planner-api";
 
 export default function MyPlannerView() {
   const router = useRouter();
+  const { user, ready } = useAuthSession();
   const [loading, setLoading] = useState(true);
-  const [planLoading, setPlanLoading] = useState(false);
   const [error, setError] = useState("");
-  const [userName, setUserName] = useState("회원");
   const [pet, setPet] = useState<Pet | null>(null);
   const [courses, setCourses] = useState<PlannerCourse[]>([]);
   const [activeCourseId, setActiveCourseId] = useState<number | null>(null);
-  const [isFallback, setIsFallback] = useState(false);
-
-  const loadRecommended = useCallback(async (primaryPet: Pet) => {
-    setPlanLoading(true);
-    setError("");
-    try {
-      const recommended = await fetchRecommendedPlan(primaryPet);
-      setCourses([recommended]);
-      setActiveCourseId(recommended.id);
-      setIsFallback(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "추천 코스를 불러오지 못했습니다.");
-    } finally {
-      setPlanLoading(false);
-    }
-  }, []);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
+    if (!ready) return;
+
     let cancelled = false;
 
     async function load() {
-      const user = loadAuthUser();
       if (!user) {
         setLoading(false);
         router.replace("/login?next=/planner");
         return;
       }
 
-      let authed = false;
       try {
-        authed = await verifyAuth();
-      } catch {
-        authed = false;
-      }
-
-      if (!authed) {
-        setLoading(false);
-        router.replace("/login?next=/planner");
-        return;
-      }
-
-      try {
-        setUserName(user.name);
         const pets = await fetchMyPets();
         if (pets.length === 0) {
           throw new Error("등록된 반려동물이 없습니다. 앱에서 프로필을 먼저 등록해 주세요.");
@@ -81,7 +47,6 @@ export default function MyPlannerView() {
         if (loadedCourses.length > 0) {
           setCourses(loadedCourses);
           setActiveCourseId(loadedCourses[0].id);
-          setIsFallback(false);
         }
       } catch (err) {
         if (!cancelled) {
@@ -98,126 +63,126 @@ export default function MyPlannerView() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [ready, user, router]);
 
   const activeCourse =
     courses.find((course) => course.id === activeCourseId) ?? courses[0] ?? null;
 
+  const handleDeleteCourse = async (courseId: number) => {
+    if (deletingId != null) return;
+    setDeletingId(courseId);
+    try {
+      await deleteItinerary(courseId);
+      setCourses((prev) => {
+        const next = prev.filter((c) => c.id !== courseId);
+        if (activeCourseId === courseId) {
+          setActiveCourseId(next[0]?.id ?? null);
+        }
+        return next;
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "코스를 삭제하지 못했습니다.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-cream pt-24 pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-          <div>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-sm text-brown-light hover:text-sage transition-colors mb-3"
-            >
-              <ArrowLeft className="w-4 h-4" />
+    <div className="planner-page w-full max-w-[1480px]">
+      {loading && (
+        <div
+          className="flex items-center justify-center gap-2 py-24"
+          style={{ color: "var(--pw-muted)" }}
+        >
+          <Loader2 className="h-5 w-5 animate-spin" />
+          플래너 정보를 불러오는 중...
+        </div>
+      )}
+
+      {!loading && error && !pet && (
+        <div className="rounded-2xl border border-red-100 bg-white px-6 py-8 text-center">
+          <p className="mb-4 text-red-500">{error}</p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link href="/login?next=/planner" className="btn-primary inline-flex">
+              다시 로그인
+            </Link>
+            <Link href="/" className="btn-secondary inline-flex">
               홈으로
             </Link>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-brown">내 AI 플래너</h1>
-            <p className="text-brown-light mt-2">
-              앱에서 저장한 코스를 채팅 · 상세 · 지도 한 화면에서 확인하세요.
-            </p>
           </div>
-          {pet && (
-            <div className="bg-white rounded-2xl border border-sage/15 px-4 py-3 text-sm text-brown">
-              <span className="text-brown-light">반려견</span>{" "}
-              <strong>{pet.name}</strong> · {pet.breed}
+        </div>
+      )}
+
+      {!loading && pet && (
+        <div className="space-y-4">
+          {error && (
+            <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+              {error}
             </div>
           )}
-        </div>
 
-        {loading && (
-          <div className="flex items-center justify-center gap-2 text-brown-light py-24">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            플래너 정보를 불러오는 중...
-          </div>
-        )}
-
-        {!loading && error && !activeCourse && (
-          <div className="bg-white rounded-2xl border border-red-100 px-6 py-8 text-center">
-            <p className="text-red-500 mb-4">{error}</p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <Link href="/login?next=/planner" className="btn-primary inline-flex">
-                다시 로그인
-              </Link>
-              <Link href="/" className="btn-secondary inline-flex">
-                홈으로
-              </Link>
+          {courses.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {courses.map((course) => {
+                const active = activeCourseId === course.id;
+                return (
+                  <div key={course.id} className="group relative">
+                    <button
+                      type="button"
+                      onClick={() => setActiveCourseId(course.id)}
+                      className={`rounded-full py-2 pl-4 pr-4 text-sm font-medium transition-all cursor-pointer group-hover:pr-9 ${
+                        active
+                          ? "bg-sage text-white shadow-md shadow-sage/25 hover:brightness-110 hover:-translate-y-0.5"
+                          : "border border-sage/15 bg-white text-brown-light hover:border-sage/40 hover:bg-sage/10 hover:text-sage hover:-translate-y-0.5 hover:shadow-sm"
+                      }`}
+                    >
+                      {course.title}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void handleDeleteCourse(course.id);
+                      }}
+                      disabled={deletingId === course.id}
+                      className={`absolute right-1 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border text-[11px] opacity-0 transition-all group-hover:opacity-100 disabled:opacity-50 ${
+                        active
+                          ? "border-white/40 bg-white/20 text-white hover:bg-white/30"
+                          : "border-red-200 bg-white text-red-500 hover:bg-red-50"
+                      }`}
+                      aria-label={`${course.title} 삭제`}
+                      title="코스 삭제"
+                    >
+                      {deletingId === course.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <X className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
-          </div>
-        )}
+          )}
 
-        {!loading && !activeCourse && pet && !error && (
-          <div className="bg-white rounded-2xl border border-sage/15 px-6 py-10 text-center max-w-lg mx-auto">
-            <Sparkles className="w-10 h-10 text-sage mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-brown mb-2">저장된 코스가 없어요</h2>
-            <p className="text-brown-light text-sm leading-relaxed mb-6">
-              앱 AI 플래너에서 코스를 저장하면 이곳에 표시됩니다.
-              지금은 {pet.name}에게 맞는 추천 코스를 미리 볼 수 있어요.
-            </p>
-            <button
-              type="button"
-              disabled={planLoading}
-              onClick={() => loadRecommended(pet)}
-              className="btn-primary inline-flex disabled:opacity-60"
-            >
-              {planLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  AI가 코스를 짜는 중...
-                </>
-              ) : (
-                "추천 코스 불러오기"
-              )}
-            </button>
-            {planLoading && (
-              <p className="text-xs text-brown-light mt-4">
-                AI 응답에 30초~1분 정도 걸릴 수 있어요.
-              </p>
-            )}
-          </div>
-        )}
-
-        {!loading && activeCourse && pet && (
-          <div className="space-y-4">
-            {error && (
-              <div className="bg-red-50 border border-red-100 text-red-600 rounded-2xl px-4 py-3 text-sm">
-                {error}
-              </div>
-            )}
-
-            {isFallback && (
-              <div className="bg-sage/10 border border-sage/20 text-sage rounded-2xl px-4 py-3 text-sm">
-                아직 저장된 코스가 없어 {pet.name}에게 맞는 추천 코스를 보여드리고 있어요.
-                앱에서 코스를 저장하면 이곳에 표시됩니다.
-              </div>
-            )}
-
-            {courses.length > 1 && (
-              <div className="flex flex-wrap gap-2">
-                {courses.map((course) => (
-                  <button
-                    key={course.id}
-                    type="button"
-                    onClick={() => setActiveCourseId(course.id)}
-                    className={`text-sm font-medium px-4 py-2 rounded-full transition-all ${
-                      activeCourseId === course.id
-                        ? "bg-sage text-white shadow-md shadow-sage/25"
-                        : "bg-white text-brown-light border border-sage/15 hover:bg-sage/10"
-                    }`}
-                  >
-                    {course.title}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <PlannerWorkbench course={activeCourse} pet={pet} userName={userName} />
-          </div>
-        )}
-      </div>
+          <PlannerWorkbench
+            pet={pet}
+            userName={user?.name ?? "회원"}
+            userEmail={user?.email ?? ""}
+            initialCourse={activeCourse}
+            onCourseSaved={(course) => {
+              setCourses((prev) => {
+                const exists = prev.some((c) => c.id === course.id);
+                if (exists) {
+                  return prev.map((c) => (c.id === course.id ? course : c));
+                }
+                return [course, ...prev];
+              });
+              setActiveCourseId(course.id);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

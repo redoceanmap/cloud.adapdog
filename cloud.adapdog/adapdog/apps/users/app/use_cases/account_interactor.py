@@ -47,12 +47,12 @@ class AccountInteractor(AccountUseCase):
         logger.info("[AccountInteractor] signup | id=%s email=%s", account.id, email)
         return account, self.token_service.issue(account.id)
 
-    async def login(self, email: str, password: str) -> str:
+    async def login(self, email: str, password: str) -> tuple[Account, str]:
         account = await self.repository.find_by_email(email)
         if account is None or not self.hasher.verify(password, account.password_hash):
             raise InvalidCredentialsError(email)
         logger.info("[AccountInteractor] login | id=%s", account.id)
-        return self.token_service.issue(account.id)
+        return account, self.token_service.issue(account.id)
 
     async def authenticate(self, token: str) -> Account:
         account_id = self.token_service.parse(token)

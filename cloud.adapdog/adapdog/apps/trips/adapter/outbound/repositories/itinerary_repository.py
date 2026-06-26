@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import Optional
 
+from trips.app.dtos.itinerary_dto import SaveItineraryInput
 from trips.app.ports.output.itinerary_port import ItineraryPort
 from trips.domain.entities.itinerary_entity import Itinerary, ItineraryStop
 
@@ -44,7 +46,70 @@ class MockItineraryRepository(ItineraryPort):
         ),
     )
 
+    _next_id = 100
+    _saved: list[Itinerary] = []
+    _deleted_ids: set[int] = set()
+
+    def _rows_by_id(self) -> dict[int, Itinerary]:
+        by_id: dict[int, Itinerary] = {}
+        for it in self._DATA:
+            if it.id not in MockItineraryRepository._deleted_ids:
+                by_id[it.id] = it
+        for it in MockItineraryRepository._saved:
+            by_id[it.id] = it
+        return by_id
+
+    def _build_row(self, itinerary_id: int, data: SaveItineraryInput, created_at: str | None = None) -> Itinerary:
+        stops = [
+            ItineraryStop(
+                order=s.order,
+                name=s.name,
+                category=s.category,
+                latitude=s.latitude,
+                longitude=s.longitude,
+            )
+            for s in data.stops
+        ]
+        return Itinerary(
+            id=itinerary_id,
+            pet_id=data.pet_id,
+            title=data.title,
+            region=data.region,
+            prompt_text=data.prompt_text,
+            is_saved=True,
+            created_at=created_at or date.today().isoformat(),
+            stops=stops,
+        )
+
     async def find_itineraries(self, pet_id: Optional[int]) -> list[Itinerary]:
+        rows = list(self._rows_by_id().values())
         if pet_id is not None:
-            return [it for it in self._DATA if it.pet_id == pet_id]
-        return list(self._DATA)
+            return [it for it in rows if it.pet_id == pet_id]
+        return rows
+
+    async def save_itinerary(self, data: SaveItineraryInput) -> Itinerary:
+        MockItineraryRepository._next_id += 1
+        row = self._build_row(MockItineraryRepository._next_id, data)
+        MockItineraryRepository._saved.append(row)
+        return row
+
+    async def update_itinerary(self, itinerary_id: int, data: SaveItineraryInput) -> Itinerary | None:
+        existing = self._rows_by_id().get(itinerary_id)
+        if existing is None:
+            return None
+        row = self._build_row(itinerary_id, data, created_at=existing.created_at)
+        for i, saved in enumerate(MockItineraryRepository._saved):
+            if saved.id == itinerary_id:
+                MockItineraryRepository._saved[i] = row
+                return row
+        MockItineraryRepository._saved.append(row)
+        return row
+
+    async def delete_itinerary(self, itinerary_id: int) -> bool:
+        if itinerary_id not in self._rows_by_id():
+            return False
+        MockItineraryRepository._saved = [
+            row for row in MockItineraryRepository._saved if row.id != itinerary_id
+        ]
+        MockItineraryRepository._deleted_ids.add(itinerary_id)
+        return True

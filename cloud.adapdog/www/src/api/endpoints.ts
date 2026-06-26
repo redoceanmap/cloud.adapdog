@@ -23,11 +23,13 @@ import type {
   RouteChatResponse,
   RoutePlanRequest,
   RoutePlanResponse,
+  SwapAlternativesResponse,
   TripPlan,
   SafetyAlertResult,
   SafetyCheckRequest,
   StampSpot,
   SymptomCheck,
+  SymptomTriageResult,
   VisitedPlace,
   WalkingTrail,
 } from './types';
@@ -87,6 +89,27 @@ export const optimizeRoute = (
     stops,
   });
 
+/** 정류장 스왑 — 특정 자리(같은 종류)의 다른 펫동반 후보를 거리순으로 받는다(더 멀리=offset 증가). */
+export const swapStop = (req: {
+  region?: string;
+  stop_name: string; stop_category: string; stop_lat: number; stop_lng: number;
+  kind?: string | null; exclude_names: string[]; offset?: number;
+  pet_size?: string; pet_breed?: string; pet_traits?: string;
+}) =>
+  apiPost<SwapAlternativesResponse>('/map/route-planner/swap', {
+    region: req.region ?? '전주',
+    stop_name: req.stop_name,
+    stop_category: req.stop_category,
+    stop_lat: req.stop_lat,
+    stop_lng: req.stop_lng,
+    kind: req.kind ?? null,
+    exclude_names: req.exclude_names,
+    offset: req.offset ?? 0,
+    pet_size: req.pet_size ?? 'medium',
+    pet_breed: req.pet_breed ?? null,
+    pet_traits: req.pet_traits ?? null,
+  });
+
 /** C5 입장 판정 — 시설×반려동물 규칙 기반 판정. */
 export const checkEntry = (req: EntryCheckRequest) =>
   apiPost<EntryVerdictResult>('/map/entry-verdict/check', req);
@@ -135,6 +158,16 @@ export const getAudioGuides = (facilityId: number) =>
 /** D6~D9 응급 증상 체크(참고용·진단 아님). */
 export const getSymptomChecks = (petId: number) =>
   apiGet<SymptomCheck[]>(`/care/symptom-check?pet_id=${petId}`);
+
+export const symptomTriage = (
+  messages: { role: string; content: string }[],
+  petBreed = '골든 리트리버', petSize = 'large',
+) =>
+  apiPost<SymptomTriageResult>('/care/symptom-check/triage', {
+    messages,
+    pet_breed: petBreed,
+    pet_size: petSize,
+  });
 
 /** D 안전·위험 알리미 — 지역 날씨 위험도 + 최근접 동물병원. */
 export const checkSafety = (req: SafetyCheckRequest) =>

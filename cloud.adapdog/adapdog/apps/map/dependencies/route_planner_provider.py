@@ -5,7 +5,25 @@ from functools import lru_cache
 
 from fastapi import Depends
 
-from core.config import GEMINI_API_KEY, GEMINI_MODEL, TRAIL_CSV_PATH
+from core.config import (
+    CITY_PARK_CSV_PATH,
+    DATABASE_URL,
+    GEMINI_API_KEY,
+    GEMINI_MODEL,
+    PETPLACE_CSV_PATH,
+    RESTAURANT_BASIC_CSV_PATH,
+    RESTAURANT_IMAGE_CSV_PATH,
+    RESTAURANT_MODEL_CSV_PATH,
+    TRAIL_CSV_PATH,
+)
+from map.adapter.outbound.repositories.city_park_repository import (
+    CsvCityParkRepository,
+    DbCityParkRepository,
+)
+from map.adapter.outbound.repositories.restaurant_repository import (
+    CsvRestaurantRepository,
+    DbRestaurantRepository,
+)
 from map.adapter.outbound.repositories.route_planner_repository import (
     CsvTrailRepository,
     LodgingRepository,
@@ -15,6 +33,8 @@ from map.adapter.outbound.repositories.route_planner_repository import (
 from map.app.ports.input.cohort_recommendation_use_case import CohortRecommendationUseCase
 from map.app.ports.input.pet_place_use_case import PetPlaceUseCase
 from map.app.ports.input.route_planner_use_case import RoutePlannerUseCase
+from map.app.ports.output.city_park_port import CityParkPort
+from map.app.ports.output.restaurant_port import RestaurantPort
 from map.app.ports.output.route_planner_port import (
     LodgingPort,
     RouteLegsPort,
@@ -63,10 +83,43 @@ def get_route_legs_port() -> RouteLegsPort:
     return RouteLegsRepository()
 
 
+@lru_cache(maxsize=1)
+def get_restaurant_port() -> RestaurantPort:
+    """DB 있으면 3NF DB(restaurant) 우선 + restaurant 테이블이 비면 CSV 폴백. 둘 다 싱글톤(재파싱 방지)."""
+    csv = CsvRestaurantRepository(
+        basic_csv=RESTAURANT_BASIC_CSV_PATH,
+        image_csv=RESTAURANT_IMAGE_CSV_PATH,
+        petplace_csv=PETPLACE_CSV_PATH,
+        model_csv=RESTAURANT_MODEL_CSV_PATH,
+    )
+    if DATABASE_URL:
+        logger.info("[provider] restaurant: 3NF DB 사용(+CSV 폴백)")
+        return DbRestaurantRepository(csv_fallback=csv)
+    logger.info("[provider] restaurant: CSV 직접 사용")
+    return csv
+
+
+@lru_cache(maxsize=1)
+def get_city_park_port() -> CityParkPort:
+    """DB 있으면 3NF DB(city_park) 우선 + 테이블이 비면 CSV 폴백. 둘 다 싱글톤(재파싱 방지)."""
+    csv = CsvCityParkRepository(csv_path=CITY_PARK_CSV_PATH)
+    if DATABASE_URL:
+        logger.info("[provider] city_park: 3NF DB 사용(+CSV 폴백)")
+        return DbCityParkRepository(csv_fallback=csv)
+    logger.info("[provider] city_park: CSV 직접 사용")
+    return csv
+
+
 def get_route_planner_use_case(
     agent: RoutePlannerAgentPort = Depends(get_route_planner_agent),
     cohort: CohortRecommendationUseCase = Depends(get_cohort_recommendation_use_case),
     lodging: LodgingPort = Depends(get_lodging_port),
     legs: RouteLegsPort = Depends(get_route_legs_port),
+    restaurants: RestaurantPort = Depends(get_restaurant_port),
+    parks: CityParkPort = Depends(get_city_park_port),
+    pet_place: PetPlaceUseCase = Depends(get_pet_place_use_case),
 ) -> RoutePlannerUseCase:
-    return RoutePlannerInteractor(agent=agent, cohort=cohort, lodging=lodging, legs=legs)
+    return RoutePlannerInteractor(
+        agent=agent, cohort=cohort, lodging=lodging, legs=legs,
+        restaurants=restaurants, parks=parks, pet_place=pet_place,
+    )

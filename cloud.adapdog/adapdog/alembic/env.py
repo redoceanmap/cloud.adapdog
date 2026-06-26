@@ -28,13 +28,28 @@ if config.config_file_name is not None:
 from core.database.base import Base
 
 # strict fractal: 슬라이스마다 orm 파일이 하나씩 늘어난다.
-# 각 orm 패키지의 모든 모듈을 import 해 Base.metadata 에 테이블을 등록한다.
-for _orm_pkg in ("map.adapter.outbound.orm", "users.adapter.outbound.orm"):
+# 각 컨텍스트 orm 패키지의 모든 모듈을 import 해 Base.metadata 에 테이블을 등록한다.
+# (map·users 만 보면 trips·care 테이블을 autogenerate 가 삭제 대상으로 오탐지하므로 전부 스캔.)
+for _orm_pkg in (
+    "map.adapter.outbound.orm",
+    "users.adapter.outbound.orm",
+    "trips.adapter.outbound.orm",
+    "care.adapter.outbound.orm",
+):
     _pkg = importlib.import_module(_orm_pkg)
     for _mod in pkgutil.iter_modules(_pkg.__path__):
         importlib.import_module(f"{_orm_pkg}.{_mod.name}")
 
 target_metadata = Base.metadata
+
+
+def include_name(name, type_, parent_names):
+    """ORM 모델이 없는 DB 테이블(과거 create_all 잔여·아직 미구현 [제안] 테이블)을
+    autogenerate 가 DROP 대상으로 오탐지하지 않게, metadata 에 있는 테이블만 비교 대상에 둔다.
+    (alembic 이 관리하지 않는 테이블은 그대로 보존 — create_all 병행 구조 대응.)"""
+    if type_ == "table":
+        return name in target_metadata.tables or name == "alembic_version"
+    return True
 
 
 def run_migrations_offline() -> None:
@@ -45,6 +60,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        include_name=include_name,
     )
 
     with context.begin_transaction():
@@ -60,7 +76,11 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            include_name=include_name,
+        )
 
         with context.begin_transaction():
             context.run_migrations()
