@@ -1,0 +1,5026 @@
+[
+ {
+  "id": "1",
+  "name": "Affenpinscher",
+  "weight_metric": "3.2-4.5",
+  "life_span": "12-15",
+  "breed_group": "Toy",
+  "temperament": "Confident, alert, playful, loyal, courageous"
+ },
+ {
+  "id": "2",
+  "name": "Afghan Hound",
+  "weight_metric": "Male: 25-30; Female: 20-25",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Independent, dignified, aloof, loyal, confident"
+ },
+ {
+  "id": "347",
+  "name": "Africanis",
+  "weight_metric": "Male: 25-34; Female: 20-32",
+  "life_span": "10-15",
+  "breed_group": "Primitive",
+  "temperament": "Intelligent, loyal, alert, adaptable, independent"
+ },
+ {
+  "id": "348",
+  "name": "Aidi",
+  "weight_metric": "23-25",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Alert, protective, independent, loyal, courageous, intelligent, energetic"
+ },
+ {
+  "id": "4",
+  "name": "Airedale Terrier",
+  "weight_metric": "Male: 23-32; Female: 18-25",
+  "life_span": "11-14",
+  "breed_group": "Terrier",
+  "temperament": "Confident, intelligent, courageous, alert, energetic, outgoing"
+ },
+ {
+  "id": "675",
+  "name": "Airedoodle",
+  "weight_metric": "Male: 18-32; Female: 18-30",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, energetic, courageous, loyal, friendly, alert"
+ },
+ {
+  "id": "5",
+  "name": "Akbash",
+  "weight_metric": "Male: 41-64; Female: 34-48",
+  "life_span": "10-12",
+  "breed_group": "Guardian",
+  "temperament": "Independent, protective, calm, alert, loyal, intelligent"
+ },
+ {
+  "id": "6",
+  "name": "Akita",
+  "weight_metric": "Male: 45-59; Female: 32-45",
+  "life_span": "10-13",
+  "breed_group": "Working",
+  "temperament": "Courageous, loyal, dignified, independent, protective, alert"
+ },
+ {
+  "id": "349",
+  "name": "Aksaray Malaklisi",
+  "weight_metric": "Male: 55-90; Female: 50-70",
+  "life_span": "8-12",
+  "breed_group": "Working",
+  "temperament": "Protective, loyal, independent, calm, alert, courageous, intelligent"
+ },
+ {
+  "id": "350",
+  "name": "Alano Español",
+  "weight_metric": "Male: 34-40; Female: 30-38",
+  "life_span": "10-14",
+  "breed_group": "Working",
+  "temperament": "Loyal, courageous, protective, intelligent, confident"
+ },
+ {
+  "id": "7",
+  "name": "Alapaha Blue Blood Bulldog",
+  "weight_metric": "Male: 32-41; Female: 25-34",
+  "life_span": "12-13",
+  "breed_group": "Working",
+  "temperament": "Loyal, protective, intelligent, confident, alert"
+ },
+ {
+  "id": "8",
+  "name": "Alaskan Husky",
+  "weight_metric": "Male: 17-27; Female: 16-25",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Energetic, intelligent, work-focused, athletic, friendly, independent"
+ },
+ {
+  "id": "265",
+  "name": "Alaskan Klee Kai",
+  "weight_metric": "Male: 7-10.4; Female: 4.5-8.2",
+  "life_span": null,
+  "breed_group": "Non-Sporting",
+  "temperament": "Alert, intelligent, energetic, loyal, curious, playful"
+ },
+ {
+  "id": "9",
+  "name": "Alaskan Malamute",
+  "weight_metric": "Male: 36-41; Female: 32-36",
+  "life_span": "10-14",
+  "breed_group": "Working",
+  "temperament": "Affectionate, friendly, loyal, playful, intelligent, energetic, outgoing"
+ },
+ {
+  "id": "351",
+  "name": "Alopekis",
+  "weight_metric": "3-7",
+  "life_span": null,
+  "breed_group": "Primitive",
+  "temperament": "Intelligent, alert, loyal, adaptable, energetic, playful"
+ },
+ {
+  "id": "352",
+  "name": "Alpine Dachsbracke",
+  "weight_metric": "15-18",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Intelligent, courageous, loyal, work-focused, energetic"
+ },
+ {
+  "id": "10",
+  "name": "American Bulldog",
+  "weight_metric": "Male: 34-45; Female: 27-36",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Confident, loyal, protective, energetic, affectionate, courageous"
+ },
+ {
+  "id": "11",
+  "name": "American Bully",
+  "weight_metric": "Male: 29-54; Female: 25-45",
+  "life_span": "8-13",
+  "breed_group": "Companion",
+  "temperament": "Confident, gentle, loyal, affectionate, outgoing, eager to please"
+ },
+ {
+  "id": "87",
+  "name": "American Cocker Spaniel",
+  "weight_metric": "Male: 11-14; Female: 9-11",
+  "life_span": "10-14",
+  "breed_group": "Sporting",
+  "temperament": "Gentle, smart, happy, outgoing, affectionate"
+ },
+ {
+  "id": "353",
+  "name": "American English Coonhound",
+  "weight_metric": "Male: 20-30; Female: 18-27",
+  "life_span": "11-12",
+  "breed_group": "Hound",
+  "temperament": "Energetic, friendly, intelligent, alert, work-focused"
+ },
+ {
+  "id": "12",
+  "name": "American Eskimo Dog",
+  "weight_metric": "3-16",
+  "life_span": null,
+  "breed_group": "Non-Sporting",
+  "temperament": "Intelligent, alert, friendly, playful, energetic, eager to please"
+ },
+ {
+  "id": "14",
+  "name": "American Foxhound",
+  "weight_metric": "Male: 29-32; Female: 27-29",
+  "life_span": "11-13",
+  "breed_group": "Hound",
+  "temperament": "Independent, friendly, gentle, energetic, intelligent"
+ },
+ {
+  "id": "266",
+  "name": "American Hairless Terrier",
+  "weight_metric": "5-7",
+  "life_span": null,
+  "breed_group": "Terrier",
+  "temperament": "Alert, energetic, intelligent, friendly, playful, curious"
+ },
+ {
+  "id": "354",
+  "name": "American Leopard Hound",
+  "weight_metric": "Male: 20-34; Female: 16-29",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Intelligent, energetic, loyal, work-focused, protective, athletic"
+ },
+ {
+  "id": "15",
+  "name": "American Pit Bull Terrier",
+  "weight_metric": "Male: 16-27; Female: 14-23",
+  "life_span": "12-16",
+  "breed_group": "Terrier",
+  "temperament": "Confident, intelligent, loyal, affectionate, eager to please, energetic"
+ },
+ {
+  "id": "16",
+  "name": "American Staffordshire Terrier",
+  "weight_metric": "Male: 25-32; Female: 18-25",
+  "life_span": "12-16",
+  "breed_group": "Terrier",
+  "temperament": "Confident, courageous, loyal, intelligent, smart"
+ },
+ {
+  "id": "17",
+  "name": "American Water Spaniel",
+  "weight_metric": "Male: 14-20; Female: 11-18",
+  "life_span": "10-14",
+  "breed_group": "Sporting",
+  "temperament": "Eager to please, intelligent, energetic, alert, happy"
+ },
+ {
+  "id": "355",
+  "name": "Andalusian Terrier",
+  "weight_metric": "Male: 9-12; Female: 8-11",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Intelligent, energetic, alert, loyal, courageous, playful"
+ },
+ {
+  "id": "356",
+  "name": "Anglo-Français de Petite Vénerie",
+  "weight_metric": "16-20",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Energetic, intelligent, alert, loyal, work-focused, devoted"
+ },
+ {
+  "id": "19",
+  "name": "Appenzeller Sennenhund",
+  "weight_metric": "Male: 22-32; Female: 20-28",
+  "life_span": "12-15",
+  "breed_group": "Working",
+  "temperament": "Energetic, intelligent, confident, loyal, alert, work-focused"
+ },
+ {
+  "id": "359",
+  "name": "Argentine Pila",
+  "weight_metric": "4-25",
+  "life_span": "12-15",
+  "breed_group": "Spitz and Primitive Types",
+  "temperament": "Affectionate, alert, playful, gentle, intelligent"
+ },
+ {
+  "id": "358",
+  "name": "Ariégeois",
+  "weight_metric": "Male: 25-30; Female: 22-30",
+  "life_span": "10-14",
+  "breed_group": "Hound",
+  "temperament": "Gentle, calm, intelligent, loyal, affectionate, friendly"
+ },
+ {
+  "id": "357",
+  "name": "Ariège Pointer",
+  "weight_metric": "Male: 25-30; Female: 22-27",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Intelligent, gentle, docile, loyal, work-focused, adaptable"
+ },
+ {
+  "id": "360",
+  "name": "Armant",
+  "weight_metric": "23-29",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Loyal, courageous, intelligent, protective, alert"
+ },
+ {
+  "id": "361",
+  "name": "Armenian Gampr",
+  "weight_metric": "Male: 50-68; Female: 41-59",
+  "life_span": "12-14",
+  "breed_group": "Working",
+  "temperament": "Protective, independent, loyal, calm, intelligent"
+ },
+ {
+  "id": "362",
+  "name": "Artois Hound",
+  "weight_metric": "Male: 25-30; Female: 23-30",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Energetic, loyal, alert, courageous, calm, affectionate"
+ },
+ {
+  "id": "20",
+  "name": "Aussiedoodle",
+  "weight_metric": "Male: 20-32; Female: 16-27",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, energetic, friendly, loyal, affectionate, playful"
+ },
+ {
+  "id": "21",
+  "name": "Australian Cattle Dog",
+  "weight_metric": "16-23",
+  "life_span": "12-16",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, alert, loyal, energetic, courageous"
+ },
+ {
+  "id": "22",
+  "name": "Australian Kelpie",
+  "weight_metric": "Male: 14-21; Female: 12-18",
+  "life_span": "12-16",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, loyal, work-focused, alert"
+ },
+ {
+  "id": "23",
+  "name": "Australian Shepherd",
+  "weight_metric": "Male: 23-29; Female: 18-25",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, work-focused, loyal, devoted, athletic"
+ },
+ {
+  "id": "228",
+  "name": "Australian Silky Terrier",
+  "weight_metric": "3.5-5",
+  "life_span": null,
+  "breed_group": "Toy",
+  "temperament": "Friendly, intelligent, alert, energetic, confident"
+ },
+ {
+  "id": "363",
+  "name": "Australian Stumpy Tail Cattle Dog",
+  "weight_metric": "Male: 16-23; Female: 14.5-20.5",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Loyal, alert, energetic, intelligent, courageous, independent, work-focused"
+ },
+ {
+  "id": "24",
+  "name": "Australian Terrier",
+  "weight_metric": "7-9",
+  "life_span": "11-15",
+  "breed_group": "Terrier",
+  "temperament": "Courageous, alert, friendly, loyal, intelligent"
+ },
+ {
+  "id": "364",
+  "name": "Austrian Black and Tan Hound",
+  "weight_metric": "Male: 22-27; Female: 20-25",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Intelligent, friendly, energetic, work-focused, independent, loyal"
+ },
+ {
+  "id": "365",
+  "name": "Austrian Pinscher",
+  "weight_metric": "12-18",
+  "life_span": "12-14",
+  "breed_group": "Working",
+  "temperament": "Alert, protective, loyal, energetic, confident, intelligent"
+ },
+ {
+  "id": "25",
+  "name": "Azawakh",
+  "weight_metric": "Male: 20-25; Female: 15-20",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Independent, loyal, alert, protective, affectionate, aloof"
+ },
+ {
+  "id": "366",
+  "name": "Bắc Hà",
+  "weight_metric": "Male: 18-25; Female: 16-22",
+  "life_span": "12-15",
+  "breed_group": "Spitz and Primitive Types",
+  "temperament": "Alert, loyal, intelligent, protective, independent"
+ },
+ {
+  "id": "367",
+  "name": "Bakharwal Dog",
+  "weight_metric": "35-60",
+  "life_span": "9-13",
+  "breed_group": "Working",
+  "temperament": "Loyal, protective, intelligent, courageous, independent"
+ },
+ {
+  "id": "368",
+  "name": "Banjara Hound",
+  "weight_metric": "Male: 25-35; Female: 22-30",
+  "life_span": "10-14",
+  "breed_group": "Hound",
+  "temperament": "Independent, loyal, alert, intelligent, courageous"
+ },
+ {
+  "id": "369",
+  "name": "Bankhar Dog",
+  "weight_metric": "Male: 39-57; Female: 32-48",
+  "life_span": "12-15",
+  "breed_group": "Working",
+  "temperament": "Protective, independent, loyal, calm, alert, intelligent"
+ },
+ {
+  "id": "370",
+  "name": "Barak Hound",
+  "weight_metric": "17-25",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Energetic, intelligent, alert, independent, courageous"
+ },
+ {
+  "id": "371",
+  "name": "Barbado da Terceira",
+  "weight_metric": "Male: 25-30; Female: 21-26",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, energetic, docile, playful, courageous, alert"
+ },
+ {
+  "id": "26",
+  "name": "Barbet",
+  "weight_metric": "17-28",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Friendly, intelligent, loyal, playful, athletic, devoted"
+ },
+ {
+  "id": "28",
+  "name": "Basenji",
+  "weight_metric": "Male: 10-12; Female: 9-11",
+  "life_span": null,
+  "breed_group": "Hound",
+  "temperament": "Independent, intelligent, alert, energetic, curious, affectionate"
+ },
+ {
+  "id": "372",
+  "name": "Basque Shepherd Dog",
+  "weight_metric": "Male: 18-36; Female: 17-30",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, energetic, alert, work-focused, devoted"
+ },
+ {
+  "id": "27",
+  "name": "Bassador",
+  "weight_metric": "20-34",
+  "life_span": "10-13",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, loyal, gentle, intelligent, outgoing"
+ },
+ {
+  "id": "373",
+  "name": "Basset Artésien Normand",
+  "weight_metric": "15-20",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Affectionate, calm, gentle, intelligent, friendly"
+ },
+ {
+  "id": "29",
+  "name": "Basset Bleu de Gascogne",
+  "weight_metric": "16-18",
+  "life_span": "10-14",
+  "breed_group": "Hound",
+  "temperament": "Gentle, friendly, alert, loyal, independent"
+ },
+ {
+  "id": "374",
+  "name": "Basset Fauve de Bretagne",
+  "weight_metric": "Male: 12-18; Female: 12-17",
+  "life_span": "11-15",
+  "breed_group": "Hound",
+  "temperament": "Friendly, energetic, intelligent, courageous, alert, happy, outgoing, loyal, affectionate"
+ },
+ {
+  "id": "30",
+  "name": "Basset Hound",
+  "weight_metric": "18-30",
+  "life_span": "12-13",
+  "breed_group": "Hound",
+  "temperament": "Friendly, calm, gentle, loyal, independent, devoted"
+ },
+ {
+  "id": "677",
+  "name": "Bassettoodle",
+  "weight_metric": "Male: 11-32; Female: 9-32",
+  "life_span": "10-14",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, intelligent, gentle, playful, loyal"
+ },
+ {
+  "id": "375",
+  "name": "Bavarian Mountain Hound",
+  "weight_metric": "Male: 20-25; Female: 17-25",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Calm, loyal, intelligent, devoted, courageous, work-focused"
+ },
+ {
+  "id": "31",
+  "name": "Beagle",
+  "weight_metric": "9-14",
+  "life_span": "10-15",
+  "breed_group": "Hound",
+  "temperament": "Friendly, gentle, alert, outgoing, curious, energetic"
+ },
+ {
+  "id": "376",
+  "name": "Beagle-Harrier",
+  "weight_metric": "19-27",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Energetic, intelligent, friendly, courageous, devoted"
+ },
+ {
+  "id": "32",
+  "name": "Bearded Collie",
+  "weight_metric": "20-25",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, playful, affectionate, alert, confident, outgoing"
+ },
+ {
+  "id": "33",
+  "name": "Beauceron",
+  "weight_metric": "32-50",
+  "life_span": "10-12",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, protective, courageous, confident"
+ },
+ {
+  "id": "34",
+  "name": "Bedlington Terrier",
+  "weight_metric": "8-10",
+  "life_span": "11-16",
+  "breed_group": "Terrier",
+  "temperament": "Intelligent, affectionate, energetic, playful, courageous, alert"
+ },
+ {
+  "id": "35",
+  "name": "Belgian Laekenois",
+  "weight_metric": "Male: 25-30; Female: 20-27",
+  "life_span": "10-14",
+  "breed_group": "Herding",
+  "temperament": "Alert, intelligent, protective, loyal, energetic, affectionate"
+ },
+ {
+  "id": "36",
+  "name": "Belgian Malinois",
+  "weight_metric": "Male: 27-36; Female: 18-27",
+  "life_span": null,
+  "breed_group": "Herding",
+  "temperament": "Intelligent, confident, energetic, loyal, alert, work-focused, protective"
+ },
+ {
+  "id": "37",
+  "name": "Belgian Shepherd",
+  "weight_metric": "Male: 25-34; Female: 20-27",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, energetic, alert, protective, work-focused"
+ },
+ {
+  "id": "38",
+  "name": "Belgian Tervuren",
+  "weight_metric": "Male: 25-34; Female: 20-27",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, courageous, alert, loyal, energetic"
+ },
+ {
+  "id": "39",
+  "name": "Bergamasco Sheepdog",
+  "weight_metric": "Male: 32-38; Female: 26-32",
+  "life_span": null,
+  "breed_group": "Herding",
+  "temperament": "Intelligent, independent, loyal, alert, gentle, calm"
+ },
+ {
+  "id": "40",
+  "name": "Berger Picard",
+  "weight_metric": "23-32",
+  "life_span": "12-13",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, energetic, alert, affectionate"
+ },
+ {
+  "id": "649",
+  "name": "Bernedoodle",
+  "weight_metric": "Male: 32-41; Female: 27-36",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, friendly, gentle, playful, affectionate, loyal"
+ },
+ {
+  "id": "41",
+  "name": "Bernese Mountain Dog",
+  "weight_metric": "Male: 36-52; Female: 32-43",
+  "life_span": "7-10",
+  "breed_group": "Working",
+  "temperament": "Calm, gentle, loyal, intelligent, affectionate, good-natured"
+ },
+ {
+  "id": "42",
+  "name": "Bichon Frisé",
+  "weight_metric": "5-8",
+  "life_span": null,
+  "breed_group": "Non-Sporting",
+  "temperament": "Happy, playful, affectionate, intelligent, gentle, energetic"
+ },
+ {
+  "id": "267",
+  "name": "Biewer Terrier",
+  "weight_metric": "1.8-3.6",
+  "life_span": null,
+  "breed_group": "Toy",
+  "temperament": "Friendly, intelligent, playful, devoted, affectionate"
+ },
+ {
+  "id": "377",
+  "name": "Billy",
+  "weight_metric": "Male: 25-33; Female: 23-30",
+  "life_span": "10-12",
+  "breed_group": "Hound",
+  "temperament": "Energetic, intelligent, courageous, gentle, independent"
+ },
+ {
+  "id": "43",
+  "name": "Black and Tan Coonhound",
+  "weight_metric": "29-50",
+  "life_span": "10-12",
+  "breed_group": "Hound",
+  "temperament": "Friendly, outgoing, intelligent, alert, adaptable, easygoing"
+ },
+ {
+  "id": "268",
+  "name": "Black Mouth Cur",
+  "weight_metric": "Male: 18-43; Female: 16-36",
+  "life_span": "12-16",
+  "breed_group": "Hound",
+  "temperament": "Loyal, courageous, intelligent, energetic, protective, work-focused"
+ },
+ {
+  "id": "378",
+  "name": "Black Norwegian Elkhound",
+  "weight_metric": "Male: 20-25; Female: 18-23",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Energetic, courageous, alert, independent, loyal, confident"
+ },
+ {
+  "id": "44",
+  "name": "Black Russian Terrier",
+  "weight_metric": "36-59",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Confident, courageous, intelligent, protective, calm, loyal"
+ },
+ {
+  "id": "45",
+  "name": "Bloodhound",
+  "weight_metric": "Male: 41-50; Female: 36-45",
+  "life_span": "10-12",
+  "breed_group": "Hound",
+  "temperament": "Gentle, friendly, independent, alert, devoted, affectionate"
+ },
+ {
+  "id": "46",
+  "name": "Blue Picardy Spaniel",
+  "weight_metric": "19.5-22.7",
+  "life_span": "10-14",
+  "breed_group": "Sporting",
+  "temperament": "Gentle, intelligent, calm, devoted, affectionate"
+ },
+ {
+  "id": "47",
+  "name": "Bluetick Coonhound",
+  "weight_metric": "Male: 25-36; Female: 20-29",
+  "life_span": "11-12",
+  "breed_group": "Hound",
+  "temperament": "Friendly, intelligent, loyal, devoted, work-focused"
+ },
+ {
+  "id": "48",
+  "name": "Boerboel",
+  "weight_metric": "Male: 68-91; Female: 50-68",
+  "life_span": "9-11",
+  "breed_group": "Working",
+  "temperament": "Confident, intelligent, loyal, protective, calm"
+ },
+ {
+  "id": "379",
+  "name": "Bohemian Shepherd",
+  "weight_metric": "Male: 19-27; Female: 17-25",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, calm, confident, eager to please, energetic, gentle, adaptable"
+ },
+ {
+  "id": "380",
+  "name": "Bohemian Spotted Dog",
+  "weight_metric": "15-20",
+  "life_span": "12-15",
+  "breed_group": "Companion",
+  "temperament": "Friendly, intelligent, adaptable, gentle, energetic"
+ },
+ {
+  "id": "49",
+  "name": "Bolognese",
+  "weight_metric": "2.5-4",
+  "life_span": "12-14",
+  "breed_group": "Toy",
+  "temperament": "Calm, devoted, intelligent, playful, gentle, loyal"
+ },
+ {
+  "id": "50",
+  "name": "Border Collie",
+  "weight_metric": "14-25",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, alert, work-focused, loyal, eager to please"
+ },
+ {
+  "id": "51",
+  "name": "Border Terrier",
+  "weight_metric": "Male: 6-7; Female: 5-6.5",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Affectionate, intelligent, alert, energetic, courageous, adaptable"
+ },
+ {
+  "id": "689",
+  "name": "Bordoodle",
+  "weight_metric": "Male: 16-29; Female: 14-25",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, energetic, loyal, playful, eager to please"
+ },
+ {
+  "id": "52",
+  "name": "Borzoi",
+  "weight_metric": "Male: 34-48; Female: 27-39",
+  "life_span": "9-14",
+  "breed_group": "Hound",
+  "temperament": "Gentle, independent, calm, intelligent, affectionate"
+ },
+ {
+  "id": "53",
+  "name": "Boston Terrier",
+  "weight_metric": "5-11",
+  "life_span": "11-13",
+  "breed_group": "Non-Sporting",
+  "temperament": "Friendly, intelligent, outgoing, playful"
+ },
+ {
+  "id": "381",
+  "name": "Bouvier des Ardennes",
+  "weight_metric": "Male: 27-34; Female: 23-29",
+  "life_span": "10-12",
+  "breed_group": "Herding",
+  "temperament": "Courageous, loyal, intelligent, energetic, work-focused, adaptable"
+ },
+ {
+  "id": "54",
+  "name": "Bouvier des Flandres",
+  "weight_metric": "32-50",
+  "life_span": "10-12",
+  "breed_group": "Herding",
+  "temperament": "Loyal, intelligent, protective, courageous, calm, gentle"
+ },
+ {
+  "id": "55",
+  "name": "Boxer",
+  "weight_metric": "Male: 29-36; Female: 23-29",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Playful, energetic, loyal, intelligent, friendly, alert"
+ },
+ {
+  "id": "666",
+  "name": "Boxerdoodle",
+  "weight_metric": "Male: 27-36; Female: 20-32",
+  "life_span": "10-14",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, playful, energetic, loyal, friendly, affectionate"
+ },
+ {
+  "id": "56",
+  "name": "Boykin Spaniel",
+  "weight_metric": "Male: 14-18; Female: 11-16",
+  "life_span": "10-15",
+  "breed_group": "Sporting",
+  "temperament": "Friendly, energetic, eager to please, intelligent, adaptable"
+ },
+ {
+  "id": "57",
+  "name": "Bracco Italiano",
+  "weight_metric": "25-40",
+  "life_span": "10-14",
+  "breed_group": "Sporting",
+  "temperament": "Gentle, intelligent, affectionate, loyal, calm, docile, adaptable"
+ },
+ {
+  "id": "382",
+  "name": "Braque d'Auvergne",
+  "weight_metric": "Male: 22-30; Female: 20-28",
+  "life_span": "12-15",
+  "breed_group": "Sporting",
+  "temperament": "Gentle, intelligent, affectionate, devoted, work-focused"
+ },
+ {
+  "id": "383",
+  "name": "Braque du Bourbonnais",
+  "weight_metric": "Male: 18-26; Female: 16-24",
+  "life_span": "12-15",
+  "breed_group": "Sporting",
+  "temperament": "Gentle, intelligent, loyal, calm, affectionate, adaptable"
+ },
+ {
+  "id": "384",
+  "name": "Braque Français",
+  "weight_metric": "18-25",
+  "life_span": "12-15",
+  "breed_group": "Sporting",
+  "temperament": "Gentle, intelligent, loyal, affectionate, adaptable"
+ },
+ {
+  "id": "385",
+  "name": "Braque Saint-Germain",
+  "weight_metric": "18-26",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Gentle, intelligent, affectionate, eager to please, loyal"
+ },
+ {
+  "id": "386",
+  "name": "Brazilian Terrier",
+  "weight_metric": "Male: 7-10; Female: 6-10",
+  "life_span": "12-14",
+  "breed_group": "Terrier",
+  "temperament": "Alert, friendly, energetic, intelligent, playful, loyal"
+ },
+ {
+  "id": "58",
+  "name": "Briard",
+  "weight_metric": "Male: 32-45; Female: 23-29",
+  "life_span": "10-12",
+  "breed_group": "Herding",
+  "temperament": "Loyal, intelligent, protective, confident, courageous, devoted"
+ },
+ {
+  "id": "387",
+  "name": "Briquet de Provence",
+  "weight_metric": "Male: 20-25; Female: 18-22",
+  "life_span": "11-14",
+  "breed_group": "Hound",
+  "temperament": "Gentle, intelligent, alert, friendly, devoted, adaptable"
+ },
+ {
+  "id": "388",
+  "name": "Briquet Griffon Vendéen",
+  "weight_metric": "22-24",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Courageous, energetic, independent, friendly, alert, intelligent"
+ },
+ {
+  "id": "59",
+  "name": "Brittany",
+  "weight_metric": "14-18",
+  "life_span": "12-15",
+  "breed_group": "Sporting",
+  "temperament": "Intelligent, energetic, eager to please, friendly, athletic, happy"
+ },
+ {
+  "id": "681",
+  "name": "Brittanydoodle",
+  "weight_metric": "Male: 16-30; Female: 14-25",
+  "life_span": "11-16",
+  "breed_group": "Mixed",
+  "temperament": "Energetic, intelligent, friendly, eager to please, loyal"
+ },
+ {
+  "id": "389",
+  "name": "Broholmer",
+  "weight_metric": "Male: 50-68; Female: 41-59",
+  "life_span": "8-10",
+  "breed_group": "Working",
+  "temperament": "Calm, friendly, confident, protective, loyal, gentle"
+ },
+ {
+  "id": "390",
+  "name": "Bruno Jura Hound",
+  "weight_metric": "Male: 15-22; Female: 15-20",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Independent, alert, intelligent, gentle, work-focused"
+ },
+ {
+  "id": "391",
+  "name": "Bucovina Shepherd Dog",
+  "weight_metric": "Male: 50-70; Female: 45-60",
+  "life_span": "10-14",
+  "breed_group": "Working",
+  "temperament": "Calm, protective, courageous, loyal, independent, devoted"
+ },
+ {
+  "id": "684",
+  "name": "Bugg",
+  "weight_metric": "Male: 7-11; Female: 6-10",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, playful, affectionate, alert, intelligent"
+ },
+ {
+  "id": "392",
+  "name": "Bulgarian Hound",
+  "weight_metric": "Male: 18-25; Female: 16-23",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Alert, energetic, intelligent, loyal, independent, work-focused"
+ },
+ {
+  "id": "393",
+  "name": "Bulgarian Scenthound",
+  "weight_metric": "Male: 20-25; Female: 18-23",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Intelligent, loyal, alert, energetic, work-focused"
+ },
+ {
+  "id": "394",
+  "name": "Bull Arab",
+  "weight_metric": "Male: 32-43; Female: 27-40",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Loyal, intelligent, protective, courageous, energetic"
+ },
+ {
+  "id": "63",
+  "name": "Bulldog",
+  "weight_metric": "Male: 23-25; Female: 18-23",
+  "life_span": "8-10",
+  "breed_group": "Non-Sporting",
+  "temperament": "Friendly, courageous, calm, docile, loyal"
+ },
+ {
+  "id": "64",
+  "name": "Bullmastiff",
+  "weight_metric": "Male: 50-59; Female: 45-54",
+  "life_span": "7-9",
+  "breed_group": "Working",
+  "temperament": "Loyal, protective, calm, courageous, affectionate, confident"
+ },
+ {
+  "id": "687",
+  "name": "Bulloxer",
+  "weight_metric": "Male: 23-36; Female: 23-32",
+  "life_span": "9-14",
+  "breed_group": "Mixed",
+  "temperament": "Loyal, protective, playful, affectionate, courageous, energetic"
+ },
+ {
+  "id": "61",
+  "name": "Bull Terrier",
+  "weight_metric": "23-32",
+  "life_span": "12-13",
+  "breed_group": "Terrier",
+  "temperament": "Playful, courageous, energetic, loyal, mischievous"
+ },
+ {
+  "id": "62",
+  "name": "Bull Terrier (Miniature)",
+  "weight_metric": "9-15",
+  "life_span": "11-13",
+  "breed_group": "Terrier",
+  "temperament": "Playful, energetic, courageous, confident, affectionate, outgoing"
+ },
+ {
+  "id": "395",
+  "name": "Bully Kutta",
+  "weight_metric": "Male: 68-91; Female: 59-77",
+  "life_span": "8-10",
+  "breed_group": "Working",
+  "temperament": "Protective, loyal, courageous, independent, intelligent"
+ },
+ {
+  "id": "396",
+  "name": "Burgos Pointer",
+  "weight_metric": "Male: 25-30; Female: 20-25",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Loyal, calm, intelligent, docile, work-focused"
+ },
+ {
+  "id": "398",
+  "name": "Ca de Bou",
+  "weight_metric": "Male: 35-38; Female: 30-34",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Calm, courageous, loyal, confident, protective"
+ },
+ {
+  "id": "65",
+  "name": "Cairn Terrier",
+  "weight_metric": "Male: 6-7.5; Female: 6-7",
+  "life_span": null,
+  "breed_group": "Terrier",
+  "temperament": "Alert, confident, friendly, intelligent, courageous, energetic"
+ },
+ {
+  "id": "400",
+  "name": "Calupoh",
+  "weight_metric": "Male: 31-45; Female: 27-40",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Loyal, intelligent, alert, calm, protective, confident"
+ },
+ {
+  "id": "397",
+  "name": "Ca Mè Mallorquí",
+  "weight_metric": "Male: 20-25; Female: 16-20",
+  "life_span": "12-14",
+  "breed_group": "Working",
+  "temperament": "Alert, intelligent, energetic, loyal, work-focused"
+ },
+ {
+  "id": "401",
+  "name": "Campeiro Bulldog",
+  "weight_metric": "Male: 35-45; Female: 30-40",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Loyal, protective, courageous, calm, work-focused"
+ },
+ {
+  "id": "66",
+  "name": "Canaan Dog",
+  "weight_metric": "Male: 20-25; Female: 16-20",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Alert, intelligent, loyal, independent, protective, confident"
+ },
+ {
+  "id": "404",
+  "name": "Canadian Eskimo Dog",
+  "weight_metric": "Male: 30-40; Female: 18-30",
+  "life_span": "10-15",
+  "breed_group": "Working",
+  "temperament": "Alert, loyal, intelligent, courageous, independent, work-focused"
+ },
+ {
+  "id": "402",
+  "name": "Can de Chira",
+  "weight_metric": "Male: 16-20; Female: 12-16",
+  "life_span": "11-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, loyal, alert, work-focused"
+ },
+ {
+  "id": "403",
+  "name": "Can de Palleiro",
+  "weight_metric": "Male: 30-35; Female: 25-30",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, protective, work-focused, alert"
+ },
+ {
+  "id": "67",
+  "name": "Cane Corso",
+  "weight_metric": "Male: 45-50; Female: 40-45",
+  "life_span": "9-12",
+  "breed_group": "Working",
+  "temperament": "Confident, protective, intelligent, loyal, affectionate"
+ },
+ {
+  "id": "405",
+  "name": "Cane di Oropa",
+  "weight_metric": "Male: 20-30; Female: 17-27",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Loyal, intelligent, energetic, work-focused, alert, devoted"
+ },
+ {
+  "id": "406",
+  "name": "Cane Paratore",
+  "weight_metric": "Male: 18-30; Female: 18-25",
+  "life_span": "10-15",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, loyal, protective, work-focused, alert"
+ },
+ {
+  "id": "407",
+  "name": "Cantabrian Water Dog",
+  "weight_metric": "Male: 15-23; Female: 12-20",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Loyal, intelligent, work-focused, energetic, alert, devoted"
+ },
+ {
+  "id": "408",
+  "name": "Cão de Gado Transmontano",
+  "weight_metric": "Male: 50-75; Female: 40-60",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Protective, independent, calm, loyal, confident, courageous"
+ },
+ {
+  "id": "399",
+  "name": "Ca Rater Mallorquí",
+  "weight_metric": "Male: 10-15; Female: 8-13",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Alert, energetic, intelligent, loyal, courageous"
+ },
+ {
+  "id": "68",
+  "name": "Cardigan Welsh Corgi",
+  "weight_metric": "Male: 14-17; Female: 11-15",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Affectionate, loyal, intelligent, alert, adaptable"
+ },
+ {
+  "id": "409",
+  "name": "Carea Leonés",
+  "weight_metric": "Male: 23-32; Female: 18-27",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, work-focused, energetic, alert, athletic"
+ },
+ {
+  "id": "410",
+  "name": "Carolina Dog",
+  "weight_metric": "14-25",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Alert, intelligent, independent, loyal, adaptable, gentle"
+ },
+ {
+  "id": "411",
+  "name": "Carpathian Shepherd Dog",
+  "weight_metric": "Male: 35-45; Female: 30-36",
+  "life_span": "12-14",
+  "breed_group": "Working",
+  "temperament": "Loyal, protective, courageous, calm, independent, alert, devoted"
+ },
+ {
+  "id": "412",
+  "name": "Castro Laboreiro Dog",
+  "weight_metric": "Male: 30-40; Female: 25-35",
+  "life_span": "11-13",
+  "breed_group": "Working",
+  "temperament": "Loyal, protective, intelligent, independent, alert, courageous"
+ },
+ {
+  "id": "69",
+  "name": "Catahoula Leopard Dog",
+  "weight_metric": "Male: 29-41; Female: 23-29",
+  "life_span": "10-14",
+  "breed_group": "Herding",
+  "temperament": "Independent, intelligent, loyal, protective, energetic, work-focused"
+ },
+ {
+  "id": "413",
+  "name": "Catalan Sheepdog",
+  "weight_metric": "Male: 20-28; Female: 17-21",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, energetic, protective, courageous"
+ },
+ {
+  "id": "70",
+  "name": "Caucasian Shepherd Dog",
+  "weight_metric": "Male: 50-77; Female: 45-68",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Protective, independent, confident, courageous, alert"
+ },
+ {
+  "id": "269",
+  "name": "Caucasian Shepherd Dog",
+  "weight_metric": "Male: 50-77; Female: 45-68",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Protective, independent, courageous, loyal, confident"
+ },
+ {
+  "id": "71",
+  "name": "Cavalier King Charles Spaniel",
+  "weight_metric": "6-8",
+  "life_span": "12-15",
+  "breed_group": "Toy",
+  "temperament": "Affectionate, gentle, friendly, playful, eager to please, adaptable"
+ },
+ {
+  "id": "72",
+  "name": "Cavapom",
+  "weight_metric": "3-9",
+  "life_span": "12-16",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, affectionate, playful, intelligent, outgoing, alert"
+ },
+ {
+  "id": "73",
+  "name": "Cavapoo",
+  "weight_metric": "5-11",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Affectionate, intelligent, friendly, playful, gentle, outgoing"
+ },
+ {
+  "id": "414",
+  "name": "Central Asian Shepherd Dog",
+  "weight_metric": "Male: 50-80; Female: 40-65",
+  "life_span": "12-15",
+  "breed_group": "Working",
+  "temperament": "Independent, protective, confident, courageous, calm"
+ },
+ {
+  "id": "415",
+  "name": "Český fousek",
+  "weight_metric": "Male: 28-34; Female: 22-28",
+  "life_span": "12-15",
+  "breed_group": "Sporting",
+  "temperament": "Intelligent, loyal, energetic, devoted, eager to please, work-focused"
+ },
+ {
+  "id": "74",
+  "name": "Cesky Terrier",
+  "weight_metric": "6-11",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Calm, gentle, playful, intelligent, loyal, devoted"
+ },
+ {
+  "id": "75",
+  "name": "Chart Polski",
+  "weight_metric": "Male: 28-43; Female: 25-37",
+  "life_span": "10-12",
+  "breed_group": "Hound",
+  "temperament": "Independent, loyal, alert, calm, confident, courageous, protective, intelligent"
+ },
+ {
+  "id": "76",
+  "name": "Chesapeake Bay Retriever",
+  "weight_metric": "Male: 29-36; Female: 25-32",
+  "life_span": "10-13",
+  "breed_group": "Sporting",
+  "temperament": "Intelligent, courageous, loyal, protective, confident"
+ },
+ {
+  "id": "416",
+  "name": "Chien Français Blanc et Noir",
+  "weight_metric": "Male: 30-35; Female: 28-33",
+  "life_span": "10-12",
+  "breed_group": "Hound",
+  "temperament": "Courageous, intelligent, work-focused, independent, loyal"
+ },
+ {
+  "id": "417",
+  "name": "Chien Français Blanc et Orange",
+  "weight_metric": "Male: 28-32; Female: 25-30",
+  "life_span": "10-12",
+  "breed_group": "Hound",
+  "temperament": "Gentle, calm, loyal, intelligent, energetic, work-focused"
+ },
+ {
+  "id": "418",
+  "name": "Chien Français Tricolore",
+  "weight_metric": "Male: 28-35; Female: 25-30",
+  "life_span": "10-12",
+  "breed_group": "Hound",
+  "temperament": "Work-focused, intelligent, energetic, loyal, athletic, alert"
+ },
+ {
+  "id": "77",
+  "name": "Chihuahua",
+  "weight_metric": "1-3",
+  "life_span": null,
+  "breed_group": "Toy",
+  "temperament": "Alert, devoted, intelligent, confident, courageous, lively"
+ },
+ {
+  "id": "419",
+  "name": "Chilean Terrier",
+  "weight_metric": "Male: 6-8; Female: 4-7",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Alert, energetic, loyal, intelligent, adaptable"
+ },
+ {
+  "id": "78",
+  "name": "Chinese Crested",
+  "weight_metric": "3.6-5.4",
+  "life_span": null,
+  "breed_group": "Toy",
+  "temperament": "Affectionate, alert, playful, lively, intelligent, gentle"
+ },
+ {
+  "id": "79",
+  "name": "Chinese Shar-Pei",
+  "weight_metric": "20-27",
+  "life_span": "8-12",
+  "breed_group": "Non-Sporting",
+  "temperament": "Loyal, independent, calm, alert, protective, intelligent"
+ },
+ {
+  "id": "80",
+  "name": "Chinook",
+  "weight_metric": "Male: 25-41; Female: 23-32",
+  "life_span": "12-15",
+  "breed_group": "Working",
+  "temperament": "Intelligent, calm, devoted, friendly, eager to please"
+ },
+ {
+  "id": "664",
+  "name": "Chipoo",
+  "weight_metric": "2-7",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, alert, playful, affectionate, energetic, loyal"
+ },
+ {
+  "id": "420",
+  "name": "Chippiparai",
+  "weight_metric": "Male: 15-22; Female: 12-18",
+  "life_span": "12-15",
+  "breed_group": "Sighthound",
+  "temperament": "Loyal, intelligent, independent, alert, gentle, athletic"
+ },
+ {
+  "id": "657",
+  "name": "Chiweenie",
+  "weight_metric": "2-5",
+  "life_span": "12-16",
+  "breed_group": "Mixed",
+  "temperament": "Loyal, alert, playful, confident, energetic, affectionate"
+ },
+ {
+  "id": "421",
+  "name": "Chongqing Dog",
+  "weight_metric": "Male: 15-25; Female: 12-20",
+  "life_span": "10-13",
+  "breed_group": "Utility",
+  "temperament": "Loyal, protective, alert, confident, independent"
+ },
+ {
+  "id": "654",
+  "name": "Chorkie",
+  "weight_metric": "1.8-4.5",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Alert, loyal, energetic, confident, affectionate, playful, intelligent"
+ },
+ {
+  "id": "422",
+  "name": "Chortai",
+  "weight_metric": "Male: 25-35; Female: 23-32",
+  "life_span": "11-13",
+  "breed_group": "Hound",
+  "temperament": "Independent, intelligent, loyal, athletic, calm"
+ },
+ {
+  "id": "81",
+  "name": "Chow Chow",
+  "weight_metric": "20-32",
+  "life_span": "8-12",
+  "breed_group": "Non-Sporting",
+  "temperament": "Loyal, independent, aloof, alert, calm, protective"
+ },
+ {
+  "id": "82",
+  "name": "Chug",
+  "weight_metric": "4.5-9",
+  "life_span": "10-13",
+  "breed_group": "Mixed",
+  "temperament": "Playful, affectionate, loyal, alert, confident"
+ },
+ {
+  "id": "423",
+  "name": "Chukotka Sled Dog",
+  "weight_metric": "Male: 20-25; Female: 18-22",
+  "life_span": "12-15",
+  "breed_group": "Northern",
+  "temperament": "Hardy, energetic, independent, loyal, alert, work-focused"
+ },
+ {
+  "id": "424",
+  "name": "Cimarrón Uruguayo",
+  "weight_metric": "Male: 38-45; Female: 33-40",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Courageous, intelligent, loyal, protective, calm, confident"
+ },
+ {
+  "id": "83",
+  "name": "Cirneco dell'Etna",
+  "weight_metric": "Male: 10-12; Female: 8-10",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Affectionate, independent, alert, gentle, intelligent"
+ },
+ {
+  "id": "84",
+  "name": "Clumber Spaniel",
+  "weight_metric": "Male: 32-39; Female: 25-32",
+  "life_span": "10-12",
+  "breed_group": "Sporting",
+  "temperament": "Gentle, loyal, calm, intelligent, playful"
+ },
+ {
+  "id": "85",
+  "name": "Cockapoo",
+  "weight_metric": "5-11",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, intelligent, affectionate, playful, outgoing"
+ },
+ {
+  "id": "86",
+  "name": "Cocker Spaniel",
+  "weight_metric": "Male: 11-14; Female: 9-11",
+  "life_span": "10-14",
+  "breed_group": "Sporting",
+  "temperament": "Friendly, affectionate, playful, intelligent, outgoing"
+ },
+ {
+  "id": "425",
+  "name": "Colombian Fino Hound",
+  "weight_metric": "15-25",
+  "life_span": "10-14",
+  "breed_group": "Scent Hound",
+  "temperament": "Affectionate, docile, energetic, intelligent, loyal, work-focused, devoted, alert"
+ },
+ {
+  "id": "426",
+  "name": "Continental Bulldog",
+  "weight_metric": "Male: 23-30; Female: 20-27",
+  "life_span": "10-14",
+  "breed_group": "Non-Sporting",
+  "temperament": "Friendly, confident, calm, alert, adaptable, loyal"
+ },
+ {
+  "id": "678",
+  "name": "Corgipoo",
+  "weight_metric": "5-14",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, friendly, playful, affectionate, energetic, alert"
+ },
+ {
+  "id": "427",
+  "name": "Corsican Dog",
+  "weight_metric": "Male: 15-29; Female: 13-25",
+  "life_span": "10-14",
+  "breed_group": "Herding",
+  "temperament": "Independent, alert, loyal, protective, intelligent"
+ },
+ {
+  "id": "89",
+  "name": "Coton de Tulear",
+  "weight_metric": "Male: 4-7; Female: 3.5-6",
+  "life_span": null,
+  "breed_group": "Non-Sporting",
+  "temperament": "Happy, playful, affectionate, alert, friendly, intelligent, adaptable"
+ },
+ {
+  "id": "428",
+  "name": "Cretan Hound",
+  "weight_metric": "Male: 15-25; Female: 15-23",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Intelligent, independent, alert, energetic, athletic, gentle, affectionate"
+ },
+ {
+  "id": "429",
+  "name": "Croatian Sheepdog",
+  "weight_metric": "13-20",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, alert, energetic, loyal, work-focused, eager to please"
+ },
+ {
+  "id": "90",
+  "name": "Curly-Coated Retriever",
+  "weight_metric": "27-43",
+  "life_span": "10-12",
+  "breed_group": "Sporting",
+  "temperament": "Confident, intelligent, independent, loyal, energetic"
+ },
+ {
+  "id": "270",
+  "name": "Czechoslovakian Wolfdog",
+  "weight_metric": "Male: 25-34; Female: 20-27",
+  "life_span": "12-16",
+  "breed_group": "Working",
+  "temperament": "Loyal, intelligent, energetic, courageous, alert, independent"
+ },
+ {
+  "id": "91",
+  "name": "Dachshund",
+  "weight_metric": "7-14.5",
+  "life_span": "12-16",
+  "breed_group": "Hound",
+  "temperament": "Courageous, intelligent, independent, alert, playful, devoted"
+ },
+ {
+  "id": "669",
+  "name": "Dalmadoodle",
+  "weight_metric": "Male: 20-32; Female: 20-29",
+  "life_span": "11-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, energetic, friendly, loyal, alert"
+ },
+ {
+  "id": "92",
+  "name": "Dalmatian",
+  "weight_metric": "Male: 25-32; Female: 20-27",
+  "life_span": "11-13",
+  "breed_group": "Non-Sporting",
+  "temperament": "Energetic, outgoing, intelligent, alert, athletic"
+ },
+ {
+  "id": "93",
+  "name": "Dandie Dinmont Terrier",
+  "weight_metric": "8-11",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Independent, intelligent, loyal, affectionate, confident, gentle"
+ },
+ {
+  "id": "430",
+  "name": "Danish Spitz",
+  "weight_metric": "Male: 12-18; Female: 10-15",
+  "life_span": "12-15",
+  "breed_group": "Non-Sporting",
+  "temperament": "Friendly, alert, intelligent, energetic, loyal"
+ },
+ {
+  "id": "431",
+  "name": "Danish-Swedish Farmdog",
+  "weight_metric": "7-11",
+  "life_span": "11-15",
+  "breed_group": "Terrier",
+  "temperament": "Alert, friendly, energetic, intelligent, adaptable, eager to please"
+ },
+ {
+  "id": "432",
+  "name": "Denmark Feist",
+  "weight_metric": "Male: 9-16; Female: 7-11",
+  "life_span": "12-18",
+  "breed_group": "Scenthound",
+  "temperament": "Energetic, alert, intelligent, courageous, loyal"
+ },
+ {
+  "id": "433",
+  "name": "Dikkulak",
+  "weight_metric": "Male: 9-14; Female: 8-13",
+  "life_span": "12-16",
+  "breed_group": "Sighthound",
+  "temperament": "Alert, energetic, loyal, intelligent"
+ },
+ {
+  "id": "434",
+  "name": "Dingo",
+  "weight_metric": "Male: 13-20; Female: 11-18",
+  "life_span": "10-15",
+  "breed_group": "Primitive/Wild Canid",
+  "temperament": "Independent, alert, intelligent, adaptable"
+ },
+ {
+  "id": "94",
+  "name": "Doberman Pinscher",
+  "weight_metric": "Male: 34-45; Female: 27-41",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Intelligent, alert, loyal, energetic, confident"
+ },
+ {
+  "id": "95",
+  "name": "Dogo Argentino",
+  "weight_metric": "Male: 40-45; Female: 40-43",
+  "life_span": "9-15",
+  "breed_group": "Working",
+  "temperament": "Courageous, loyal, protective, confident, intelligent, energetic"
+ },
+ {
+  "id": "435",
+  "name": "Dogo Sardesco",
+  "weight_metric": "Male: 35-50; Female: 30-45",
+  "life_span": "10-13",
+  "breed_group": "Working",
+  "temperament": "Protective, loyal, courageous, intelligent, confident, independent"
+ },
+ {
+  "id": "436",
+  "name": "Dogue Brasileiro",
+  "weight_metric": "Male: 36-50; Female: 31-45",
+  "life_span": "9-12",
+  "breed_group": "Working",
+  "temperament": "Protective, loyal, intelligent, courageous, calm, devoted"
+ },
+ {
+  "id": "96",
+  "name": "Dogue de Bordeaux",
+  "weight_metric": "Male: 50-64; Female: 45-55",
+  "life_span": "5-8",
+  "breed_group": "Working",
+  "temperament": "Loyal, affectionate, courageous, calm, protective, devoted"
+ },
+ {
+  "id": "437",
+  "name": "Donggyeongi",
+  "weight_metric": "Male: 16-18; Female: 14-16",
+  "life_span": "12-15",
+  "breed_group": "Spitz",
+  "temperament": "Friendly, gentle, alert, intelligent, loyal, courageous, adaptable"
+ },
+ {
+  "id": "658",
+  "name": "Dorkie",
+  "weight_metric": "2-5.5",
+  "life_span": "11-16",
+  "breed_group": "Mixed",
+  "temperament": "Affectionate, intelligent, playful, alert, loyal, courageous"
+ },
+ {
+  "id": "97",
+  "name": "Doxiepoo",
+  "weight_metric": "4.5-14",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, playful, affectionate, loyal, alert"
+ },
+ {
+  "id": "438",
+  "name": "Drentse Patrijshond",
+  "weight_metric": "Male: 23-33; Female: 22-25",
+  "life_span": "11-14",
+  "breed_group": "Sporting",
+  "temperament": "Friendly, intelligent, loyal, gentle, energetic, alert"
+ },
+ {
+  "id": "439",
+  "name": "Drever",
+  "weight_metric": "14-18",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Alert, calm, friendly, intelligent, loyal, even-tempered, courageous"
+ },
+ {
+  "id": "440",
+  "name": "Dunker",
+  "weight_metric": "16-22",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Friendly, calm, gentle, intelligent, energetic"
+ },
+ {
+  "id": "98",
+  "name": "Dutch Shepherd",
+  "weight_metric": "Male: 23-34; Female: 19-30",
+  "life_span": "11-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, alert, energetic, athletic, work-focused, independent"
+ },
+ {
+  "id": "441",
+  "name": "Dutch Smoushond",
+  "weight_metric": "Male: 9-11; Female: 8-10",
+  "life_span": "12-15",
+  "breed_group": "Non-Sporting",
+  "temperament": "Friendly, alert, affectionate, playful, lively, intelligent"
+ },
+ {
+  "id": "443",
+  "name": "East European Shepherd",
+  "weight_metric": "Male: 34-50; Female: 29-45",
+  "life_span": "10-14",
+  "breed_group": "Working",
+  "temperament": "Loyal, protective, confident, intelligent, work-focused"
+ },
+ {
+  "id": "442",
+  "name": "East Siberian Laika",
+  "weight_metric": "Male: 18-23; Female: 16-20",
+  "life_span": "12-15",
+  "breed_group": "Spitz and Primitive Types",
+  "temperament": "Independent, alert, intelligent, courageous, loyal, work-focused"
+ },
+ {
+  "id": "444",
+  "name": "Ecuadorian Hairless Dog",
+  "weight_metric": "Male: 11-16; Female: 9-14",
+  "life_span": "10-12",
+  "breed_group": "Unknown",
+  "temperament": "Calm, alert, loyal, gentle, affectionate, intelligent, independent"
+ },
+ {
+  "id": "99",
+  "name": "English Cocker Spaniel",
+  "weight_metric": "Male: 13-15.5; Female: 12-14.5",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Merry, affectionate, intelligent, energetic, playful, gentle, eager to please"
+ },
+ {
+  "id": "100",
+  "name": "English Foxhound",
+  "weight_metric": "Male: 27-34; Female: 27-29",
+  "life_span": "10-13",
+  "breed_group": "Hound",
+  "temperament": "Friendly, energetic, gentle, independent, courageous"
+ },
+ {
+  "id": "164",
+  "name": "English Mastiff",
+  "weight_metric": "Male: 73-104; Female: 54-77",
+  "life_span": "6-10",
+  "breed_group": "Working",
+  "temperament": "Gentle, loyal, protective, calm, courageous"
+ },
+ {
+  "id": "101",
+  "name": "English Setter",
+  "weight_metric": "Male: 29-36; Female: 20-32",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Friendly, gentle, affectionate, intelligent, energetic"
+ },
+ {
+  "id": "102",
+  "name": "English Shepherd",
+  "weight_metric": "Male: 20-27; Female: 16-23",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, energetic, alert, devoted, adaptable"
+ },
+ {
+  "id": "103",
+  "name": "English Springer Spaniel",
+  "weight_metric": "Male: 20-25; Female: 16-23",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Friendly, intelligent, energetic, eager to please, playful"
+ },
+ {
+  "id": "105",
+  "name": "English Toy Terrier (Black & Tan)",
+  "weight_metric": "2.7-3.6",
+  "life_span": "12-13",
+  "breed_group": "Toy",
+  "temperament": "Alert, intelligent, loyal, playful"
+ },
+ {
+  "id": "106",
+  "name": "Entlebucher Mountain Dog",
+  "weight_metric": "Male: 23-30; Female: 18-25",
+  "life_span": "11-13",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, loyal, alert, confident, devoted"
+ },
+ {
+  "id": "445",
+  "name": "Erbi Txakur",
+  "weight_metric": "Male: 15-20; Female: 13-18",
+  "life_span": "12-14",
+  "breed_group": "Scent Hound",
+  "temperament": "Intelligent, energetic, alert, loyal, work-focused"
+ },
+ {
+  "id": "679",
+  "name": "Eskapoo",
+  "weight_metric": "Male: 7-11; Female: 6-10",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, friendly, playful, affectionate, alert, energetic"
+ },
+ {
+  "id": "446",
+  "name": "Estonian Hound",
+  "weight_metric": "20-30",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Friendly, energetic, alert, intelligent, calm"
+ },
+ {
+  "id": "447",
+  "name": "Estrela Mountain Dog",
+  "weight_metric": "Male: 40-60; Female: 30-50",
+  "life_span": "10-14",
+  "breed_group": "Working",
+  "temperament": "Loyal, protective, intelligent, calm, courageous, independent"
+ },
+ {
+  "id": "107",
+  "name": "Eurasier",
+  "weight_metric": "Male: 23-32; Female: 18-26",
+  "life_span": "12-14",
+  "breed_group": "Non-Sporting",
+  "temperament": "Calm, confident, loyal, intelligent, gentle, reserved"
+ },
+ {
+  "id": "448",
+  "name": "Faroese Sheepdog",
+  "weight_metric": "Male: 11-20; Female: 10-18",
+  "life_span": "11-15",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, loyal, alert, work-focused, independent"
+ },
+ {
+  "id": "108",
+  "name": "Field Spaniel",
+  "weight_metric": "16-23",
+  "life_span": "12-13",
+  "breed_group": "Sporting",
+  "temperament": "Docile, intelligent, affectionate, gentle, sensitive"
+ },
+ {
+  "id": "109",
+  "name": "Fila Brasileiro",
+  "weight_metric": "Male: 50-82; Female: 40-73",
+  "life_span": "9-11",
+  "breed_group": "Working",
+  "temperament": "Loyal, protective, courageous, devoted, independent"
+ },
+ {
+  "id": "449",
+  "name": "Finnish Hound",
+  "weight_metric": "Male: 20-29; Female: 20-25",
+  "life_span": "11-13",
+  "breed_group": "Hound",
+  "temperament": "Friendly, energetic, independent, alert, intelligent"
+ },
+ {
+  "id": "110",
+  "name": "Finnish Lapphund",
+  "weight_metric": "15-24",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Friendly, alert, intelligent, calm, courageous, loyal, adaptable"
+ },
+ {
+  "id": "111",
+  "name": "Finnish Spitz",
+  "weight_metric": "Male: 11-15; Female: 9-13",
+  "life_span": "12-15",
+  "breed_group": "Non-Sporting",
+  "temperament": "Friendly, alert, intelligent, independent, playful, courageous"
+ },
+ {
+  "id": "112",
+  "name": "Flat-Coated Retriever",
+  "weight_metric": "Male: 27-32; Female: 25-29",
+  "life_span": "8-10",
+  "breed_group": "Sporting",
+  "temperament": "Friendly, outgoing, optimistic, intelligent, energetic, playful, devoted"
+ },
+ {
+  "id": "450",
+  "name": "Florida Cracker Cur",
+  "weight_metric": "Male: 14-25; Female: 11-23",
+  "life_span": "10-14",
+  "breed_group": "Herding",
+  "temperament": "Loyal, intelligent, energetic, protective, work-focused, alert"
+ },
+ {
+  "id": "676",
+  "name": "Foxhoodle",
+  "weight_metric": "Male: 23-32; Female: 18-29",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, energetic, friendly, alert, loyal, playful"
+ },
+ {
+  "id": "113",
+  "name": "French Bulldog",
+  "weight_metric": "7-13",
+  "life_span": "10-12",
+  "breed_group": "Non-Sporting",
+  "temperament": "Affectionate, playful, alert, adaptable, smart"
+ },
+ {
+  "id": "451",
+  "name": "French Spaniel",
+  "weight_metric": "Male: 23-27; Female: 20-27",
+  "life_span": "10-12",
+  "breed_group": "Sporting",
+  "temperament": "Gentle, intelligent, calm, adaptable, eager to please"
+ },
+ {
+  "id": "683",
+  "name": "Frenchton",
+  "weight_metric": "Male: 7-11; Female: 6-10",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, playful, intelligent, affectionate, adaptable"
+ },
+ {
+  "id": "685",
+  "name": "Frug",
+  "weight_metric": "6-13",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Playful, affectionate, outgoing, adaptable, alert, happy"
+ },
+ {
+  "id": "452",
+  "name": "Gascon Saintongeois",
+  "weight_metric": "Male: 30-35; Female: 26-30",
+  "life_span": "11-13",
+  "breed_group": "Hound",
+  "temperament": "Gentle, calm, affectionate, loyal, intelligent, work-focused"
+ },
+ {
+  "id": "453",
+  "name": "Gaucho Sheepdog",
+  "weight_metric": "Male: 20-34; Female: 18-29",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, energetic, protective, alert, calm"
+ },
+ {
+  "id": "454",
+  "name": "Georgian Shepherd",
+  "weight_metric": "Male: 50-70; Female: 41-60",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Protective, independent, loyal, courageous, calm, confident"
+ },
+ {
+  "id": "692",
+  "name": "Gerberian Shepsky",
+  "weight_metric": "Male: 20-41; Female: 16-32",
+  "life_span": "10-13",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, loyal, energetic, alert, protective, independent"
+ },
+ {
+  "id": "455",
+  "name": "German Hound",
+  "weight_metric": "18-25",
+  "life_span": "10-14",
+  "breed_group": "Hound",
+  "temperament": "Intelligent, loyal, energetic, calm, confident"
+ },
+ {
+  "id": "456",
+  "name": "German Longhaired Pointer",
+  "weight_metric": "Male: 25-36; Female: 20-32",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Intelligent, gentle, calm, loyal, eager to please, work-focused"
+ },
+ {
+  "id": "114",
+  "name": "German Pinscher",
+  "weight_metric": "11-20",
+  "life_span": "12-14",
+  "breed_group": "Working",
+  "temperament": "Alert, courageous, intelligent, energetic, confident, loyal"
+ },
+ {
+  "id": "457",
+  "name": "German Roughhaired Pointer",
+  "weight_metric": "Male: 30-35; Female: 26-32",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Intelligent, loyal, energetic, confident, work-focused"
+ },
+ {
+  "id": "115",
+  "name": "German Shepherd",
+  "weight_metric": "Male: 29-41; Female: 23-32",
+  "life_span": "9-13",
+  "breed_group": "Herding",
+  "temperament": "Confident, courageous, intelligent, loyal, protective"
+ },
+ {
+  "id": "690",
+  "name": "German Sheprador",
+  "weight_metric": "Male: 27-41; Female: 25-36",
+  "life_span": "10-13",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, loyal, friendly, energetic, protective, eager to please"
+ },
+ {
+  "id": "116",
+  "name": "German Shorthaired Pointer",
+  "weight_metric": "Male: 25-32; Female: 20-27",
+  "life_span": "10-12",
+  "breed_group": "Sporting",
+  "temperament": "Friendly, intelligent, energetic, eager to please, athletic"
+ },
+ {
+  "id": "458",
+  "name": "German Spaniel",
+  "weight_metric": "20-25",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Intelligent, loyal, energetic, adaptable, confident, work-focused"
+ },
+ {
+  "id": "117",
+  "name": "German Spitz",
+  "weight_metric": "Male: 3.6-12; Female: 3.6-11",
+  "life_span": null,
+  "breed_group": "Non-Sporting",
+  "temperament": "Alert, intelligent, confident, lively, devoted"
+ },
+ {
+  "id": "118",
+  "name": "German Wirehaired Pointer",
+  "weight_metric": "23-32",
+  "life_span": "12-16",
+  "breed_group": "Sporting",
+  "temperament": "Intelligent, energetic, loyal, affectionate, alert, eager to please"
+ },
+ {
+  "id": "119",
+  "name": "Giant Schnauzer",
+  "weight_metric": "Male: 27-39; Female: 25-34",
+  "life_span": "12-15",
+  "breed_group": "Working",
+  "temperament": "Loyal, intelligent, alert, energetic, courageous, confident"
+ },
+ {
+  "id": "120",
+  "name": "Glen of Imaal Terrier",
+  "weight_metric": "Male: 15-18; Female: 14-18",
+  "life_span": "10-15",
+  "breed_group": "Terrier",
+  "temperament": "Courageous, gentle, loyal, intelligent, spirited"
+ },
+ {
+  "id": "693",
+  "name": "Goberian",
+  "weight_metric": "Male: 20-36; Female: 16-32",
+  "life_span": "10-14",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, energetic, intelligent, loyal, outgoing, affectionate"
+ },
+ {
+  "id": "122",
+  "name": "Goldendoodle",
+  "weight_metric": "23-41",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, intelligent, gentle, affectionate, outgoing, playful"
+ },
+ {
+  "id": "688",
+  "name": "Golden Mountain Dog",
+  "weight_metric": "Male: 34-50; Female: 27-41",
+  "life_span": "8-12",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, gentle, intelligent, loyal, calm, affectionate"
+ },
+ {
+  "id": "121",
+  "name": "Golden Retriever",
+  "weight_metric": "Male: 29-34; Female: 25-29",
+  "life_span": "10-12",
+  "breed_group": "Sporting",
+  "temperament": "Friendly, intelligent, devoted, confident, loyal, eager to please"
+ },
+ {
+  "id": "459",
+  "name": "Gończy Polski",
+  "weight_metric": "Male: 25-30; Female: 20-25",
+  "life_span": "10-13",
+  "breed_group": "Hound",
+  "temperament": "Intelligent, courageous, loyal, alert, confident"
+ },
+ {
+  "id": "123",
+  "name": "Gordon Setter",
+  "weight_metric": "Male: 25-36; Female: 20-32",
+  "life_span": "12-13",
+  "breed_group": "Sporting",
+  "temperament": "Confident, loyal, affectionate, intelligent, eager to please, alert"
+ },
+ {
+  "id": "460",
+  "name": "Grand Anglo-Français Blanc et Noir",
+  "weight_metric": "35-40",
+  "life_span": "10-12",
+  "breed_group": "Hound",
+  "temperament": "Energetic, courageous, intelligent, independent, work-focused"
+ },
+ {
+  "id": "461",
+  "name": "Grand Anglo-Français Blanc et Orange",
+  "weight_metric": "30-35",
+  "life_span": "10-12",
+  "breed_group": "Hound",
+  "temperament": "Energetic, loyal, independent, courageous, work-focused"
+ },
+ {
+  "id": "462",
+  "name": "Grand Anglo-Français Tricolore",
+  "weight_metric": "30-35",
+  "life_span": "10-12",
+  "breed_group": "Hound",
+  "temperament": "Energetic, courageous, loyal, work-focused, independent, alert"
+ },
+ {
+  "id": "463",
+  "name": "Grand Basset Griffon Vendéen",
+  "weight_metric": "18-20.5",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Happy, outgoing, independent, intelligent, courageous"
+ },
+ {
+  "id": "464",
+  "name": "Grand Bleu de Gascogne",
+  "weight_metric": "Male: 36-50; Female: 32-50",
+  "life_span": "10-12",
+  "breed_group": "Hound",
+  "temperament": "Gentle, calm, independent, intelligent, loyal, devoted"
+ },
+ {
+  "id": "465",
+  "name": "Grand Griffon Vendéen",
+  "weight_metric": "30-35",
+  "life_span": "10-13",
+  "breed_group": "Hound",
+  "temperament": "Independent, courageous, intelligent, energetic, alert"
+ },
+ {
+  "id": "124",
+  "name": "Great Dane",
+  "weight_metric": "Male: 64-79; Female: 50-64",
+  "life_span": "7-10",
+  "breed_group": "Working",
+  "temperament": "Friendly, gentle, confident, loyal, affectionate"
+ },
+ {
+  "id": "126",
+  "name": "Greater Swiss Mountain Dog",
+  "weight_metric": "Male: 52-64; Female: 39-50",
+  "life_span": "8-11",
+  "breed_group": "Working",
+  "temperament": "Gentle, loyal, confident, alert, friendly"
+ },
+ {
+  "id": "466",
+  "name": "Greek Harehound",
+  "weight_metric": "17-20",
+  "life_span": "10-13",
+  "breed_group": "Hound",
+  "temperament": "Energetic, independent, alert, courageous, intelligent, loyal"
+ },
+ {
+  "id": "467",
+  "name": "Greek Shepherd",
+  "weight_metric": "Male: 40-55; Female: 32-50",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Protective, independent, loyal, courageous, calm"
+ },
+ {
+  "id": "468",
+  "name": "Greenland Dog",
+  "weight_metric": "30-32",
+  "life_span": "10-14",
+  "breed_group": "Working",
+  "temperament": "Independent, energetic, courageous, loyal, athletic, confident"
+ },
+ {
+  "id": "127",
+  "name": "Greyhound",
+  "weight_metric": "Male: 29-32; Female: 27-29",
+  "life_span": "10-13",
+  "breed_group": "Hound",
+  "temperament": "Gentle, calm, intelligent, affectionate, independent"
+ },
+ {
+  "id": "469",
+  "name": "Griffon Bleu de Gascogne",
+  "weight_metric": "18-25",
+  "life_span": "10-12",
+  "breed_group": "Hound",
+  "temperament": "Alert, energetic, independent, courageous, devoted, work-focused"
+ },
+ {
+  "id": "60",
+  "name": "Griffon Bruxellois",
+  "weight_metric": "4-5",
+  "life_span": "12-15",
+  "breed_group": "Toy",
+  "temperament": "Alert, intelligent, loyal, confident"
+ },
+ {
+  "id": "470",
+  "name": "Griffon Fauve de Bretagne",
+  "weight_metric": "Male: 18-23; Female: 16-20",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Courageous, independent, intelligent, energetic, affectionate"
+ },
+ {
+  "id": "471",
+  "name": "Griffon Nivernais",
+  "weight_metric": "Male: 22-25; Female: 20-23",
+  "life_span": "10-14",
+  "breed_group": "Hound",
+  "temperament": "Independent, courageous, energetic, alert, work-focused"
+ },
+ {
+  "id": "472",
+  "name": "Gull Dong",
+  "weight_metric": "Male: 36-64; Female: 36-54",
+  "life_span": "10-13",
+  "breed_group": "Mixed",
+  "temperament": "Protective, courageous, loyal, independent, intelligent"
+ },
+ {
+  "id": "473",
+  "name": "Gull Terrier",
+  "weight_metric": "Male: 25-30; Female: 22-27",
+  "life_span": "10-14",
+  "breed_group": "Terrier",
+  "temperament": "Loyal, courageous, intelligent, protective, independent, energetic, alert"
+ },
+ {
+  "id": "475",
+  "name": "Halden Hound",
+  "weight_metric": "Male: 23-29; Female: 20-26",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Gentle, alert, intelligent, confident, energetic"
+ },
+ {
+  "id": "474",
+  "name": "Hällefors Elkhound",
+  "weight_metric": "Male: 22-30; Female: 20-28",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Courageous, alert, independent, intelligent, loyal"
+ },
+ {
+  "id": "476",
+  "name": "Hamiltonstövare",
+  "weight_metric": "23-34",
+  "life_span": "10-14",
+  "breed_group": "Hound",
+  "temperament": "Friendly, energetic, intelligent, alert, independent"
+ },
+ {
+  "id": "477",
+  "name": "Hanoverian Scenthound",
+  "weight_metric": "36-45",
+  "life_span": "10-14",
+  "breed_group": "Hound",
+  "temperament": "Calm, loyal, determined, independent"
+ },
+ {
+  "id": "129",
+  "name": "Harrier",
+  "weight_metric": "20-27",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Friendly, outgoing, energetic, intelligent, gentle"
+ },
+ {
+  "id": "130",
+  "name": "Havanese",
+  "weight_metric": "3-6",
+  "life_span": null,
+  "breed_group": "Toy",
+  "temperament": "Outgoing, intelligent, friendly, playful, affectionate, adaptable"
+ },
+ {
+  "id": "661",
+  "name": "Havapoo",
+  "weight_metric": "1.8-5.9",
+  "life_span": "12-16",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, intelligent, playful, affectionate, outgoing"
+ },
+ {
+  "id": "478",
+  "name": "Himalayan Sheepdog",
+  "weight_metric": "Male: 41-64; Female: 36-54",
+  "life_span": "10-13",
+  "breed_group": "Working",
+  "temperament": "Protective, loyal, independent, intelligent, alert, courageous"
+ },
+ {
+  "id": "479",
+  "name": "Hmong Bobtail Dog",
+  "weight_metric": "Male: 16-25; Female: 14-22",
+  "life_span": "12-15",
+  "breed_group": "Spitz-type",
+  "temperament": "Loyal, intelligent, alert, protective, affectionate"
+ },
+ {
+  "id": "480",
+  "name": "Hokkaido",
+  "weight_metric": "Male: 20-30; Female: 20-26",
+  "life_span": "11-15",
+  "breed_group": "Working",
+  "temperament": "Alert, loyal, courageous, intelligent, independent, devoted"
+ },
+ {
+  "id": "481",
+  "name": "Hovawart",
+  "weight_metric": "Male: 30-40; Female: 25-35",
+  "life_span": "10-14",
+  "breed_group": "Working",
+  "temperament": "Loyal, protective, intelligent, confident, devoted, alert"
+ },
+ {
+  "id": "482",
+  "name": "Huntaway",
+  "weight_metric": "Male: 29-40; Female: 25-35",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, work-focused, loyal, adaptable"
+ },
+ {
+  "id": "695",
+  "name": "Huskimo",
+  "weight_metric": "Male: 16-32; Female: 14-27",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, energetic, playful, friendly, alert, loyal"
+ },
+ {
+  "id": "483",
+  "name": "Hygen Hound",
+  "weight_metric": "20-25",
+  "life_span": "10-12",
+  "breed_group": "Hound",
+  "temperament": "Energetic, intelligent, independent, alert, affectionate, loyal"
+ },
+ {
+  "id": "131",
+  "name": "Ibizan Hound",
+  "weight_metric": "Male: 23-29; Female: 20-25",
+  "life_span": "11-14",
+  "breed_group": "Hound",
+  "temperament": "Independent, intelligent, athletic, gentle, alert, playful"
+ },
+ {
+  "id": "132",
+  "name": "Icelandic Sheepdog",
+  "weight_metric": "Male: 14-16; Female: 11-14",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Friendly, alert, energetic, intelligent, playful, confident, hardy"
+ },
+ {
+  "id": "484",
+  "name": "Indian Pariah Dog",
+  "weight_metric": "Male: 15-30; Female: 15-25",
+  "life_span": null,
+  "breed_group": "Primitive",
+  "temperament": "Alert, intelligent, loyal, adaptable, independent"
+ },
+ {
+  "id": "485",
+  "name": "Indian Spitz",
+  "weight_metric": "Male: 12-18; Female: 10-16",
+  "life_span": "10-16",
+  "breed_group": "Non-Sporting",
+  "temperament": "Alert, intelligent, playful, loyal, friendly, adaptable"
+ },
+ {
+  "id": "682",
+  "name": "Irish Doodle",
+  "weight_metric": "Male: 18-34; Female: 18-29",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, intelligent, energetic, playful, affectionate, outgoing"
+ },
+ {
+  "id": "133",
+  "name": "Irish Red and White Setter",
+  "weight_metric": "Male: 23-32; Female: 20-27",
+  "life_span": "11-15",
+  "breed_group": "Sporting",
+  "temperament": "Friendly, energetic, intelligent, courageous, devoted, gentle, eager to please"
+ },
+ {
+  "id": "134",
+  "name": "Irish Setter",
+  "weight_metric": "Male: 27-34; Female: 24-29",
+  "life_span": "12-15",
+  "breed_group": "Sporting",
+  "temperament": "Friendly, outgoing, energetic, intelligent, playful, affectionate"
+ },
+ {
+  "id": "135",
+  "name": "Irish Terrier",
+  "weight_metric": "Male: 11-13; Female: 11-12",
+  "life_span": null,
+  "breed_group": "Terrier",
+  "temperament": "Courageous, loyal, intelligent, energetic, spirited"
+ },
+ {
+  "id": "136",
+  "name": "Irish Water Spaniel",
+  "weight_metric": "Male: 25-31; Female: 20-26",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Intelligent, playful, alert, courageous, eager to please"
+ },
+ {
+  "id": "137",
+  "name": "Irish Wolfhound",
+  "weight_metric": "Male: 64-82; Female: 52-64",
+  "life_span": "6-8",
+  "breed_group": "Hound",
+  "temperament": "Gentle, calm, dignified, courageous, loyal"
+ },
+ {
+  "id": "486",
+  "name": "Istrian Coarse-haired Hound",
+  "weight_metric": "Male: 16-24; Female: 15-21",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Alert, energetic, gentle, loyal, independent, intelligent"
+ },
+ {
+  "id": "487",
+  "name": "Istrian Shorthaired Hound",
+  "weight_metric": "Male: 16-25; Female: 16-23",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Alert, energetic, intelligent, independent, gentle, loyal"
+ },
+ {
+  "id": "138",
+  "name": "Italian Greyhound",
+  "weight_metric": "3-6.5",
+  "life_span": null,
+  "breed_group": "Toy",
+  "temperament": "Affectionate, gentle, playful, alert, intelligent"
+ },
+ {
+  "id": "139",
+  "name": "Jack Russell Terrier",
+  "weight_metric": "6-8",
+  "life_span": "12-14",
+  "breed_group": "Terrier",
+  "temperament": "Energetic, intelligent, alert, courageous, confident, playful"
+ },
+ {
+  "id": "488",
+  "name": "Jagdterrier",
+  "weight_metric": "Male: 9-10; Female: 7.5-9",
+  "life_span": "10-15",
+  "breed_group": "Terrier",
+  "temperament": "Courageous, intelligent, energetic, work-focused, independent"
+ },
+ {
+  "id": "489",
+  "name": "Jämthund",
+  "weight_metric": "Male: 30-40; Female: 25-35",
+  "life_span": "12-13",
+  "breed_group": "Hound",
+  "temperament": "Courageous, intelligent, calm, independent, alert, loyal, devoted"
+ },
+ {
+  "id": "140",
+  "name": "Japanese Chin",
+  "weight_metric": "1.8-5",
+  "life_span": "10-12",
+  "breed_group": "Toy",
+  "temperament": "Alert, intelligent, affectionate, independent, playful, calm"
+ },
+ {
+  "id": "141",
+  "name": "Japanese Spitz",
+  "weight_metric": "Male: 5-11; Female: 4.5-9",
+  "life_span": "12-16",
+  "breed_group": "Non-Sporting",
+  "temperament": "Intelligent, playful, alert, loyal, affectionate, friendly"
+ },
+ {
+  "id": "490",
+  "name": "Japanese Terrier",
+  "weight_metric": "2.5-4",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Lively, alert, intelligent, playful, affectionate"
+ },
+ {
+  "id": "491",
+  "name": "Jeju Dog",
+  "weight_metric": "Male: 15-25; Female: 13-20",
+  "life_span": "12-15",
+  "breed_group": "Spitz and Primitive Types",
+  "temperament": "Alert, loyal, intelligent, courageous, independent, energetic"
+ },
+ {
+  "id": "492",
+  "name": "Jindo",
+  "weight_metric": "Male: 18-23; Female: 14-19",
+  "life_span": "12-15",
+  "breed_group": "Foundation Stock Service",
+  "temperament": "Loyal, independent, intelligent, alert, courageous, protective"
+ },
+ {
+  "id": "493",
+  "name": "Jonangi",
+  "weight_metric": "Male: 13-23; Female: 13-20",
+  "life_span": "12-15",
+  "breed_group": "Primitive",
+  "temperament": "Energetic, intelligent, loyal, alert, independent"
+ },
+ {
+  "id": "495",
+  "name": "Kaikadi",
+  "weight_metric": "Male: 15-20; Female: 14-18",
+  "life_span": "10-15",
+  "breed_group": "Hound",
+  "temperament": "Alert, energetic, intelligent, loyal, independent, courageous"
+ },
+ {
+  "id": "494",
+  "name": "Kai Ken",
+  "weight_metric": "Male: 14-20; Female: 11-16",
+  "life_span": "12-16",
+  "breed_group": "Non-Sporting",
+  "temperament": "Alert, intelligent, loyal, courageous, independent, athletic"
+ },
+ {
+  "id": "496",
+  "name": "Kamchatka Sled Dog",
+  "weight_metric": "Male: 23-40; Female: 18-35",
+  "life_span": "10-15",
+  "breed_group": "Working",
+  "temperament": "Hardy, independent, work-focused, loyal, intelligent, energetic"
+ },
+ {
+  "id": "18",
+  "name": "Kangal Shepherd Dog",
+  "weight_metric": "Male: 50-66; Female: 41-54",
+  "life_span": "12-15",
+  "breed_group": "Working",
+  "temperament": "Loyal, protective, independent, calm, intelligent, alert"
+ },
+ {
+  "id": "497",
+  "name": "Kanni",
+  "weight_metric": "Male: 18-25; Female: 15-23",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Loyal, intelligent, independent, alert, athletic, reserved"
+ },
+ {
+  "id": "498",
+  "name": "Karakachan",
+  "weight_metric": "Male: 40-57; Female: 35-50",
+  "life_span": "12-14",
+  "breed_group": "Working",
+  "temperament": "Independent, protective, loyal, alert, courageous, intelligent"
+ },
+ {
+  "id": "499",
+  "name": "Karelian Bear Dog",
+  "weight_metric": "Male: 20-23; Female: 17-20",
+  "life_span": "11-13",
+  "breed_group": "Working",
+  "temperament": "Courageous, independent, loyal, alert, protective"
+ },
+ {
+  "id": "500",
+  "name": "Karelo-Finnish Laika",
+  "weight_metric": "Male: 12-16; Female: 11-14",
+  "life_span": "12-15",
+  "breed_group": "Non-Sporting",
+  "temperament": "Intelligent, energetic, courageous, alert, independent"
+ },
+ {
+  "id": "501",
+  "name": "Kars",
+  "weight_metric": "Male: 40-60; Female: 35-50",
+  "life_span": "10-13",
+  "breed_group": "Working",
+  "temperament": "Protective, independent, courageous, loyal"
+ },
+ {
+  "id": "502",
+  "name": "Karst Shepherd",
+  "weight_metric": "Male: 30-40; Female: 25-35",
+  "life_span": "10-13",
+  "breed_group": "Working",
+  "temperament": "Protective, loyal, courageous, confident, calm, independent"
+ },
+ {
+  "id": "503",
+  "name": "Kazakh Tazy",
+  "weight_metric": "Male: 20-29; Female: 18-25",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Independent, intelligent, alert, loyal, calm, confident"
+ },
+ {
+  "id": "142",
+  "name": "Keeshond",
+  "weight_metric": "16-20",
+  "life_span": "12-15",
+  "breed_group": "Non-Sporting",
+  "temperament": "Friendly, intelligent, outgoing, alert, eager to please"
+ },
+ {
+  "id": "504",
+  "name": "Kerry Beagle",
+  "weight_metric": "Male: 23-27; Female: 20-25",
+  "life_span": "10-14",
+  "breed_group": "Hound",
+  "temperament": "Energetic, intelligent, loyal, independent, friendly, alert"
+ },
+ {
+  "id": "143",
+  "name": "Kerry Blue Terrier",
+  "weight_metric": "Male: 15-18; Female: 14-18",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Alert, intelligent, loyal, playful, energetic, courageous"
+ },
+ {
+  "id": "505",
+  "name": "Khala",
+  "weight_metric": "7-15",
+  "life_span": "12-14",
+  "breed_group": "Sighthound",
+  "temperament": "Loyal, independent, intelligent, alert, affectionate"
+ },
+ {
+  "id": "104",
+  "name": "King Charles Spaniel",
+  "weight_metric": "3.6-6.3",
+  "life_span": "10-12",
+  "breed_group": "Toy",
+  "temperament": "Gentle, affectionate, intelligent, friendly, happy, playful"
+ },
+ {
+  "id": "506",
+  "name": "King Shepherd",
+  "weight_metric": "Male: 41-68; Female: 34-50",
+  "life_span": "10-11",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, loyal, confident, protective, gentle, courageous"
+ },
+ {
+  "id": "507",
+  "name": "Kintamani",
+  "weight_metric": "Male: 13-18; Female: 12-17",
+  "life_span": "12-15",
+  "breed_group": "Spitz and Primitive Types",
+  "temperament": "Alert, intelligent, loyal, independent, protective, devoted"
+ },
+ {
+  "id": "271",
+  "name": "Kishu Ken",
+  "weight_metric": "Male: 16-27; Female: 14-23",
+  "life_span": "11-13",
+  "breed_group": "Spitz and Primitive Types",
+  "temperament": "Loyal, intelligent, alert, courageous, independent, reserved"
+ },
+ {
+  "id": "508",
+  "name": "Kokoni",
+  "weight_metric": "4-6",
+  "life_span": null,
+  "breed_group": "Companion",
+  "temperament": "Friendly, intelligent, alert, playful, affectionate, loyal"
+ },
+ {
+  "id": "509",
+  "name": "Kombai",
+  "weight_metric": "Male: 25-30; Female: 20-25",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Courageous, loyal, protective, intelligent, alert, independent"
+ },
+ {
+  "id": "144",
+  "name": "Komondor",
+  "weight_metric": "Male: 45-59; Female: 36-50",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Loyal, protective, independent, courageous, calm"
+ },
+ {
+  "id": "145",
+  "name": "Kooikerhondje",
+  "weight_metric": "9-14",
+  "life_span": "12-15",
+  "breed_group": "Sporting",
+  "temperament": "Friendly, intelligent, alert, energetic, cheerful, adaptable"
+ },
+ {
+  "id": "510",
+  "name": "Koolie",
+  "weight_metric": "Male: 15-25; Female: 14-24",
+  "life_span": "12-18",
+  "breed_group": "Herding",
+  "temperament": "Energetic, intelligent, loyal, work-focused, alert, devoted"
+ },
+ {
+  "id": "146",
+  "name": "Kromfohrländer",
+  "weight_metric": "10-16",
+  "life_span": null,
+  "breed_group": "Companion",
+  "temperament": "Friendly, intelligent, loyal, playful, adaptable, alert"
+ },
+ {
+  "id": "511",
+  "name": "Kuchi",
+  "weight_metric": "Male: 50-60; Female: 40-50",
+  "life_span": "10-13",
+  "breed_group": "Working",
+  "temperament": "Protective, independent, loyal, courageous, intelligent"
+ },
+ {
+  "id": "513",
+  "name": "Kunming Dog",
+  "weight_metric": "Male: 30-38; Female: 25-34",
+  "life_span": "12-14",
+  "breed_group": "Working",
+  "temperament": "Intelligent, loyal, courageous, alert, protective, work-focused"
+ },
+ {
+  "id": "514",
+  "name": "Kurdish Mastiff",
+  "weight_metric": "Male: 50-82; Female: 40-70",
+  "life_span": "10-13",
+  "breed_group": "Working",
+  "temperament": "Protective, loyal, independent, courageous, alert, confident"
+ },
+ {
+  "id": "147",
+  "name": "Kuvasz",
+  "weight_metric": "Male: 45-52; Female: 32-41",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Loyal, protective, independent, courageous, intelligent, calm"
+ },
+ {
+  "id": "148",
+  "name": "Labradoodle",
+  "weight_metric": "Male: 23-29; Female: 20-29",
+  "life_span": "12-14",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, intelligent, energetic, gentle, outgoing, affectionate"
+ },
+ {
+  "id": "149",
+  "name": "Labrador Retriever",
+  "weight_metric": "Male: 29-36; Female: 25-32",
+  "life_span": "10-12",
+  "breed_group": "Sporting",
+  "temperament": "Friendly, outgoing, energetic, intelligent, gentle, eager to please"
+ },
+ {
+  "id": "691",
+  "name": "Labraheeler",
+  "weight_metric": "Male: 18-36; Female: 16-32",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, energetic, loyal, alert, friendly, work-focused"
+ },
+ {
+  "id": "694",
+  "name": "Labsky",
+  "weight_metric": "Male: 20-36; Female: 16-32",
+  "life_span": "10-14",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, energetic, intelligent, loyal, outgoing, playful"
+ },
+ {
+  "id": "150",
+  "name": "Lacy Dog",
+  "weight_metric": "Male: 14-23; Female: 11-23",
+  "life_span": "12-16",
+  "breed_group": "Herding",
+  "temperament": "Energetic, intelligent, work-focused, devoted, loyal, alert"
+ },
+ {
+  "id": "151",
+  "name": "Lagotto Romagnolo",
+  "weight_metric": "Male: 13-16; Female: 11-14",
+  "life_span": null,
+  "breed_group": "Sporting",
+  "temperament": "Affectionate, intelligent, energetic, loyal, alert, work-focused"
+ },
+ {
+  "id": "515",
+  "name": "Lài",
+  "weight_metric": "Male: 16-25; Female: 14-23",
+  "life_span": "12-15",
+  "breed_group": "Primitive",
+  "temperament": "Loyal, intelligent, athletic, alert, protective"
+ },
+ {
+  "id": "516",
+  "name": "Laizhou Hong",
+  "weight_metric": "Male: 35-45; Female: 30-40",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Loyal, protective, confident, intelligent, alert"
+ },
+ {
+  "id": "152",
+  "name": "Lakeland Terrier",
+  "weight_metric": "Male: 7-8; Female: 6-7",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Confident, alert, courageous, intelligent, friendly, energetic"
+ },
+ {
+  "id": "153",
+  "name": "Lancashire Heeler",
+  "weight_metric": "4-8",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, alert, energetic, friendly, playful, courageous"
+ },
+ {
+  "id": "517",
+  "name": "Landseer",
+  "weight_metric": "Male: 50-68; Female: 45-59",
+  "life_span": "8-11",
+  "breed_group": "Working",
+  "temperament": "Gentle, calm, intelligent, loyal, devoted, protective"
+ },
+ {
+  "id": "518",
+  "name": "Langqing",
+  "weight_metric": "unknown",
+  "life_span": "10-14",
+  "breed_group": "Hound",
+  "temperament": "Loyal, intelligent, independent, athletic, energetic"
+ },
+ {
+  "id": "519",
+  "name": "Lapponian Herder",
+  "weight_metric": "Male: 30-35; Female: 25-30",
+  "life_span": "10-14",
+  "breed_group": "Herding",
+  "temperament": "Alert, energetic, intelligent, loyal, work-focused, calm, friendly"
+ },
+ {
+  "id": "154",
+  "name": "Large Münsterländer",
+  "weight_metric": "25-32",
+  "life_span": "11-13",
+  "breed_group": "Sporting",
+  "temperament": "Intelligent, loyal, energetic, eager to please, friendly"
+ },
+ {
+  "id": "155",
+  "name": "Leonberger",
+  "weight_metric": "Male: 50-77; Female: 41-64",
+  "life_span": "7-9",
+  "breed_group": "Working",
+  "temperament": "Gentle, calm, loyal, friendly, intelligent, confident"
+ },
+ {
+  "id": "520",
+  "name": "Levriero Sardo",
+  "weight_metric": "Male: 18-25; Female: 16-23",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Independent, alert, loyal, intelligent, reserved"
+ },
+ {
+  "id": "156",
+  "name": "Lhasa Apso",
+  "weight_metric": "Male: 5.4-8.2; Female: 5.0-8.2",
+  "life_span": "12-15",
+  "breed_group": "Non-Sporting",
+  "temperament": "Confident, independent, alert, loyal, smart, protective"
+ },
+ {
+  "id": "157",
+  "name": "Lhasapoo",
+  "weight_metric": "4.5-9",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, affectionate, playful, alert, confident"
+ },
+ {
+  "id": "521",
+  "name": "Liangshan Dog",
+  "weight_metric": "Male: 30-40; Female: 25-35",
+  "life_span": "10-14",
+  "breed_group": "Primitive",
+  "temperament": "Loyal, courageous, independent, intelligent, protective, alert"
+ },
+ {
+  "id": "522",
+  "name": "Lithuanian Hound",
+  "weight_metric": "Male: 20-25; Female: 18-23",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Energetic, loyal, intelligent, courageous, alert, work-focused"
+ },
+ {
+  "id": "523",
+  "name": "Lobito Herreño",
+  "weight_metric": "18-22",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, energetic, alert, independent, protective"
+ },
+ {
+  "id": "159",
+  "name": "Löwchen",
+  "weight_metric": "4-8",
+  "life_span": null,
+  "breed_group": "Non-Sporting",
+  "temperament": "Affectionate, outgoing, playful, intelligent, alert"
+ },
+ {
+  "id": "524",
+  "name": "Lucas Terrier",
+  "weight_metric": "Male: 6-9; Female: 5-9",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Friendly, intelligent, alert, affectionate, adaptable"
+ },
+ {
+  "id": "525",
+  "name": "Lupo Italiano",
+  "weight_metric": "Male: 30-40; Female: 25-35",
+  "life_span": "12-15",
+  "breed_group": "Working",
+  "temperament": "Intelligent, loyal, alert, independent, work-focused"
+ },
+ {
+  "id": "160",
+  "name": "Lurcher",
+  "weight_metric": "Male: 27-36; Female: 23-32",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, gentle, loyal, affectionate, athletic, independent"
+ },
+ {
+  "id": "526",
+  "name": "Mackenzie River Husky",
+  "weight_metric": "Male: 39-64; Female: 34-54",
+  "life_span": "10-15",
+  "breed_group": "Working",
+  "temperament": "Independent, hardy, work-focused, loyal, intelligent, alert"
+ },
+ {
+  "id": "527",
+  "name": "Magyar Agár",
+  "weight_metric": "Male: 22-31; Female: 20-28",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Loyal, calm, gentle, intelligent, athletic, independent"
+ },
+ {
+  "id": "528",
+  "name": "Mahratta Hound",
+  "weight_metric": "Male: 20-29; Female: 18-27",
+  "life_span": "10-14",
+  "breed_group": "Hound",
+  "temperament": "Independent, loyal, intelligent, alert, athletic"
+ },
+ {
+  "id": "529",
+  "name": "Majorca Shepherd Dog",
+  "weight_metric": "Male: 35-40; Female: 30-35",
+  "life_span": "11-13",
+  "breed_group": "Herding",
+  "temperament": "Loyal, intelligent, protective, courageous, devoted"
+ },
+ {
+  "id": "161",
+  "name": "Maltese",
+  "weight_metric": "1.8-3.2",
+  "life_span": "12-15",
+  "breed_group": "Toy",
+  "temperament": "Playful, gentle, affectionate, charming, fearless, alert, adaptable"
+ },
+ {
+  "id": "162",
+  "name": "Maltipoo",
+  "weight_metric": "2-9",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Affectionate, friendly, intelligent, playful, gentle"
+ },
+ {
+  "id": "660",
+  "name": "Maltshi",
+  "weight_metric": "2.7-6.8",
+  "life_span": "10-16",
+  "breed_group": "Mixed",
+  "temperament": "Affectionate, playful, friendly, gentle, outgoing, intelligent"
+ },
+ {
+  "id": "163",
+  "name": "Manchester Terrier",
+  "weight_metric": "5-10",
+  "life_span": null,
+  "breed_group": "Terrier",
+  "temperament": "Alert, intelligent, loyal, energetic, spirited, independent"
+ },
+ {
+  "id": "530",
+  "name": "Maneto",
+  "weight_metric": "8-11.5",
+  "life_span": "12-14",
+  "breed_group": "Spitz and Primitive Types",
+  "temperament": "Intelligent, energetic, alert, loyal, affectionate, devoted, independent"
+ },
+ {
+  "id": "532",
+  "name": "Maremma Sheepdog",
+  "weight_metric": "Male: 35-45; Female: 30-40",
+  "life_span": "11-13",
+  "breed_group": "Working",
+  "temperament": "Protective, independent, loyal, alert, calm"
+ },
+ {
+  "id": "531",
+  "name": "Markiesje",
+  "weight_metric": "6-8",
+  "life_span": "12-15",
+  "breed_group": "Companion",
+  "temperament": "Friendly, intelligent, calm, alert, affectionate, energetic"
+ },
+ {
+  "id": "668",
+  "name": "Mastidoodle",
+  "weight_metric": "Male: 54-91; Female: 45-73",
+  "life_span": "8-12",
+  "breed_group": "Mixed",
+  "temperament": "Gentle, intelligent, loyal, protective, calm"
+ },
+ {
+  "id": "282",
+  "name": "McNab",
+  "weight_metric": "Male: 16-29; Female: 14-27",
+  "life_span": null,
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, loyal, alert, work-focused"
+ },
+ {
+  "id": "165",
+  "name": "Miniature American Shepherd",
+  "weight_metric": "9-18",
+  "life_span": "12-13",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, devoted, loyal, eager to please, work-focused"
+ },
+ {
+  "id": "166",
+  "name": "Miniature Bull Terrier",
+  "weight_metric": "8-13",
+  "life_span": "11-13",
+  "breed_group": "Terrier",
+  "temperament": "Playful, energetic, courageous, loyal, mischievous, outgoing"
+ },
+ {
+  "id": "533",
+  "name": "Miniature Fox Terrier",
+  "weight_metric": "3-5.5",
+  "life_span": "12-18",
+  "breed_group": "Terrier",
+  "temperament": "Alert, energetic, intelligent, confident, loyal"
+ },
+ {
+  "id": "167",
+  "name": "Miniature Pinscher",
+  "weight_metric": "3.5-4.5",
+  "life_span": "12-16",
+  "breed_group": "Toy",
+  "temperament": "Energetic, alert, confident, intelligent, courageous, fearless"
+ },
+ {
+  "id": "168",
+  "name": "Miniature Schnauzer",
+  "weight_metric": "5-9",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Friendly, intelligent, alert, outgoing, energetic"
+ },
+ {
+  "id": "534",
+  "name": "Mojee",
+  "weight_metric": "3-5",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Affectionate, playful, intelligent, gentle"
+ },
+ {
+  "id": "535",
+  "name": "Molossus of Epirus",
+  "weight_metric": "Male: 45-68; Female: 40-59",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Protective, loyal, independent, calm, courageous, confident"
+ },
+ {
+  "id": "536",
+  "name": "Mongrel",
+  "weight_metric": "unknown",
+  "life_span": "10-16",
+  "breed_group": "Mixed",
+  "temperament": "Variable depending on ancestry and individual traits"
+ },
+ {
+  "id": "537",
+  "name": "Montenegrin Mountain Hound",
+  "weight_metric": "Male: 20-25; Female: 18-23",
+  "life_span": "11-14",
+  "breed_group": "Hound",
+  "temperament": "Alert, loyal, energetic, docile, intelligent, devoted"
+ },
+ {
+  "id": "655",
+  "name": "Morkie",
+  "weight_metric": "1.8-4",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Affectionate, playful, alert, energetic, intelligent"
+ },
+ {
+  "id": "538",
+  "name": "Moscow Watchdog",
+  "weight_metric": "Male: 50-68; Female: 45-60",
+  "life_span": "9-11",
+  "breed_group": "Working",
+  "temperament": "Protective, confident, loyal, alert, intelligent, independent"
+ },
+ {
+  "id": "539",
+  "name": "Mountain Cur",
+  "weight_metric": "14-27",
+  "life_span": "12-16",
+  "breed_group": "Foundation Stock Service",
+  "temperament": "Courageous, intelligent, loyal, energetic, protective"
+ },
+ {
+  "id": "540",
+  "name": "Mountain Feist",
+  "weight_metric": "5-14",
+  "life_span": "10-15",
+  "breed_group": "Hound",
+  "temperament": "Energetic, alert, intelligent, courageous, loyal"
+ },
+ {
+  "id": "541",
+  "name": "Mudhol Hound",
+  "weight_metric": "Male: 22-28; Female: 18-26",
+  "life_span": "10-15",
+  "breed_group": "Hound",
+  "temperament": "Loyal, independent, intelligent, alert, courageous"
+ },
+ {
+  "id": "169",
+  "name": "Mudi",
+  "weight_metric": "8-13",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Energetic, intelligent, alert, loyal, adaptable, work-focused"
+ },
+ {
+  "id": "170",
+  "name": "Neapolitan Mastiff",
+  "weight_metric": "Male: 60-91; Female: 50-68",
+  "life_span": "7-9",
+  "breed_group": "Working",
+  "temperament": "Protective, loyal, calm, confident, affectionate"
+ },
+ {
+  "id": "542",
+  "name": "Nenets Herding Laika",
+  "weight_metric": "Male: 18-25; Female: 16-23",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, work-focused, independent, alert, loyal, hardy"
+ },
+ {
+  "id": "171",
+  "name": "Newfoundland",
+  "weight_metric": "Male: 59-68; Female: 45-54",
+  "life_span": "9-10",
+  "breed_group": "Working",
+  "temperament": "Gentle, loyal, devoted, calm, intelligent"
+ },
+ {
+  "id": "651",
+  "name": "Newfypoo",
+  "weight_metric": "Male: 32-68; Female: 29-54",
+  "life_span": "8-12",
+  "breed_group": "Mixed",
+  "temperament": "Gentle, intelligent, loyal, friendly, affectionate, calm"
+ },
+ {
+  "id": "543",
+  "name": "New Guinea Singing Dog",
+  "weight_metric": "Male: 9-14; Female: 8-11",
+  "life_span": null,
+  "breed_group": "Primitive",
+  "temperament": "Independent, alert, intelligent, energetic, cautious"
+ },
+ {
+  "id": "544",
+  "name": "New Zealand Heading Dog",
+  "weight_metric": "Male: 16-25; Female: 14-25",
+  "life_span": "12-16",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, work-focused, loyal, alert"
+ },
+ {
+  "id": "172",
+  "name": "Norfolk Terrier",
+  "weight_metric": "5-5.5",
+  "life_span": "12-16",
+  "breed_group": "Terrier",
+  "temperament": "Alert, courageous, affectionate, energetic, playful"
+ },
+ {
+  "id": "545",
+  "name": "Norrbottenspets",
+  "weight_metric": "Male: 9-14; Female: 8-14",
+  "life_span": "12-16",
+  "breed_group": "Hound",
+  "temperament": "Alert, energetic, intelligent, courageous, confident, independent"
+ },
+ {
+  "id": "546",
+  "name": "Northern Inuit Dog",
+  "weight_metric": "Male: 36-50; Female: 25-38",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, intelligent, loyal, independent, gentle, alert"
+ },
+ {
+  "id": "173",
+  "name": "Norwegian Buhund",
+  "weight_metric": "Male: 14-18; Female: 12-16",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, friendly, confident, alert, loyal, playful"
+ },
+ {
+  "id": "174",
+  "name": "Norwegian Elkhound",
+  "weight_metric": "Male: 22-27; Female: 20-25",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Friendly, confident, energetic, loyal, independent"
+ },
+ {
+  "id": "175",
+  "name": "Norwegian Lundehund",
+  "weight_metric": "9-14",
+  "life_span": "12-15",
+  "breed_group": "Non-Sporting",
+  "temperament": "Alert, energetic, loyal, intelligent"
+ },
+ {
+  "id": "176",
+  "name": "Norwich Terrier",
+  "weight_metric": "5-5.5",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Alert, energetic, affectionate, courageous, outgoing"
+ },
+ {
+  "id": "177",
+  "name": "Nova Scotia Duck Tolling Retriever",
+  "weight_metric": "16-23",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Intelligent, energetic, playful, outgoing, alert, affectionate"
+ },
+ {
+  "id": "547",
+  "name": "Nureongi",
+  "weight_metric": "16-25",
+  "life_span": "12-15",
+  "breed_group": "Landrace",
+  "temperament": "Intelligent, alert, loyal, independent"
+ },
+ {
+  "id": "548",
+  "name": "Old Danish Pointer",
+  "weight_metric": "Male: 30-36; Female: 26-35",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Calm, gentle, intelligent, loyal, confident, courageous"
+ },
+ {
+  "id": "179",
+  "name": "Olde English Bulldogge",
+  "weight_metric": "Male: 27-36; Female: 23-32",
+  "life_span": "9-14",
+  "breed_group": "Foundation Stock Service",
+  "temperament": "Confident, courageous, alert, friendly, loyal"
+ },
+ {
+  "id": "178",
+  "name": "Old English Sheepdog",
+  "weight_metric": "Male: 32-45; Female: 27-39",
+  "life_span": "10-12",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, gentle, playful, adaptable, affectionate"
+ },
+ {
+  "id": "180",
+  "name": "Otterhound",
+  "weight_metric": "Male: 43-54; Female: 34-45",
+  "life_span": "10-13",
+  "breed_group": "Hound",
+  "temperament": "Friendly, gentle, independent, energetic, amiable"
+ },
+ {
+  "id": "549",
+  "name": "Pachón Navarro",
+  "weight_metric": "Male: 25-33; Female: 20-27",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Intelligent, loyal, calm, work-focused, docile, alert, affectionate"
+ },
+ {
+  "id": "550",
+  "name": "Pampas Deerhound",
+  "weight_metric": "Male: 32-41; Female: 27-36",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Loyal, intelligent, energetic, courageous, devoted"
+ },
+ {
+  "id": "181",
+  "name": "Papillon",
+  "weight_metric": "2-4.5",
+  "life_span": null,
+  "breed_group": "Toy",
+  "temperament": "Friendly, intelligent, alert, energetic, happy"
+ },
+ {
+  "id": "662",
+  "name": "Papipoo",
+  "weight_metric": "2-6",
+  "life_span": "12-16",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, alert, playful, affectionate, friendly"
+ },
+ {
+  "id": "285",
+  "name": "Parson Russell Terrier",
+  "weight_metric": "6-8",
+  "life_span": "12-16",
+  "breed_group": "Terrier",
+  "temperament": "Alert, confident, energetic, intelligent, athletic, courageous"
+ },
+ {
+  "id": "552",
+  "name": "Pastore della Lessinia e del Lagorai",
+  "weight_metric": "Male: 23-33; Female: 19-29",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, loyal, alert, work-focused"
+ },
+ {
+  "id": "551",
+  "name": "Pastor Garafiano",
+  "weight_metric": "Male: 25-35; Female: 22-30",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Docile, intelligent, loyal, alert, work-focused"
+ },
+ {
+  "id": "553",
+  "name": "Patagonian Sheepdog",
+  "weight_metric": "Male: 22-30; Female: 21-29",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, work-focused, protective, energetic, independent"
+ },
+ {
+  "id": "283",
+  "name": "Patterdale Terrier",
+  "weight_metric": "5-6",
+  "life_span": "10-13",
+  "breed_group": "Terrier",
+  "temperament": "Energetic, courageous, confident, independent, alert, work-focused"
+ },
+ {
+  "id": "663",
+  "name": "Peekapoo",
+  "weight_metric": "4-8",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Affectionate, intelligent, alert, playful"
+ },
+ {
+  "id": "182",
+  "name": "Pekeapoo",
+  "weight_metric": "4-9",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Affectionate, intelligent, alert, playful, loyal"
+ },
+ {
+  "id": "183",
+  "name": "Pekingese",
+  "weight_metric": "3.2-6.4",
+  "life_span": "12-14",
+  "breed_group": "Toy",
+  "temperament": "Loyal, independent, confident, courageous, affectionate, alert"
+ },
+ {
+  "id": "184",
+  "name": "Pembroke Welsh Corgi",
+  "weight_metric": "Male: 12-14; Female: 11-13",
+  "life_span": "12-13",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, affectionate, alert, outgoing, playful"
+ },
+ {
+  "id": "554",
+  "name": "Perdigueiro Galego",
+  "weight_metric": "Male: 20-30; Female: 18-25",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Intelligent, loyal, docile, energetic, alert"
+ },
+ {
+  "id": "555",
+  "name": "Perro Majorero",
+  "weight_metric": "Male: 30-40; Female: 25-35",
+  "life_span": "11-14",
+  "breed_group": "Working",
+  "temperament": "Loyal, protective, intelligent, alert, confident, calm, courageous"
+ },
+ {
+  "id": "186",
+  "name": "Peruvian Inca Orchid",
+  "weight_metric": "8-25",
+  "life_span": "12-14",
+  "breed_group": "Non-Sporting",
+  "temperament": "Loyal, affectionate, alert, intelligent, agile"
+ },
+ {
+  "id": "187",
+  "name": "Petit Basset Griffon Vendéen",
+  "weight_metric": "11-18",
+  "life_span": "12-16",
+  "breed_group": "Hound",
+  "temperament": "Happy, outgoing, independent, alert, confident, energetic"
+ },
+ {
+  "id": "556",
+  "name": "Petit Bleu de Gascogne",
+  "weight_metric": "Male: 18-25; Female: 16-22",
+  "life_span": "10-13",
+  "breed_group": "Hound",
+  "temperament": "Gentle, calm, intelligent, loyal, affectionate, alert"
+ },
+ {
+  "id": "557",
+  "name": "Phalène",
+  "weight_metric": "2.3-4.5",
+  "life_span": null,
+  "breed_group": "Toy",
+  "temperament": "Friendly, intelligent, alert, gentle, playful, happy"
+ },
+ {
+  "id": "188",
+  "name": "Pharaoh Hound",
+  "weight_metric": "20-25",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Intelligent, friendly, playful, alert, affectionate"
+ },
+ {
+  "id": "558",
+  "name": "Philippine Forest Dog",
+  "weight_metric": "Male: 11-16; Female: 9-14",
+  "life_span": "12-14",
+  "breed_group": "Unknown",
+  "temperament": "Alert, intelligent, independent, agile"
+ },
+ {
+  "id": "559",
+  "name": "Phu Quoc Ridgeback",
+  "weight_metric": "Male: 16-23; Female: 15-20",
+  "life_span": "12-15",
+  "breed_group": "Primitive",
+  "temperament": "Intelligent, loyal, alert, independent, courageous"
+ },
+ {
+  "id": "560",
+  "name": "Picardy Spaniel",
+  "weight_metric": "20-25",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Gentle, calm, intelligent, docile, devoted, adaptable"
+ },
+ {
+  "id": "696",
+  "name": "Pitsky",
+  "weight_metric": "Male: 16-32; Female: 14-27",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Energetic, loyal, intelligent, confident, playful"
+ },
+ {
+  "id": "189",
+  "name": "Plott Hound",
+  "weight_metric": "Male: 23-27; Female: 18-25",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Loyal, alert, courageous, intelligent, devoted"
+ },
+ {
+  "id": "561",
+  "name": "Plummer Terrier",
+  "weight_metric": "Male: 5-8; Female: 4-7",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Intelligent, courageous, energetic, alert, work-focused"
+ },
+ {
+  "id": "562",
+  "name": "Podenco Andaluz",
+  "weight_metric": "Male: 7.5-32.5; Female: 7.5-30",
+  "life_span": "10-15",
+  "breed_group": "Hound",
+  "temperament": "Independent, alert, energetic, intelligent, loyal"
+ },
+ {
+  "id": "563",
+  "name": "Podenco Canario",
+  "weight_metric": "Male: 20-25; Female: 17-22",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Energetic, intelligent, alert, independent, courageous, loyal"
+ },
+ {
+  "id": "564",
+  "name": "Podenco Valenciano",
+  "weight_metric": "Male: 18-24; Female: 16-23",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Alert, energetic, independent, intelligent, loyal, athletic"
+ },
+ {
+  "id": "190",
+  "name": "Pointer",
+  "weight_metric": "Male: 25-34; Female: 20-30",
+  "life_span": "12-17",
+  "breed_group": "Sporting",
+  "temperament": "Intelligent, loyal, energetic, affectionate, even-tempered, adaptable"
+ },
+ {
+  "id": "565",
+  "name": "Poitevin",
+  "weight_metric": "Male: 30-35; Female: 25-30",
+  "life_span": "10-13",
+  "breed_group": "Hound",
+  "temperament": "Intelligent, courageous, independent, gentle, devoted"
+ },
+ {
+  "id": "566",
+  "name": "Polish Hound",
+  "weight_metric": "Male: 25-32; Female: 20-27",
+  "life_span": "10-14",
+  "breed_group": "Hound",
+  "temperament": "Loyal, calm, intelligent, alert, gentle"
+ },
+ {
+  "id": "191",
+  "name": "Polish Lowland Sheepdog",
+  "weight_metric": "14-23",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, confident, alert, loyal, energetic"
+ },
+ {
+  "id": "192",
+  "name": "Pomapoo",
+  "weight_metric": "2-7",
+  "life_span": "12-16",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, affectionate, playful, alert, adaptable"
+ },
+ {
+  "id": "193",
+  "name": "Pomeranian",
+  "weight_metric": "1.4-3.2",
+  "life_span": "12-16",
+  "breed_group": "Toy",
+  "temperament": "Alert, intelligent, playful, confident, outgoing"
+ },
+ {
+  "id": "194",
+  "name": "Pomsky",
+  "weight_metric": "7-14",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Playful, intelligent, energetic, alert, affectionate, loyal"
+ },
+ {
+  "id": "567",
+  "name": "Pont-Audemer Spaniel",
+  "weight_metric": "Male: 20-25; Female: 18-22",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Affectionate, intelligent, gentle, athletic, devoted, playful, loyal"
+ },
+ {
+  "id": "665",
+  "name": "Poochon",
+  "weight_metric": "3-8",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, intelligent, playful, affectionate, outgoing, adaptable"
+ },
+ {
+  "id": "195",
+  "name": "Poodle",
+  "weight_metric": "Male: 20-32; Female: 18-27",
+  "life_span": "10-18",
+  "breed_group": "Non-Sporting",
+  "temperament": "Intelligent, athletic, alert, confident, loyal, eager to please"
+ },
+ {
+  "id": "196",
+  "name": "Poodle (Miniature)",
+  "weight_metric": "4.5-6.8",
+  "life_span": "12-16",
+  "breed_group": "Non-Sporting",
+  "temperament": "Intelligent, alert, playful, confident, eager to please"
+ },
+ {
+  "id": "197",
+  "name": "Poodle (Toy)",
+  "weight_metric": "1.8-2.7",
+  "life_span": "10-18",
+  "breed_group": "Toy",
+  "temperament": "Intelligent, alert, confident, playful, affectionate, loyal, outgoing"
+ },
+ {
+  "id": "568",
+  "name": "Porcelaine",
+  "weight_metric": "25-28",
+  "life_span": "12-13",
+  "breed_group": "Hound",
+  "temperament": "Gentle, intelligent, energetic, friendly, work-focused"
+ },
+ {
+  "id": "198",
+  "name": "Portuguese Podengo",
+  "weight_metric": "16-20",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Alert, intelligent, energetic, loyal, independent"
+ },
+ {
+  "id": "569",
+  "name": "Portuguese Pointer",
+  "weight_metric": "Male: 20-27; Female: 16-22",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Affectionate, loyal, intelligent, devoted, energetic, alert"
+ },
+ {
+  "id": "570",
+  "name": "Portuguese Sheepdog",
+  "weight_metric": "Male: 17-27; Female: 16-25",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, energetic, alert, devoted"
+ },
+ {
+  "id": "199",
+  "name": "Portuguese Water Dog",
+  "weight_metric": "Male: 19-27; Female: 16-23",
+  "life_span": "11-13",
+  "breed_group": "Working",
+  "temperament": "Intelligent, loyal, energetic, athletic, eager to please"
+ },
+ {
+  "id": "571",
+  "name": "Posavac Hound",
+  "weight_metric": "16-25",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Calm, devoted, energetic, intelligent, independent"
+ },
+ {
+  "id": "572",
+  "name": "Pražský Krysařík",
+  "weight_metric": "1-3",
+  "life_span": "12-14",
+  "breed_group": "Toy",
+  "temperament": "Alert, intelligent, loyal, affectionate, lively, playful, confident"
+ },
+ {
+  "id": "185",
+  "name": "Presa Canario",
+  "weight_metric": "Male: 50-59; Female: 39-50",
+  "life_span": "9-11",
+  "breed_group": "Working",
+  "temperament": "Confident, calm, protective, intelligent, loyal, courageous"
+ },
+ {
+  "id": "573",
+  "name": "Pudelpointer",
+  "weight_metric": "Male: 25-32; Female: 20-29",
+  "life_span": "11-14",
+  "breed_group": "Sporting",
+  "temperament": "Intelligent, loyal, eager to please, work-focused, energetic, playful"
+ },
+ {
+  "id": "201",
+  "name": "Pug",
+  "weight_metric": "6-8",
+  "life_span": null,
+  "breed_group": "Toy",
+  "temperament": "Affectionate, playful, friendly, charming, adaptable"
+ },
+ {
+  "id": "202",
+  "name": "Pugapoo",
+  "weight_metric": "6-14",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Affectionate, playful, intelligent, outgoing, adaptable"
+ },
+ {
+  "id": "203",
+  "name": "Puggle",
+  "weight_metric": "6-14",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, playful, affectionate, outgoing, energetic, intelligent"
+ },
+ {
+  "id": "204",
+  "name": "Puli",
+  "weight_metric": "Male: 13.5-16; Female: 11-14",
+  "life_span": "10-16",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, loyal, alert, devoted, playful"
+ },
+ {
+  "id": "205",
+  "name": "Pumi",
+  "weight_metric": "10-13",
+  "life_span": "12-13",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, alert, playful, loyal, confident"
+ },
+ {
+  "id": "574",
+  "name": "Pungsan",
+  "weight_metric": "Male: 25-36; Female: 20-30",
+  "life_span": "12-15",
+  "breed_group": "Northern",
+  "temperament": "Loyal, courageous, intelligent, alert, independent"
+ },
+ {
+  "id": "653",
+  "name": "Pyredoodle",
+  "weight_metric": "Male: 39-54; Female: 34-48",
+  "life_span": "10-13",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, loyal, gentle, protective, calm, affectionate"
+ },
+ {
+  "id": "575",
+  "name": "Pyrenean Mastiff",
+  "weight_metric": "Male: 64-100; Female: 55-81",
+  "life_span": "8-13",
+  "breed_group": "Working",
+  "temperament": "Calm, gentle, courageous, protective, intelligent, loyal"
+ },
+ {
+  "id": "125",
+  "name": "Pyrenean Mountain Dog",
+  "weight_metric": "Male: 45-73; Female: 39-52",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Gentle, confident, protective, independent, calm, loyal"
+ },
+ {
+  "id": "206",
+  "name": "Pyrenean Sheepdog",
+  "weight_metric": "Male: 7-15; Female: 7-13",
+  "life_span": null,
+  "breed_group": "Herding",
+  "temperament": "Energetic, intelligent, alert, courageous, playful, devoted, work-focused"
+ },
+ {
+  "id": "576",
+  "name": "Rafeiro do Alentejo",
+  "weight_metric": "Male: 45-60; Female: 40-50",
+  "life_span": "12-14",
+  "breed_group": "Working",
+  "temperament": "Calm, confident, protective, loyal, independent, alert"
+ },
+ {
+  "id": "577",
+  "name": "Rajapalayam",
+  "weight_metric": "Male: 30-35; Female: 25-30",
+  "life_span": "9-12",
+  "breed_group": "Hound",
+  "temperament": "Loyal, protective, independent, alert, courageous, intelligent"
+ },
+ {
+  "id": "578",
+  "name": "Rampur Greyhound",
+  "weight_metric": "Male: 27-34; Female: 23-32",
+  "life_span": "10-14",
+  "breed_group": "Hound",
+  "temperament": "Loyal, intelligent, independent, courageous, protective"
+ },
+ {
+  "id": "579",
+  "name": "Rastreador Brasileiro",
+  "weight_metric": "Male: 23-32; Female: 20-27",
+  "life_span": "10-12",
+  "breed_group": "Hound",
+  "temperament": "Courageous, intelligent, loyal, calm, alert, work-focused"
+ },
+ {
+  "id": "580",
+  "name": "Ratonero Murciano",
+  "weight_metric": "Male: 6-8; Female: 5-7",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Alert, energetic, intelligent, loyal, courageous"
+ },
+ {
+  "id": "207",
+  "name": "Rat Terrier",
+  "weight_metric": "4-11",
+  "life_span": "12-18",
+  "breed_group": "Terrier",
+  "temperament": "Alert, intelligent, energetic, friendly, playful, loyal"
+ },
+ {
+  "id": "208",
+  "name": "Redbone Coonhound",
+  "weight_metric": "20-32",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Friendly, loyal, eager to please, energetic, affectionate"
+ },
+ {
+  "id": "209",
+  "name": "Rhodesian Ridgeback",
+  "weight_metric": "Male: 36-41; Female: 29-34",
+  "life_span": "10-12",
+  "breed_group": "Hound",
+  "temperament": "Loyal, intelligent, confident, independent, affectionate"
+ },
+ {
+  "id": "672",
+  "name": "Ridgeypoo",
+  "weight_metric": "Male: 23-41; Female: 20-34",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, loyal, athletic, confident, affectionate, energetic"
+ },
+ {
+  "id": "581",
+  "name": "Rize Koyun",
+  "weight_metric": "Male: 45-59; Female: 40-55",
+  "life_span": "10-13",
+  "breed_group": "Working",
+  "temperament": "Protective, independent, courageous, loyal, alert"
+ },
+ {
+  "id": "582",
+  "name": "Romanian Mioritic Shepherd Dog",
+  "weight_metric": "Male: 45-65; Female: 36-60",
+  "life_span": "12-14",
+  "breed_group": "Working",
+  "temperament": "Calm, protective, independent, loyal, intelligent, courageous, devoted"
+ },
+ {
+  "id": "583",
+  "name": "Romanian Raven Shepherd Dog",
+  "weight_metric": "Male: 45-63; Female: 40-55",
+  "life_span": "10-14",
+  "breed_group": "Working",
+  "temperament": "Protective, loyal, calm, courageous, intelligent, independent, devoted"
+ },
+ {
+  "id": "667",
+  "name": "Rottle",
+  "weight_metric": "Male: 27-57; Female: 23-45",
+  "life_span": "9-14",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, loyal, protective, confident, affectionate, energetic"
+ },
+ {
+  "id": "697",
+  "name": "Rottsky",
+  "weight_metric": "Male: 25-61; Female: 23-50",
+  "life_span": "10-14",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, loyal, energetic, protective, athletic, confident"
+ },
+ {
+  "id": "210",
+  "name": "Rottweiler",
+  "weight_metric": "Male: 43-61; Female: 36-45",
+  "life_span": "9-10",
+  "breed_group": "Working",
+  "temperament": "Confident, loyal, courageous, calm, protective, affectionate"
+ },
+ {
+  "id": "88",
+  "name": "Rough Collie",
+  "weight_metric": "Male: 27-34; Female: 23-30",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, devoted, gentle, protective, alert, athletic"
+ },
+ {
+  "id": "584",
+  "name": "Russian Spaniel",
+  "weight_metric": "Male: 13-16; Female: 11-14",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Energetic, friendly, intelligent, devoted, loyal"
+ },
+ {
+  "id": "211",
+  "name": "Russian Toy",
+  "weight_metric": "1.4-3",
+  "life_span": "12-14",
+  "breed_group": "Toy",
+  "temperament": "Alert, intelligent, loyal, playful, affectionate, energetic, outgoing"
+ },
+ {
+  "id": "585",
+  "name": "Russo-European Laika",
+  "weight_metric": "Male: 18-25; Female: 16-23",
+  "life_span": "11-15",
+  "breed_group": "Spitz and Primitive Types",
+  "temperament": "Alert, courageous, independent, intelligent, loyal, energetic, confident"
+ },
+ {
+  "id": "586",
+  "name": "Ryukyu",
+  "weight_metric": "Male: 15-20; Female: 12-18",
+  "life_span": "12-14",
+  "breed_group": "Primitive",
+  "temperament": "Loyal, intelligent, independent, courageous, alert, energetic"
+ },
+ {
+  "id": "587",
+  "name": "Saarloos Wolfdog",
+  "weight_metric": "Male: 36-41; Female: 30-35",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Independent, alert, loyal, reserved, intelligent"
+ },
+ {
+  "id": "588",
+  "name": "Sabueso Español",
+  "weight_metric": "Male: 23-25; Female: 20-25",
+  "life_span": "10-13",
+  "breed_group": "Hound",
+  "temperament": "Loyal, intelligent, calm, devoted, courageous"
+ },
+ {
+  "id": "650",
+  "name": "Saint Berdoodle",
+  "weight_metric": "Male: 50-82; Female: 41-68",
+  "life_span": "8-12",
+  "breed_group": "Mixed",
+  "temperament": "Gentle, intelligent, friendly, loyal, affectionate, calm, protective"
+ },
+ {
+  "id": "212",
+  "name": "Saint Bernard",
+  "weight_metric": "Male: 64-82; Female: 54-64",
+  "life_span": "8-10",
+  "breed_group": "Working",
+  "temperament": "Gentle, friendly, calm, patient, loyal, protective"
+ },
+ {
+  "id": "589",
+  "name": "Saint Miguel Cattle Dog",
+  "weight_metric": "Male: 23-32; Female: 18-27",
+  "life_span": "11-14",
+  "breed_group": "Herding",
+  "temperament": "Loyal, intelligent, protective, work-focused, courageous, alert"
+ },
+ {
+  "id": "590",
+  "name": "Saint-Usuge Spaniel",
+  "weight_metric": "Male: 13-20; Female: 13-19",
+  "life_span": "12-15",
+  "breed_group": "Sporting",
+  "temperament": "Gentle, affectionate, intelligent, eager to please, loyal, devoted, energetic, adaptable"
+ },
+ {
+  "id": "591",
+  "name": "Sakhalin Husky",
+  "weight_metric": "Male: 30-40; Female: 25-35",
+  "life_span": "12-15",
+  "breed_group": "Working",
+  "temperament": "Loyal, intelligent, independent, work-focused, energetic, courageous"
+ },
+ {
+  "id": "213",
+  "name": "Saluki",
+  "weight_metric": "Male: 18-29; Female: 16-25",
+  "life_span": "10-17",
+  "breed_group": "Hound",
+  "temperament": "Gentle, independent, intelligent, devoted, calm, reserved"
+ },
+ {
+  "id": "214",
+  "name": "Samoyed",
+  "weight_metric": "Male: 20-29; Female: 16-23",
+  "life_span": "12-14",
+  "breed_group": "Working",
+  "temperament": "Friendly, gentle, adaptable, alert, intelligent, playful"
+ },
+ {
+  "id": "592",
+  "name": "Sapsali",
+  "weight_metric": "Male: 16-28; Female: 14-25",
+  "life_span": "10-14",
+  "breed_group": "Non-Sporting",
+  "temperament": "Loyal, gentle, friendly, protective, intelligent, patient"
+ },
+ {
+  "id": "593",
+  "name": "Sarabi",
+  "weight_metric": "Male: 54-90; Female: 45-77",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Protective, independent, calm, loyal, courageous"
+ },
+ {
+  "id": "594",
+  "name": "Sarail Hound",
+  "weight_metric": "Male: 25-32; Female: 20-27",
+  "life_span": "10-14",
+  "breed_group": "Hound",
+  "temperament": "Loyal, courageous, intelligent, protective, energetic, alert"
+ },
+ {
+  "id": "595",
+  "name": "Sardinian Shepherd Dog",
+  "weight_metric": "Male: 29-35; Female: 25-30",
+  "life_span": "12-14",
+  "breed_group": "Pastoral/Herding",
+  "temperament": "Protective, loyal, independent, intelligent, alert, courageous"
+ },
+ {
+  "id": "596",
+  "name": "Šarplaninac",
+  "weight_metric": "Male: 35-55; Female: 30-50",
+  "life_span": "11-13",
+  "breed_group": "Working",
+  "temperament": "Independent, protective, loyal, calm, courageous, confident"
+ },
+ {
+  "id": "215",
+  "name": "Schapendoes",
+  "weight_metric": "12-20",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Friendly, intelligent, energetic, playful, courageous, alert"
+ },
+ {
+  "id": "597",
+  "name": "Schillerstövare",
+  "weight_metric": "18-25",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Energetic, intelligent, alert, loyal, courageous, work-focused"
+ },
+ {
+  "id": "216",
+  "name": "Schipperke",
+  "weight_metric": "4.5-7",
+  "life_span": "12-14",
+  "breed_group": "Non-Sporting",
+  "temperament": "Alert, confident, energetic, intelligent, independent, curious"
+ },
+ {
+  "id": "217",
+  "name": "Schnoodle",
+  "weight_metric": "4.5-36",
+  "life_span": "10-16",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, loyal, playful, alert, affectionate, devoted, energetic"
+ },
+ {
+  "id": "599",
+  "name": "Schweizerischer Niederlaufhund",
+  "weight_metric": "15-18",
+  "life_span": "12-14",
+  "breed_group": "Scenthound",
+  "temperament": "Intelligent, alert, energetic, friendly, loyal, independent"
+ },
+ {
+  "id": "598",
+  "name": "Schweizer Laufhund",
+  "weight_metric": "Male: 16-25; Female: 16-23",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Energetic, intelligent, gentle, devoted, alert, independent"
+ },
+ {
+  "id": "673",
+  "name": "Scoodle",
+  "weight_metric": "Male: 5-10; Female: 4.5-9",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, confident, alert, playful, loyal"
+ },
+ {
+  "id": "218",
+  "name": "Scottish Deerhound",
+  "weight_metric": "Male: 39-50; Female: 34-43",
+  "life_span": "8-11",
+  "breed_group": "Hound",
+  "temperament": "Gentle, dignified, calm, loyal, friendly"
+ },
+ {
+  "id": "219",
+  "name": "Scottish Terrier",
+  "weight_metric": "Male: 8.5-10; Female: 8-9.5",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Confident, independent, alert, intelligent, loyal"
+ },
+ {
+  "id": "220",
+  "name": "Sealyham Terrier",
+  "weight_metric": "Male: 10-11; Female: 9.5-10",
+  "life_span": "12-14",
+  "breed_group": "Terrier",
+  "temperament": "Friendly, alert, confident, outgoing, courageous"
+ },
+ {
+  "id": "600",
+  "name": "Segugio dell'Appennino",
+  "weight_metric": "10-20",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Energetic, intelligent, alert, courageous, work-focused, independent"
+ },
+ {
+  "id": "601",
+  "name": "Segugio Italiano",
+  "weight_metric": "18-28",
+  "life_span": "10-14",
+  "breed_group": "Hound",
+  "temperament": "Intelligent, energetic, loyal, alert, determined, eager to please"
+ },
+ {
+  "id": "602",
+  "name": "Segugio Maremmano",
+  "weight_metric": "Male: 18-24; Female: 16-22",
+  "life_span": "10-14",
+  "breed_group": "Hound",
+  "temperament": "Alert, energetic, intelligent, courageous, independent"
+ },
+ {
+  "id": "603",
+  "name": "Serbian Hound",
+  "weight_metric": "Male: 20-25; Female: 18-22",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Energetic, loyal, intelligent, courageous, devoted, tenacious"
+ },
+ {
+  "id": "604",
+  "name": "Serbian Tricolour Hound",
+  "weight_metric": "Male: 20-30; Female: 18-25",
+  "life_span": "12-14",
+  "breed_group": "Scenthound",
+  "temperament": "Energetic, intelligent, loyal, alert, devoted, gentle"
+ },
+ {
+  "id": "605",
+  "name": "Serrano Bulldog",
+  "weight_metric": "Male: 30-40; Female: 25-35",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Loyal, protective, confident, courageous, calm, alert"
+ },
+ {
+  "id": "652",
+  "name": "Sheepadoodle",
+  "weight_metric": "Male: 29-39; Female: 20-29",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, playful, gentle, energetic, friendly, loyal"
+ },
+ {
+  "id": "221",
+  "name": "Shetland Sheepdog",
+  "weight_metric": "7-11",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, alert, playful, gentle, eager to please"
+ },
+ {
+  "id": "222",
+  "name": "Shiba Inu",
+  "weight_metric": "Male: 8-11; Female: 7-9",
+  "life_span": null,
+  "breed_group": "Non-Sporting",
+  "temperament": "Alert, confident, intelligent, independent, loyal, courageous"
+ },
+ {
+  "id": "224",
+  "name": "Shih Poo",
+  "weight_metric": "3.5-8",
+  "life_span": "10-17",
+  "breed_group": "Mixed",
+  "temperament": "Affectionate, friendly, playful, intelligent, outgoing"
+ },
+ {
+  "id": "223",
+  "name": "Shih Tzu",
+  "weight_metric": "4-7",
+  "life_span": "10-18",
+  "breed_group": "Toy",
+  "temperament": "Affectionate, playful, outgoing, loyal"
+ },
+ {
+  "id": "272",
+  "name": "Shikoku",
+  "weight_metric": "Male: 16-25; Female: 16-20",
+  "life_span": "10-15",
+  "breed_group": "Spitz and Primitive Types",
+  "temperament": "Alert, loyal, energetic, intelligent, courageous, independent"
+ },
+ {
+  "id": "225",
+  "name": "Shiloh Shepherd",
+  "weight_metric": "Male: 45-59; Female: 36-45",
+  "life_span": "9-14",
+  "breed_group": "Herding",
+  "temperament": "Calm, gentle, intelligent, loyal, confident, affectionate"
+ },
+ {
+  "id": "659",
+  "name": "Shorkie",
+  "weight_metric": "3-7",
+  "life_span": "11-16",
+  "breed_group": "Mixed",
+  "temperament": "Affectionate, playful, intelligent, alert, loyal, confident"
+ },
+ {
+  "id": "226",
+  "name": "Siberian Husky",
+  "weight_metric": "Male: 20-27; Female: 16-23",
+  "life_span": "12-14",
+  "breed_group": "Working",
+  "temperament": "Friendly, outgoing, intelligent, alert, gentle, independent, energetic"
+ },
+ {
+  "id": "227",
+  "name": "Silken Windhound",
+  "weight_metric": "Male: 15-25; Female: 9-20",
+  "life_span": "12-18",
+  "breed_group": "Hound",
+  "temperament": "Friendly, gentle, affectionate, intelligent, playful, calm"
+ },
+ {
+  "id": "606",
+  "name": "Sinhala Hound",
+  "weight_metric": "Male: 15-20; Female: 13-18",
+  "life_span": "12-15",
+  "breed_group": "Sighthound & Pariah",
+  "temperament": "Alert, independent, loyal, intelligent, energetic"
+ },
+ {
+  "id": "229",
+  "name": "Skye Terrier",
+  "weight_metric": "Male: 16-20; Female: 11-18",
+  "life_span": "12-14",
+  "breed_group": "Terrier",
+  "temperament": "Loyal, courageous, intelligent, calm, confident"
+ },
+ {
+  "id": "230",
+  "name": "Sloughi",
+  "weight_metric": "Male: 23-32; Female: 16-23",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Independent, gentle, loyal, intelligent, reserved"
+ },
+ {
+  "id": "608",
+  "name": "Slovak Cuvac",
+  "weight_metric": "Male: 35-45; Female: 30-40",
+  "life_span": "11-13",
+  "breed_group": "Working",
+  "temperament": "Alert, courageous, loyal, protective, independent, confident"
+ },
+ {
+  "id": "607",
+  "name": "Slovak Rough-haired Pointer",
+  "weight_metric": "Male: 25-35; Female: 22-30",
+  "life_span": "12-15",
+  "breed_group": "Sporting",
+  "temperament": "Intelligent, loyal, energetic, work-focused, adaptable"
+ },
+ {
+  "id": "609",
+  "name": "Slovenský kopov",
+  "weight_metric": "15-20",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Courageous, energetic, intelligent, loyal, alert, work-focused"
+ },
+ {
+  "id": "610",
+  "name": "Smaland Hound",
+  "weight_metric": "13.6-20.4",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Calm, intelligent, loyal, alert, energetic"
+ },
+ {
+  "id": "611",
+  "name": "Small Međimurje Dog",
+  "weight_metric": "Male: 8-16; Female: 7-15",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Energetic, intelligent, alert, loyal, affectionate"
+ },
+ {
+  "id": "231",
+  "name": "Small Münsterländer",
+  "weight_metric": "18-30",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Intelligent, eager to please, energetic, loyal, adaptable"
+ },
+ {
+  "id": "612",
+  "name": "Smithfield",
+  "weight_metric": "Male: 16-25; Female: 14-18",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, work-focused, alert, independent, courageous"
+ },
+ {
+  "id": "284",
+  "name": "Smooth Collie",
+  "weight_metric": "Male: 27-34; Female: 23-29",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, gentle, friendly, devoted"
+ },
+ {
+  "id": "232",
+  "name": "Smooth Fox Terrier",
+  "weight_metric": "Male: 8-8.5; Female: 7-7.5",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Energetic, alert, intelligent, friendly, courageous, playful"
+ },
+ {
+  "id": "233",
+  "name": "Soft Coated Wheaten Terrier",
+  "weight_metric": "Male: 16-18; Female: 14-16",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Friendly, happy, intelligent, devoted, energetic"
+ },
+ {
+  "id": "234",
+  "name": "Spanish Greyhound",
+  "weight_metric": "Male: 23-30; Female: 20-27",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Gentle, calm, intelligent, affectionate, independent, loyal"
+ },
+ {
+  "id": "613",
+  "name": "Spanish Mastiff",
+  "weight_metric": "Male: 64-100; Female: 50-77",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Protective, calm, loyal, intelligent, independent, affectionate"
+ },
+ {
+  "id": "235",
+  "name": "Spanish Water Dog",
+  "weight_metric": "Male: 18-22; Female: 14-18",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Loyal, intelligent, work-focused, athletic, energetic, alert"
+ },
+ {
+  "id": "614",
+  "name": "Spino degli Iblei",
+  "weight_metric": "Male: 20-35; Female: 18-32",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Courageous, independent, loyal, alert, intelligent"
+ },
+ {
+  "id": "236",
+  "name": "Spinone Italiano",
+  "weight_metric": "Male: 32-37; Female: 28-32",
+  "life_span": "10-12",
+  "breed_group": "Sporting",
+  "temperament": "Gentle, patient, loyal, intelligent, docile, affectionate"
+ },
+ {
+  "id": "615",
+  "name": "Sporting Lucas Terrier",
+  "weight_metric": "Male: 6.5-8; Female: 5-6.5",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Alert, intelligent, friendly, energetic, courageous"
+ },
+ {
+  "id": "680",
+  "name": "Springerdoodle",
+  "weight_metric": "Male: 23-32; Female: 16-27",
+  "life_span": "11-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, friendly, energetic, playful, affectionate, eager to please, loyal"
+ },
+ {
+  "id": "237",
+  "name": "Sprollie",
+  "weight_metric": "Male: 16-32; Female: 14-27",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, energetic, loyal, athletic, eager to please, work-focused"
+ },
+ {
+  "id": "617",
+  "name": "Stabyhoun",
+  "weight_metric": "Male: 20-25; Female: 18-23",
+  "life_span": null,
+  "breed_group": "Sporting",
+  "temperament": "Gentle, intelligent, calm, loyal, friendly, devoted"
+ },
+ {
+  "id": "238",
+  "name": "Staffordshire Bull Terrier",
+  "weight_metric": "Male: 13-17; Female: 11-15",
+  "life_span": "12-14",
+  "breed_group": "Terrier",
+  "temperament": "Courageous, intelligent, affectionate, loyal, confident, energetic"
+ },
+ {
+  "id": "239",
+  "name": "Standard Schnauzer",
+  "weight_metric": "Male: 16-23; Female: 14-20",
+  "life_span": null,
+  "breed_group": "Working",
+  "temperament": "Intelligent, alert, energetic, loyal, protective, devoted"
+ },
+ {
+  "id": "618",
+  "name": "Stephens Stock",
+  "weight_metric": "Male: 18-29; Female: 16-25",
+  "life_span": "10-16",
+  "breed_group": "Hound",
+  "temperament": "Courageous, loyal, intelligent, alert, work-focused, energetic"
+ },
+ {
+  "id": "616",
+  "name": "St. Hubert Jura Hound",
+  "weight_metric": "Male: 15-25; Female: 15-23",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Gentle, intelligent, devoted, calm, work-focused"
+ },
+ {
+  "id": "619",
+  "name": "Styrian Coarse-haired Hound",
+  "weight_metric": "Male: 15-18; Female: 15-17",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Work-focused, loyal, courageous, independent, alert"
+ },
+ {
+  "id": "240",
+  "name": "Sussex Spaniel",
+  "weight_metric": "16-20",
+  "life_span": "12-15",
+  "breed_group": "Sporting",
+  "temperament": "Calm, gentle, friendly, loyal, alert"
+ },
+ {
+  "id": "241",
+  "name": "Swedish Lapphund",
+  "weight_metric": "Male: 19-30; Female: 17-25",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Alert, intelligent, affectionate, friendly, energetic, loyal"
+ },
+ {
+  "id": "242",
+  "name": "Swedish Vallhund",
+  "weight_metric": "9-16",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Alert, energetic, friendly, intelligent, courageous, playful, eager to please"
+ },
+ {
+  "id": "620",
+  "name": "Taigan",
+  "weight_metric": "Male: 27-35; Female: 25-30",
+  "life_span": "11-14",
+  "breed_group": "Hound",
+  "temperament": "Independent, calm, intelligent, loyal, courageous, reserved"
+ },
+ {
+  "id": "621",
+  "name": "Taiwan Dog",
+  "weight_metric": "Male: 13-18; Female: 11-16",
+  "life_span": "12-15",
+  "breed_group": "Spitz and Primitive Types",
+  "temperament": "Alert, loyal, courageous, intelligent, independent"
+ },
+ {
+  "id": "622",
+  "name": "Tamaskan Dog",
+  "weight_metric": "Male: 30-45; Female: 23-39",
+  "life_span": null,
+  "breed_group": "Working",
+  "temperament": "Intelligent, loyal, friendly, athletic, alert, energetic"
+ },
+ {
+  "id": "623",
+  "name": "Tang Dog",
+  "weight_metric": "Male: 15-25; Female: 12-20",
+  "life_span": "12-16",
+  "breed_group": "Non-Sporting",
+  "temperament": "Loyal, intelligent, independent, protective, alert"
+ },
+ {
+  "id": "624",
+  "name": "Tarsus Çatalburun",
+  "weight_metric": "Male: 20-25; Female: 16-24",
+  "life_span": "10-14",
+  "breed_group": "Sporting",
+  "temperament": "Loyal, intelligent, energetic, alert, work-focused"
+ },
+ {
+  "id": "625",
+  "name": "Tatra Shepherd Dog",
+  "weight_metric": "Male: 40-59; Female: 36-51",
+  "life_span": "10-13",
+  "breed_group": "Working",
+  "temperament": "Protective, intelligent, calm, confident, loyal, independent, courageous"
+ },
+ {
+  "id": "626",
+  "name": "Teddy Roosevelt Terrier",
+  "weight_metric": "4-11",
+  "life_span": null,
+  "breed_group": "Terrier",
+  "temperament": "Alert, loyal, intelligent, courageous, energetic, playful, friendly"
+ },
+ {
+  "id": "627",
+  "name": "Telomian",
+  "weight_metric": "8-13",
+  "life_span": "12-15",
+  "breed_group": "Pariah",
+  "temperament": "Intelligent, alert, independent, loyal, energetic"
+ },
+ {
+  "id": "628",
+  "name": "Tenterfield Terrier",
+  "weight_metric": "2.7-4.5",
+  "life_span": "12-16",
+  "breed_group": "Terrier",
+  "temperament": "Alert, intelligent, energetic, loyal, confident, affectionate, playful, friendly"
+ },
+ {
+  "id": "629",
+  "name": "Thai Bangkaew Dog",
+  "weight_metric": "Male: 16-20.5; Female: 14-18",
+  "life_span": "12-14",
+  "breed_group": "Spitz and Primitive Types",
+  "temperament": "Alert, loyal, protective, intelligent, independent"
+ },
+ {
+  "id": "243",
+  "name": "Thai Ridgeback",
+  "weight_metric": "Male: 23-34; Female: 16-25",
+  "life_span": "12-13",
+  "breed_group": "Hound",
+  "temperament": "Intelligent, loyal, independent, protective, athletic, alert"
+ },
+ {
+  "id": "630",
+  "name": "Tibetan Kyi Apso",
+  "weight_metric": "Male: 35-54; Female: 30-45",
+  "life_span": "12-15",
+  "breed_group": "Guardian",
+  "temperament": "Protective, independent, loyal, alert, intelligent"
+ },
+ {
+  "id": "244",
+  "name": "Tibetan Mastiff",
+  "weight_metric": "Male: 45-73; Female: 34-54",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Independent, protective, intelligent, loyal, calm"
+ },
+ {
+  "id": "245",
+  "name": "Tibetan Spaniel",
+  "weight_metric": "4-7",
+  "life_span": "12-15",
+  "breed_group": "Non-Sporting",
+  "temperament": "Intelligent, alert, independent, playful, confident, affectionate"
+ },
+ {
+  "id": "246",
+  "name": "Tibetan Terrier",
+  "weight_metric": "8-14",
+  "life_span": "12-16",
+  "breed_group": "Non-Sporting",
+  "temperament": "Affectionate, intelligent, loyal, alert, playful"
+ },
+ {
+  "id": "631",
+  "name": "Tonya Finosu",
+  "weight_metric": "Male: 7-11; Female: 6-10",
+  "life_span": "12-15",
+  "breed_group": "Non-Sporting",
+  "temperament": "Alert, intelligent, energetic, loyal, friendly, courageous"
+ },
+ {
+  "id": "273",
+  "name": "Tornjak",
+  "weight_metric": "Male: 35-50; Female: 28-45",
+  "life_span": "12-14",
+  "breed_group": "Working",
+  "temperament": "Calm, protective, loyal, intelligent, confident, alert"
+ },
+ {
+  "id": "632",
+  "name": "Tosa",
+  "weight_metric": "Male: 45-91; Female: 36-73",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Calm, courageous, loyal, protective, confident"
+ },
+ {
+  "id": "247",
+  "name": "Tosa Ken",
+  "weight_metric": "Male: 45-91; Female: 41-73",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Calm, courageous, loyal, protective, confident"
+ },
+ {
+  "id": "248",
+  "name": "Toy Fox Terrier",
+  "weight_metric": "1.6-3.2",
+  "life_span": null,
+  "breed_group": "Toy",
+  "temperament": "Alert, intelligent, energetic, friendly, playful, loyal, outgoing"
+ },
+ {
+  "id": "633",
+  "name": "Toy Manchester Terrier",
+  "weight_metric": "3-5",
+  "life_span": null,
+  "breed_group": "Toy",
+  "temperament": "Alert, intelligent, spirited, devoted, playful"
+ },
+ {
+  "id": "274",
+  "name": "Transylvanian Hound",
+  "weight_metric": "Male: 25-35; Female: 25-30",
+  "life_span": "10-14",
+  "breed_group": "Hound",
+  "temperament": "Courageous, intelligent, loyal, energetic, independent, calm, adaptable"
+ },
+ {
+  "id": "275",
+  "name": "Treeing Cur",
+  "weight_metric": "14-27",
+  "life_span": "10-16",
+  "breed_group": "Scenthound",
+  "temperament": "Intelligent, energetic, courageous, loyal, protective"
+ },
+ {
+  "id": "634",
+  "name": "Treeing Feist",
+  "weight_metric": "7-14",
+  "life_span": "10-18",
+  "breed_group": "Foundation Stock Service",
+  "temperament": "Energetic, alert, intelligent, eager to please, work-focused"
+ },
+ {
+  "id": "276",
+  "name": "Treeing Tennessee Brindle",
+  "weight_metric": "Male: 14-23; Female: 14-18",
+  "life_span": "10-12",
+  "breed_group": "Hound",
+  "temperament": "Intelligent, alert, courageous, energetic, friendly"
+ },
+ {
+  "id": "250",
+  "name": "Treeing Walker Coonhound",
+  "weight_metric": "23-32",
+  "life_span": "12-13",
+  "breed_group": "Hound",
+  "temperament": "Intelligent, confident, friendly, energetic, courageous, alert"
+ },
+ {
+  "id": "277",
+  "name": "Trigg Hound",
+  "weight_metric": "Male: 20-34; Female: 18-32",
+  "life_span": "10-13",
+  "breed_group": "Hound",
+  "temperament": "Energetic, independent, alert, intelligent, loyal, work-focused"
+ },
+ {
+  "id": "278",
+  "name": "Tyrolean Hound",
+  "weight_metric": "15-22",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Intelligent, independent, energetic, alert, work-focused, devoted"
+ },
+ {
+  "id": "635",
+  "name": "Valencian Terrier",
+  "weight_metric": "6-8",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Intelligent, energetic, alert, loyal, affectionate"
+ },
+ {
+  "id": "686",
+  "name": "Valley Bulldog",
+  "weight_metric": "Male: 23-36; Female: 18-32",
+  "life_span": "10-14",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, loyal, playful, courageous, intelligent, affectionate"
+ },
+ {
+  "id": "636",
+  "name": "Vikhan",
+  "weight_metric": "25-35",
+  "life_span": "10-12",
+  "breed_group": "Guardian",
+  "temperament": "Alert, courageous, independent, protective, loyal"
+ },
+ {
+  "id": "637",
+  "name": "Villano de Las Encartaciones",
+  "weight_metric": "Male: 33-45; Female: 28-38",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Loyal, courageous, protective, intelligent, confident, independent"
+ },
+ {
+  "id": "638",
+  "name": "Villanuco de Las Encartaciones",
+  "weight_metric": "Male: 8-10; Female: 7-9",
+  "life_span": "12-14",
+  "breed_group": "Primitive",
+  "temperament": "Intelligent, alert, courageous, energetic, loyal"
+ },
+ {
+  "id": "251",
+  "name": "Vizsla",
+  "weight_metric": "Male: 25-27; Female: 20-25",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Energetic, affectionate, gentle, intelligent, athletic"
+ },
+ {
+  "id": "671",
+  "name": "Vizsladoodle",
+  "weight_metric": "Male: 23-32; Female: 18-29",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Energetic, intelligent, affectionate, athletic, loyal, playful"
+ },
+ {
+  "id": "639",
+  "name": "Volkosob",
+  "weight_metric": "Male: 38-48; Female: 32-41",
+  "life_span": "10-14",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, alert, loyal, protective, work-focused, confident"
+ },
+ {
+  "id": "252",
+  "name": "Volpino Italiano",
+  "weight_metric": "4-5.5",
+  "life_span": null,
+  "breed_group": "Non-Sporting",
+  "temperament": "Alert, playful, loyal, intelligent, confident, energetic"
+ },
+ {
+  "id": "253",
+  "name": "Weimaraner",
+  "weight_metric": "Male: 32-41; Female: 25-34",
+  "life_span": "10-13",
+  "breed_group": "Sporting",
+  "temperament": "Energetic, intelligent, loyal, friendly, alert, courageous, athletic"
+ },
+ {
+  "id": "670",
+  "name": "Weimardoodle",
+  "weight_metric": "Male: 27-39; Female: 20-34",
+  "life_span": "10-13",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, energetic, loyal, athletic, affectionate, protective"
+ },
+ {
+  "id": "279",
+  "name": "Welsh Hound",
+  "weight_metric": "Male: 25-32; Female: 23-29",
+  "life_span": "10-13",
+  "breed_group": "Hound",
+  "temperament": "Energetic, intelligent, independent, alert, loyal, gentle"
+ },
+ {
+  "id": "280",
+  "name": "Welsh Sheepdog",
+  "weight_metric": "Male: 16-25; Female: 14-20",
+  "life_span": "12-15",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, energetic, loyal, work-focused, independent"
+ },
+ {
+  "id": "254",
+  "name": "Welsh Springer Spaniel",
+  "weight_metric": "Male: 18-25; Female: 16-23",
+  "life_span": "12-15",
+  "breed_group": "Sporting",
+  "temperament": "Friendly, loyal, energetic, intelligent, affectionate, eager to please"
+ },
+ {
+  "id": "255",
+  "name": "Welsh Terrier",
+  "weight_metric": "9-10",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Friendly, alert, intelligent, spirited, energetic, confident"
+ },
+ {
+  "id": "640",
+  "name": "West Country Harrier",
+  "weight_metric": "Male: 25-34; Female: 22-31",
+  "life_span": "12-14",
+  "breed_group": "Hound",
+  "temperament": "Energetic, friendly, alert, independent, outgoing, work-focused"
+ },
+ {
+  "id": "256",
+  "name": "West Highland White Terrier",
+  "weight_metric": "Male: 7-10; Female: 6-7",
+  "life_span": null,
+  "breed_group": "Terrier",
+  "temperament": "Confident, alert, playful, loyal, independent"
+ },
+ {
+  "id": "674",
+  "name": "Westiepoo",
+  "weight_metric": "Male: 7-14; Female: 6-13",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Friendly, intelligent, playful, alert, confident"
+ },
+ {
+  "id": "642",
+  "name": "Westphalian Dachsbracke",
+  "weight_metric": "Male: 15-18; Female: 14-17",
+  "life_span": "10-15",
+  "breed_group": "Hound",
+  "temperament": "Alert, intelligent, friendly, work-focused, loyal"
+ },
+ {
+  "id": "641",
+  "name": "West Siberian Laika",
+  "weight_metric": "Male: 16-25; Female: 16-23",
+  "life_span": "12-15",
+  "breed_group": "Spitz and Primitive Types",
+  "temperament": "Alert, independent, loyal, energetic, intelligent"
+ },
+ {
+  "id": "643",
+  "name": "Wetterhoun",
+  "weight_metric": "Male: 25-35; Female: 20-30",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Independent, loyal, intelligent, alert, calm, protective"
+ },
+ {
+  "id": "257",
+  "name": "Whippet",
+  "weight_metric": "11-18",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Gentle, affectionate, calm, intelligent, playful"
+ },
+ {
+  "id": "258",
+  "name": "White Shepherd",
+  "weight_metric": "Male: 35-40; Female: 25-32",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, alert, confident, courageous, gentle"
+ },
+ {
+  "id": "644",
+  "name": "White Swiss Shepherd Dog",
+  "weight_metric": "Male: 30-40; Female: 25-35",
+  "life_span": "12-14",
+  "breed_group": "Herding",
+  "temperament": "Intelligent, loyal, alert, confident, gentle, devoted"
+ },
+ {
+  "id": "259",
+  "name": "Wire Fox Terrier",
+  "weight_metric": "Male: 7.7-8.6; Female: 6.8-7.7",
+  "life_span": "12-15",
+  "breed_group": "Terrier",
+  "temperament": "Alert, confident, energetic, intelligent, playful"
+ },
+ {
+  "id": "260",
+  "name": "Wirehaired Pointing Griffon",
+  "weight_metric": "Male: 23-32; Female: 16-27",
+  "life_span": "12-15",
+  "breed_group": "Sporting",
+  "temperament": "Friendly, intelligent, eager to please, loyal, energetic"
+ },
+ {
+  "id": "261",
+  "name": "Wirehaired Vizsla",
+  "weight_metric": "Male: 25-29; Female: 20-25",
+  "life_span": "12-14",
+  "breed_group": "Sporting",
+  "temperament": "Energetic, loyal, intelligent, affectionate, gentle"
+ },
+ {
+  "id": "645",
+  "name": "Xiasi Dog",
+  "weight_metric": "Male: 20-30; Female: 15-25",
+  "life_span": "12-15",
+  "breed_group": "Hound",
+  "temperament": "Alert, intelligent, loyal, courageous, energetic"
+ },
+ {
+  "id": "646",
+  "name": "Xigou",
+  "weight_metric": "Male: 20-30; Female: 20-25",
+  "life_span": "12-15",
+  "breed_group": "Sighthound",
+  "temperament": "Calm, loyal, intelligent, alert, independent"
+ },
+ {
+  "id": "262",
+  "name": "Xoloitzcuintli",
+  "weight_metric": "4.5-25",
+  "life_span": null,
+  "breed_group": "Non-Sporting",
+  "temperament": "Calm, loyal, alert, intelligent, affectionate, protective"
+ },
+ {
+  "id": "647",
+  "name": "Yakutian Laika",
+  "weight_metric": "Male: 18-25; Female: 16-25",
+  "life_span": "10-12",
+  "breed_group": "Working",
+  "temperament": "Energetic, intelligent, loyal, alert, friendly, courageous"
+ },
+ {
+  "id": "263",
+  "name": "Yorkipoo",
+  "weight_metric": "2-6.5",
+  "life_span": "10-15",
+  "breed_group": "Mixed",
+  "temperament": "Intelligent, affectionate, playful, energetic, confident"
+ },
+ {
+  "id": "264",
+  "name": "Yorkshire Terrier",
+  "weight_metric": "1.8-3.2",
+  "life_span": "12-16",
+  "breed_group": "Toy",
+  "temperament": "Confident, courageous, energetic, affectionate, alert, intelligent"
+ },
+ {
+  "id": "656",
+  "name": "Yorktese",
+  "weight_metric": "2-4",
+  "life_span": "12-15",
+  "breed_group": "Mixed",
+  "temperament": "Affectionate, playful, alert, intelligent, gentle, devoted"
+ },
+ {
+  "id": "648",
+  "name": "Zerdava",
+  "weight_metric": "Male: 8-20; Female: 8-19",
+  "life_span": "12-16",
+  "breed_group": "Spitz and Primitive Types",
+  "temperament": "Intelligent, courageous, loyal, energetic, alert"
+ }
+]

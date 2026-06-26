@@ -44,7 +44,7 @@ const features = [
         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 280 140">
           <path
             d="M30 100 Q80 40 140 70 T250 50"
-            stroke="#10B981"
+            stroke="#3B5BFE"
             strokeWidth="3"
             fill="none"
             strokeDasharray="6 4"
@@ -56,7 +56,7 @@ const features = [
             { x: 250, y: 50, label: "도착" },
           ].map((pt) => (
             <g key={pt.label}>
-              <circle cx={pt.x} cy={pt.y} r="6" fill="#10B981" />
+              <circle cx={pt.x} cy={pt.y} r="6" fill="#3B5BFE" />
               <text x={pt.x} y={pt.y - 12} textAnchor="middle" fontSize="9" fill="#334155">
                 {pt.label}
               </text>

@@ -1,0 +1,22 @@
+/* 발자국 — standalone 시안 helmet 스타일 이식. 색 토큰/다크모드는 App 루트 인라인에서 주입. */
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; height: 100%; }
+body {
+  font-family: Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+input, button, textarea { font-family: inherit; }
+button { border: none; background: none; cursor: pointer; }
+
+/* Material Symbols — msr(outlined) / msf(filled) */
+.msr { font-family: 'Material Symbols Rounded'; font-weight: 400; line-height: 1; -webkit-font-smoothing: antialiased; }
+.msf { font-family: 'Material Symbols Rounded'; font-weight: 400; line-height: 1; font-variation-settings: 'FILL' 1; -webkit-font-smoothing: antialiased; }
+
+/* 스크롤바(시안 .sc) */
+.sc::-webkit-scrollbar { width: 7px; height: 7px; }
+.sc::-webkit-scrollbar-thumb { background: rgba(140, 140, 150, .28); border-radius: 99px; }
+.sc::-webkit-scrollbar-track { background: transparent; }
+
+@keyframes wv { 0%, 100% { transform: scaleY(.4); } 50% { transform: scaleY(1); } }
+@keyframes ping { 0% { transform: scale(1); opacity: .55; } 100% { transform: scale(2.4); opacity: 0; } }
+@keyframes fadeup { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }

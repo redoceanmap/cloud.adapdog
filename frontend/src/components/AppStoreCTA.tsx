@@ -29,7 +29,7 @@ function StoreBadge({
 export default function AppStoreCTA() {
   return (
     <section id="download" className="py-24 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-sage via-sage-dark to-ink" />
+      <div className="absolute inset-0 bg-gradient-to-br from-brand via-brand-dark to-ink" />
       <div className="absolute inset-0 opacity-[0.07]">
         {["🐾", "🐕", "🦴"].map((emoji, i) => (
           <span
@@ -67,14 +67,10 @@ export default function AppStoreCTA() {
             강아지와 함께하는 여행의 모든 것을 앱 하나에 담았습니다.
           </p>
 
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
+          <div className="flex flex-wrap justify-center gap-4">
             <StoreBadge platform="App Store" subtitle="Download on the" icon={Apple} />
             <StoreBadge platform="Google Play" subtitle="Get it on" icon={Play} />
           </div>
-
-          <p className="text-white/50 text-xs">
-            * 앱 스토어 링크는 출시 후 연결됩니다 (Mockup)
-          </p>
         </motion.div>
       </div>
     </section>

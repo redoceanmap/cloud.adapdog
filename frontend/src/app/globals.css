@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 /*
- * 베이지 & 에메랄드 팔레트
- * Primary   #10B981  에메랄드     → sage
+ * 베이지 & 블루 팔레트 (앱 UI와 동일 계열)
+ * Primary   #3B5BFE  브랜드 블루  → sage (tailwind alias)
+ * Soft      #EEF1FF  연한 블루    → lavender-light
  * Background #FAF7F2  웜 베이지   → background, warm-white
  * Surface   #F0EBE3  크림 베이지 → cream
  * Text      #3D3832  웜 브라운   → brown, foreground
@@ -18,18 +19,25 @@
   --coral-light: #e2bb8f;
   --coral-dark: #c08f5a;
 
-  --sage: #10b981;
-  --sage-light: #34d399;
-  --sage-dark: #059669;
+  --brand: #3b5bfe;
+  --brand-light: #5b78ff;
+  --brand-dark: #2e4fd4;
+  --brand-soft: #eef1ff;
+  --planner-blue: #2e9bff;
+  --planner-blue-dark: #1a7feb;
+
+  --sage: var(--brand);
+  --sage-light: var(--brand-light);
+  --sage-dark: var(--brand-dark);
 
   --brown: #3d3832;
   --brown-light: #6b6560;
 
-  --gold: #8fbc8f;
-  --lavender: #a8c5b0;
-  --lavender-light: #c2d9c8;
+  --gold: #9cc2ff;
+  --lavender: #b8c9ff;
+  --lavender-light: var(--brand-soft);
 
-  --ink: #2a2622;
+  --ink: #181a1f;
 }
 
 @theme inline {
@@ -43,6 +51,10 @@
   --color-sage: var(--sage);
   --color-sage-light: var(--sage-light);
   --color-sage-dark: var(--sage-dark);
+  --color-brand: var(--brand);
+  --color-brand-light: var(--brand-light);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-soft: var(--brand-soft);
   --color-brown: var(--brown);
   --color-brown-light: var(--brown-light);
   --color-gold: var(--gold);
@@ -82,7 +94,7 @@ body {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, var(--sage) 0%, var(--lavender) 55%, var(--coral) 100%);
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 50%, var(--planner-blue) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -91,24 +103,24 @@ body {
 .glass {
   background: rgba(250, 247, 242, 0.85);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(59, 91, 254, 0.12);
 }
 
 .btn-primary {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--sage);
+  background: var(--brand);
   color: white;
   font-weight: 600;
   border-radius: 9999px;
   transition: all 0.2s;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 14px rgba(59, 91, 254, 0.28);
 }
 .btn-primary:hover {
-  background: var(--sage-dark);
+  background: var(--brand-dark);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+  box-shadow: 0 6px 20px rgba(59, 91, 254, 0.35);
 }
 
 .btn-secondary {
@@ -116,15 +128,15 @@ body {
   align-items: center;
   gap: 0.5rem;
   background: white;
-  color: var(--sage);
+  color: var(--brand);
   font-weight: 600;
   border-radius: 9999px;
-  border: 2px solid rgba(16, 185, 129, 0.3);
+  border: 2px solid rgba(59, 91, 254, 0.28);
   transition: all 0.2s;
 }
 .btn-secondary:hover {
-  background: rgba(16, 185, 129, 0.06);
-  border-color: var(--sage);
+  background: var(--brand-soft);
+  border-color: var(--brand);
 }
 
 .btn-ghost {
@@ -135,18 +147,18 @@ body {
   color: var(--brown-light);
   font-weight: 600;
   border-radius: 9999px;
-  border: 1px solid rgba(168, 197, 176, 0.5);
+  border: 1px solid rgba(184, 201, 255, 0.55);
   transition: all 0.2s;
 }
 .btn-ghost:hover {
-  color: var(--sage);
-  border-color: rgba(16, 185, 129, 0.35);
-  background: rgba(168, 197, 176, 0.08);
+  color: var(--brand);
+  border-color: rgba(59, 91, 254, 0.35);
+  background: var(--brand-soft);
 }
 
 .paw-pattern {
   background-image:
-    radial-gradient(circle at 20% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(168, 197, 176, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(59, 91, 254, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(156, 194, 255, 0.18) 0%, transparent 50%),
     radial-gradient(circle at 50% 50%, rgba(212, 165, 116, 0.08) 0%, transparent 70%);
 }

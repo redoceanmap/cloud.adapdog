@@ -14,7 +14,7 @@ export default function AppScreenshot({
 }: AppScreenshotProps) {
   return (
     <div className={`relative ${className}`}>
-      <div className="absolute -inset-4 bg-gradient-to-br from-sage/15 via-emerald-100/30 to-cream rounded-[2.75rem] blur-xl" />
+      <div className="absolute -inset-4 bg-gradient-to-br from-brand/15 via-brand-soft to-cream rounded-[2.75rem] blur-xl" />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -120,7 +120,7 @@ export default function AppScreenshot({
                 </div>
               ))}
 
-              <div className="bg-emerald-50 rounded-xl p-3 border border-sage/20">
+              <div className="bg-brand-soft rounded-xl p-3 border border-brand/20">
                 <div className="text-[10px] text-sage font-semibold mb-1">자차 경로 추천</div>
                 <div className="text-[11px] text-brown-light leading-relaxed">
                   휴게소 2곳 · 반려견 산책 구간 포함

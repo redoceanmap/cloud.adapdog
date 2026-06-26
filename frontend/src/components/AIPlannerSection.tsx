@@ -1,236 +1,415 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Bot, Car, Home, MapPin, Send } from "lucide-react";
+import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";import {
+  Bell,
+  ChevronRight,
+  Coffee,
+  MapPin,
+  Mic,
+  Moon,
+  MoreHorizontal,
+  PawPrint,
+  Plus,
+  Send,
+  Share2,
+  Sparkles,
+  Star,
+  Sun,
+  TreePine,
+  User,
+  X,
+} from "lucide-react";
 
-type Step = "destination" | "transport" | "accommodation" | "complete";
+const PLANNER_BLUE = "#3B5BFE";
+const PLANNER_BLUE_DARK = "#2E4FD4";
 
-interface ChatMessage {
-  id: string;
-  role: "user" | "ai";
-  text: string;
-  options?: string[];
-}
+const QUICK_CHIPS = ["축제 넣어줘", "맛집 추가", "자차로 바꿔", "여행 시작"];
 
-const STEPS: Record<Step, ChatMessage[]> = {
-  destination: [
-    { id: "d1", role: "ai", text: "어디로 여행 가고 싶으세요? 목적지를 알려주세요 🗺️" },
-    { id: "d2", role: "user", text: "전주 한옥마을이요! 체리랑 같이 가요 🐕" },
-  ],
-  transport: [
-    { id: "t1", role: "ai", text: "좋아요! 어떤 이동 수단을 이용하실 예정인가요?" },
-    {
-      id: "t2",
-      role: "ai",
-      text: "",
-      options: ["🚗 자차", "🚄 KTX", "🚌 고속버스"],
-    },
-    { id: "t3", role: "user", text: "자차로 갈게요" },
-  ],
-  accommodation: [
-    { id: "a1", role: "ai", text: "숙소는 어떤 스타일을 원하시나요?" },
-    {
-      id: "a2",
-      role: "ai",
-      text: "",
-      options: ["🏠 한옥 스테이", "🏨 펫 호텔", "⛺ 글램핑"],
-    },
-    { id: "a3", role: "user", text: "한옥 스테이로 부탁해요" },
-  ],
-  complete: [
-    {
-      id: "c1",
-      role: "ai",
-      text: "체리(말티즈 · 5kg) 정보를 반영해 펫프렌들리 일정을 완성했어요! 🎉",
-    },
-  ],
-};
+const DETAIL_TABS = ["개요", "입장 정책", "위치", "리뷰"];
 
-const STEP_ORDER: Step[] = ["destination", "transport", "accommodation", "complete"];
-
-const STEP_LABELS = [
-  { icon: MapPin, label: "목적지 입력" },
-  { icon: Car, label: "이동 수단" },
-  { icon: Home, label: "숙소 선택" },
-  { icon: Bot, label: "일정 완성" },
+const FACILITIES = [
+  { icon: Sun, label: "테라스 동반석", sub: "대형견 가능" },
+  { icon: Coffee, label: "펫 음료", sub: "강아지 메뉴" },
+  { icon: TreePine, label: "그늘 좌석", sub: "더위 케어" },
 ];
 
-export default function AIPlannerSection() {
-  const [stepIndex, setStepIndex] = useState(0);
-  const [visibleCount, setVisibleCount] = useState(0);
+function CocoAvatar() {
+  return (
+    <div
+      className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] font-bold"
+      style={{ background: PLANNER_BLUE }}
+    >
+      코
+    </div>
+  );
+}
 
-  const currentStep = STEP_ORDER[stepIndex];
-  const messages = STEPS[currentStep];
+export default function AIPlannerSection() {
+  const [visibleMsgs, setVisibleMsgs] = useState(0);
+  const [showCourseCard, setShowCourseCard] = useState(false);
+  const [activeTab, setActiveTab] = useState("개요");
 
   useEffect(() => {
-    const messages = STEPS[STEP_ORDER[stepIndex]];
-    setVisibleCount(0);
-    const timers: ReturnType<typeof setTimeout>[] = [];
-
-    messages.forEach((_, i) => {
-      timers.push(
-        setTimeout(() => setVisibleCount(i + 1), (i + 1) * 1200),
-      );
-    });
-
-    const nextStepDelay = messages.length * 1200 + 1800;
-    timers.push(
-      setTimeout(() => {
-        setStepIndex((prev) => (prev + 1) % STEP_ORDER.length);
-      }, nextStepDelay),
-    );
-
+    setVisibleMsgs(0);
+    setShowCourseCard(false);
+    const timers = [
+      setTimeout(() => setVisibleMsgs(1), 500),
+      setTimeout(() => setVisibleMsgs(2), 1800),
+      setTimeout(() => setShowCourseCard(true), 3000),
+    ];
     return () => timers.forEach(clearTimeout);
-  }, [stepIndex]);
-
-  const visibleMessages = messages.slice(0, visibleCount);
+  }, []);
 
   return (
-    <section id="ai-planner" className="py-24 bg-white">
-      <div className="max-w-6xl mx-auto px-6">
+    <section id="ai-planner" className="py-24 bg-cream">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-14"
+          className="text-center mb-10"
         >
-          <span className="inline-block text-sm font-semibold text-sage bg-sage/10 px-4 py-1.5 rounded-full mb-4">
+          <span
+            className="inline-block text-sm font-semibold px-4 py-1.5 rounded-full mb-4"
+            style={{ color: PLANNER_BLUE, background: `${PLANNER_BLUE}14` }}
+          >
             AI 여행 플래너
           </span>
           <h2 className="text-3xl md:text-4xl font-extrabold text-brown mb-4">
-            채팅만 하면 끝나는
+            채팅 · 상세 · 지도가
             <br />
-            <span className="gradient-text">맞춤 여행 설계</span>
+            <span className="gradient-text">한 화면에서 연결</span>
           </h2>
           <p className="text-brown-light max-w-xl mx-auto leading-relaxed">
-            목적지를 입력하면 AI가 이동 수단과 숙소를 순서대로 물어보고,
-            반려동물 정보를 반영한 일정을 자동으로 완성해요.
+            앱과 동일한 화면에서 코코와 대화하고, 장소 상세와 경로를 바로 확인하세요.
+            <br />
+            <Link href="/login?next=/planner" className="text-sage font-medium hover:underline">
+              로그인하면 내가 저장한 코스를 웹에서 볼 수 있어요
+            </Link>
           </p>
         </motion.div>
 
-        <div className="flex justify-center gap-3 sm:gap-6 mb-10">
-          {STEP_LABELS.map((item, i) => {
-            const Icon = item.icon;
-            const active = i === stepIndex;
-            const done = i < stepIndex;
-            return (
-              <div key={item.label} className="flex flex-col items-center gap-2">
-                <div
-                  className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-500 ${
-                    active
-                      ? "bg-sage text-white shadow-lg shadow-sage/30 scale-110"
-                      : done
-                        ? "bg-sage/20 text-sage"
-                        : "bg-cream text-brown-light"
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                </div>
-                <span
-                  className={`text-[11px] font-medium text-center ${
-                    active ? "text-sage" : "text-brown-light"
-                  }`}
-                >
-                  {item.label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 32 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="relative max-w-md mx-auto w-full"
+          transition={{ duration: 0.7 }}
+          className="bg-white rounded-2xl border border-gray-200 shadow-2xl overflow-hidden"
         >
-            <div className="absolute -inset-3 bg-gradient-to-br from-sage/10 to-cream rounded-3xl blur-lg" />
-            <div className="relative bg-warm-white rounded-3xl border border-sage/15 shadow-xl overflow-hidden">
-              <div className="px-5 py-4 border-b border-sage/10 bg-white flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-sage flex items-center justify-center">
-                  <Bot className="w-5 h-5 text-white" />
+          {/* App top bar */}
+          <div className="flex items-center justify-between px-4 sm:px-5 py-2.5 border-b border-gray-100 bg-white">
+            <div className="flex items-center gap-5">
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background: PLANNER_BLUE }}
+                >
+                  <PawPrint className="w-4 h-4 text-white" />
                 </div>
-                <div>
-                  <div className="text-sm font-bold text-brown">코코 AI</div>
-                  <div className="text-xs text-sage">여행 플래너 대화 중...</div>
+                <span className="font-bold text-gray-800 hidden sm:inline">발자국</span>
+              </div>
+              <nav className="hidden md:flex items-center gap-4 text-[13px]">
+                <span className="font-semibold pb-1 border-b-2" style={{ color: PLANNER_BLUE, borderColor: PLANNER_BLUE }}>
+                  AI 플래너
+                </span>
+                {["둘러보기", "여정", "내 강아지"].map((item) => (
+                  <span key={item} className="text-gray-400">{item}</span>
+                ))}
+              </nav>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button type="button" className="p-2 rounded-lg text-gray-400 hover:bg-gray-50">
+                <Moon className="w-4 h-4" />
+              </button>
+              <button type="button" className="p-2 rounded-lg text-gray-400 hover:bg-gray-50 relative">
+                <Bell className="w-4 h-4" />
+                <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-orange-400 rounded-full" />
+              </button>
+              <div className="flex items-center gap-1.5 pl-2 ml-1 border-l border-gray-100">
+                <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
+                  <User className="w-3.5 h-3.5 text-gray-500" />
+                </div>
+                <span className="text-[13px] font-medium text-gray-700 hidden sm:inline">김민주</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,3.5fr)_minmax(0,2.8fr)] lg:min-h-[600px] xl:min-h-[640px] bg-[#f8f9fb]">
+            {/* Left — Chat */}
+            <div className="flex flex-col border-b lg:border-b-0 lg:border-r border-gray-200 bg-white min-w-0">
+              <div className="px-3 py-2.5 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" style={{ color: PLANNER_BLUE }} />
+                  <span className="text-[13px] font-bold text-gray-800">발자국 AI 1.0</span>
+                  <ChevronRight className="w-3 h-3 text-gray-300 rotate-90" />
+                </div>
+                <div className="flex items-center gap-0.5 text-gray-400">
+                  <button type="button" className="p-1 hover:bg-gray-50 rounded"><Plus className="w-3.5 h-3.5" /></button>
+                  <button type="button" className="p-1 hover:bg-gray-50 rounded"><Share2 className="w-3.5 h-3.5" /></button>
+                  <button type="button" className="p-1 hover:bg-gray-50 rounded"><MoreHorizontal className="w-3.5 h-3.5" /></button>
                 </div>
               </div>
 
-              <div className="p-5 min-h-[320px] flex flex-col gap-3">
-                <AnimatePresence mode="popLayout">
-                  {visibleMessages.map((msg) => (
+              <div className="flex-1 px-3 py-4 space-y-3 overflow-y-auto max-h-[420px] lg:max-h-none">
+                <AnimatePresence initial={false}>
+                  {visibleMsgs >= 1 ? (
                     <motion.div
-                      key={`${currentStep}-${msg.id}`}
-                      initial={{ opacity: 0, y: 12, scale: 0.96 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.35 }}
-                      className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                      key="chat-user"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex justify-end"
                     >
-                      {msg.options ? (
-                        <div className="flex flex-wrap gap-2">
-                          {msg.options.map((opt, i) => (
-                            <motion.span
-                              key={opt}
-                              initial={{ opacity: 0, scale: 0.9 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ delay: i * 0.15 }}
-                              className={`text-sm px-3.5 py-2 rounded-full border ${
-                                i === 0 && currentStep === "transport"
-                                  ? "bg-sage text-white border-sage"
-                                  : i === 0 && currentStep === "accommodation"
-                                    ? "bg-sage text-white border-sage"
-                                    : "bg-white text-brown border-sage/20"
-                              }`}
-                            >
-                              {opt}
-                            </motion.span>
-                          ))}
-                        </div>
-                      ) : (
-                        <div
-                          className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                            msg.role === "user"
-                              ? "bg-sage text-white rounded-tr-sm"
-                              : "bg-white text-brown border border-sage/15 rounded-tl-sm shadow-sm"
-                          }`}
-                        >
-                          {msg.text}
-                        </div>
-                      )}
+                      <div
+                        className="max-w-[88%] text-white text-[13px] px-3.5 py-2.5 rounded-2xl rounded-tr-md leading-relaxed"
+                        style={{ background: PLANNER_BLUE }}
+                      >
+                        체리랑 전주 1박 여행 코스 짜줘 🐶
+                      </div>
                     </motion.div>
-                  ))}
+                  ) : null}
+                  {visibleMsgs >= 2 ? (
+                    <motion.div
+                      key="chat-ai"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex gap-2"
+                    >
+                      <CocoAvatar />
+                      <div className="max-w-[90%] bg-gray-50 border border-gray-100 text-gray-700 text-[13px] px-3.5 py-2.5 rounded-2xl rounded-tl-md leading-[1.65]">
+                        김민주 님, 골든리트리버 <strong className="text-gray-900">체리</strong>
+                        (대형견 · 더위 취약) 프로필을 반영해 전주 1박 코스를 짰어요.
+                        <br />
+                        KTX 전주역 이동 기준이며, 각 장소{" "}
+                        <strong className="text-gray-900">입장 가능 여부 · 그늘 · 이동약자 배려</strong>
+                        를 확인했습니다.
+                      </div>
+                    </motion.div>
+                  ) : null}
+                  {showCourseCard ? (
+                    <motion.div
+                      key="chat-course"
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="ml-9"
+                    >
+                      <button
+                        type="button"
+                        className="w-full text-left bg-white border border-gray-200 rounded-xl p-3 hover:border-blue-200 hover:shadow-sm transition-all group"
+                      >
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-4 h-4 mt-0.5 shrink-0" style={{ color: PLANNER_BLUE }} />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[13px] font-bold text-gray-800">전주 1박 펫 동반 코스</div>
+                            <div className="text-[11px] text-gray-400 mt-0.5">4곳 · 입장 상태 확인됨 · 출처 확인됨</div>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-400 shrink-0" />
+                        </div>
+                      </button>
+                    </motion.div>
+                  ) : null}
                 </AnimatePresence>
-
-                {currentStep === "complete" && visibleCount >= messages.length && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-2 p-3 rounded-xl bg-sage/10 border border-sage/20"
-                  >
-                    <div className="text-xs font-bold text-sage mb-2">📋 전주 2박 3일 일정</div>
-                    <div className="space-y-1.5 text-xs text-brown">
-                      <div>Day 1 · 한옥마을 산책 & 감성 카페</div>
-                      <div>Day 2 · 자차 경유 반려견 공원</div>
-                      <div>Day 3 · 근교 잔디밭 피크닉</div>
-                    </div>
-                  </motion.div>
-                )}
               </div>
 
-              <div className="px-5 pb-5">
-                <div className="flex items-center gap-2 bg-white rounded-xl px-4 py-3 border border-sage/15">
-                  <span className="flex-1 text-sm text-brown-light">메시지를 입력하세요...</span>
-                  <div className="w-8 h-8 rounded-full bg-sage flex items-center justify-center">
-                    <Send className="w-4 h-4 text-white" />
-                  </div>
+              <div className="p-3 border-t border-gray-100 bg-white space-y-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {QUICK_CHIPS.map((chip) => (
+                    <button
+                      key={chip}
+                      type="button"
+                      className="text-[11px] font-medium text-gray-600 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-full hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition-colors"
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border border-gray-200">
+                  <input
+                    readOnly
+                    placeholder="무엇이든 물어보세요..."
+                    className="flex-1 text-[12px] bg-transparent text-gray-500 outline-none placeholder:text-gray-400"
+                  />
+                  <button type="button" className="p-1 text-gray-400 hover:text-gray-600">
+                    <Mic className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center"
+                    style={{ background: PLANNER_BLUE }}
+                  >
+                    <Send className="w-3.5 h-3.5 text-white" />
+                  </button>
                 </div>
               </div>
             </div>
-          </motion.div>
+
+            {/* Center — Place detail */}
+            <div className="flex flex-col border-b lg:border-b-0 lg:border-r border-gray-200 bg-white min-w-0">
+              <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
+                <span className="text-[12px] font-semibold text-gray-500">Day 1 · 11:00</span>
+                <button type="button" className="p-1 rounded-lg hover:bg-gray-50 text-gray-400">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto">
+                <div className="relative aspect-[5/3] max-h-36 sm:max-h-40 bg-orange-50 overflow-hidden">
+                  <img
+                    src="/images/vlog/jeonju-hanok-cafe.jpg"
+                    alt="한옥마을 펫카페"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                    {[0, 1, 2].map((i) => (
+                      <span
+                        key={i}
+                        className={`w-1.5 h-1.5 rounded-full ${i === 0 ? "bg-white" : "bg-white/50"}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="px-4 py-3 space-y-2.5">
+                  <div>
+                    <h3 className="text-base font-bold text-gray-900">한옥마을 펫카페</h3>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[12px] text-gray-500">
+                      <span className="flex items-center gap-0.5 font-semibold text-orange-500">
+                        <Star className="w-3 h-3 fill-orange-400 text-orange-400" />
+                        4.7
+                      </span>
+                      <span>12,000원~</span>
+                      <span className="text-brand font-medium">영업 중 ~ 21:00</span>
+                      <span>전주시 완산구 한옥마을</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-1 border-b border-gray-100">
+                    {DETAIL_TABS.map((tab) => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setActiveTab(tab)}
+                        className={`text-[11px] font-medium pb-2 px-2 -mb-px transition-colors ${
+                          activeTab === tab
+                            ? "text-blue-600 border-b-2 border-blue-500"
+                            : "text-gray-400 hover:text-gray-600"
+                        }`}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="bg-brand-soft border border-brand/25 text-brand text-[11px] font-medium px-3 py-2 rounded-lg leading-relaxed">
+                    체리 입장 가능 · 대형견 가능 · 목줄 필수 · 실내 동반
+                  </div>
+
+                  <p className="text-[13px] text-gray-600 leading-relaxed">
+                    대형견 입장 가능 + 실내 에어컨으로 더위 취약한 체리도 시원하게
+                    머물 수 있어요. 한옥 테라스에서 사진 찍기도 좋아요.
+                  </p>
+
+                  <div>
+                    <div className="text-[12px] font-semibold text-gray-700 mb-2">함께 가기 좋은 곳</div>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {FACILITIES.map(({ icon: Icon, label, sub }) => (
+                        <div
+                          key={label}
+                          className="bg-gray-50 rounded-xl p-2 border border-gray-100 text-center"
+                        >
+                          <Icon className="w-4 h-4 mx-auto mb-1.5" style={{ color: PLANNER_BLUE }} />
+                          <div className="text-[10px] font-semibold text-gray-800 leading-tight">{label}</div>
+                          <div className="text-[9px] text-gray-400 mt-0.5">{sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  className="w-full text-white font-semibold text-[13px] py-3 rounded-xl transition-colors shadow-sm"
+                  style={{ background: PLANNER_BLUE }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = PLANNER_BLUE_DARK; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = PLANNER_BLUE; }}
+                >
+                  이 장소 코스에 담기
+                </button>
+              </div>
+            </div>
+
+            {/* Right — Map */}
+            <div className="relative bg-[#eef1f5] min-h-[300px] lg:min-h-0 lg:min-w-[240px]">
+              <div className="absolute top-3 left-3 right-3 z-10">
+                <div className="bg-white rounded-xl px-3 py-2 shadow-sm border border-gray-100 text-[11px] font-semibold text-gray-700 leading-snug">
+                  서울 → 전주 · KTX
+                  <span className="block sm:inline font-normal text-gray-400 sm:ml-1">(약 1시간 40분)</span>
+                </div>
+              </div>
+
+              <svg
+                className="absolute inset-0 w-full h-full"
+                viewBox="0 0 300 520"
+                preserveAspectRatio="xMidYMid meet"
+              >
+                <defs>
+                  <pattern id="planner-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#dde3ea" strokeWidth="0.5" />
+                  </pattern>
+                </defs>
+                <rect width="300" height="520" fill="url(#planner-grid)" />
+                <path
+                  d="M70 440 C110 340, 130 300, 150 260 S190 180, 220 120"
+                  stroke={PLANNER_BLUE}
+                  strokeWidth="2.5"
+                  fill="none"
+                  strokeDasharray="7 5"
+                  strokeLinecap="round"
+                />
+                {[
+                  { x: 70, y: 440, emoji: "🏠", label: "서울" },
+                  { x: 150, y: 260, emoji: "☕", label: "카페", active: true },
+                  { x: 185, y: 195, emoji: "🐾", label: "산책" },
+                  { x: 220, y: 120, emoji: "🏯", label: "전주" },
+                ].map((pt) => (
+                  <g key={pt.label}>
+                    {pt.active && (
+                      <circle cx={pt.x} cy={pt.y} r="22" fill={`${PLANNER_BLUE}25`}>
+                        <animate attributeName="r" values="18;24;18" dur="2s" repeatCount="indefinite" />
+                      </circle>
+                    )}
+                    <circle
+                      cx={pt.x}
+                      cy={pt.y}
+                      r={pt.active ? 16 : 13}
+                      fill={pt.active ? PLANNER_BLUE : "white"}
+                      stroke={PLANNER_BLUE}
+                      strokeWidth="2"
+                    />
+                    <text x={pt.x} y={pt.y + 4} textAnchor="middle" fontSize="11">
+                      {pt.emoji}
+                    </text>
+                    <text x={pt.x} y={pt.y + 26} textAnchor="middle" fontSize="9" fill="#6b7280">
+                      {pt.label}
+                    </text>
+                  </g>
+                ))}
+              </svg>
+
+              <button
+                type="button"
+                className="absolute bottom-4 right-3 flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white text-[11px] font-bold px-3 py-2 rounded-full shadow-lg shadow-red-500/25 z-10 transition-colors"
+              >
+                <span className="text-sm leading-none">✱</span>
+                응급
+              </button>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </section>
   );

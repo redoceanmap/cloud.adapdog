@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { PawPrint, Mail, Lock, User, ArrowLeft } from "lucide-react";
-import { apiFetch } from "@/lib/api";
+import { login, signup } from "@/lib/auth-api";
 
 interface AuthFormProps {
   initialMode?: "login" | "register";
@@ -12,38 +12,44 @@ interface AuthFormProps {
 
 export default function AuthForm({ initialMode = "login" }: AuthFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isRegister, setIsRegister] = useState(initialMode === "register");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const emailFromQuery = searchParams.get("email");
+    if (emailFromQuery && initialMode === "login") {
+      setEmail(emailFromQuery);
+    }
+    if (searchParams.get("registered") === "1" && initialMode === "login") {
+      setSuccess("회원가입이 완료되었습니다. 로그인해 주세요.");
+    }
+  }, [searchParams, initialMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
-      const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
-      const body = isRegister ? { email, password, name } : { email, password };
-
-      const res = await apiFetch(endpoint, {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "오류가 발생했습니다.");
+      if (isRegister) {
+        await signup(name, email, password);
+        router.push(`/login?registered=1&email=${encodeURIComponent(email)}`);
         return;
       }
 
-      router.push("/");
+      await login(email, password);
+      const next = searchParams.get("next");
+      router.push(next && next.startsWith("/") ? next : "/");
       router.refresh();
-    } catch {
-      setError("네트워크 오류가 발생했습니다.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "네트워크 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -52,9 +58,9 @@ export default function AuthForm({ initialMode = "login" }: AuthFormProps) {
   const switchMode = (register: boolean) => {
     setIsRegister(register);
     setError("");
+    setSuccess("");
     router.replace(register ? "/register" : "/login", { scroll: false });
   };
-
   return (
     <div className="min-h-screen paw-pattern flex items-center justify-center p-6">
       <div className="absolute top-6 left-6">
@@ -148,6 +154,12 @@ export default function AuthForm({ initialMode = "login" }: AuthFormProps) {
                 />
               </div>
             </div>
+
+            {success && (
+              <div className="text-sm text-sage bg-sage/10 rounded-xl px-4 py-2.5">
+                {success}
+              </div>
+            )}
 
             {error && (
               <div className="text-sm text-red-500 bg-red-50 rounded-xl px-4 py-2.5">

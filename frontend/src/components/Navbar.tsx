@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PawPrint, Menu, X } from "lucide-react";
-import { apiFetch } from "@/lib/api";
+import { loadAuthUser } from "@/lib/auth";
+import { logout, verifyAuth } from "@/lib/auth-api";
 
 interface User {
   id: string;
@@ -17,9 +18,14 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    apiFetch("/api/auth/me")
-      .then((r) => r.json())
-      .then((d) => setUser(d.user))
+    const stored = loadAuthUser();
+    if (!stored) return;
+
+    verifyAuth()
+      .then((ok) => {
+        if (ok) setUser(stored);
+        else logout();
+      })
       .catch(() => {});
 
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -27,17 +33,18 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleLogout = async () => {
-    await apiFetch("/api/auth/logout", { method: "POST" });
+  const handleLogout = () => {
+    logout();
     setUser(null);
   };
 
+  const plannerHref = user ? "/planner" : "/login?next=/planner";
+
   const navLinks = [
-    { href: "#ai-planner", label: "AI 플래너" },
-    { href: "#ai-voice", label: "음성·응급" },
-    { href: "#scenarios", label: "시나리오" },
-    { href: "#features", label: "차별점" },
-    { href: "#download", label: "다운로드" },
+    { href: plannerHref, label: "AI 플래너", isRoute: true },
+    { href: "#ai-voice", label: "음성·응급", isRoute: false },
+    { href: "#features", label: "차별점", isRoute: false },
+    { href: "#download", label: "다운로드", isRoute: false },
   ];
 
   return (
@@ -55,19 +62,29 @@ export default function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-brown-light hover:text-sage transition-colors"
-            >
-              {link.label}
-            </a>
-          ))}
+          {navLinks.map((link) =>
+            link.isRoute ? (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="text-sm font-medium text-brown-light hover:text-sage transition-colors"
+              >
+                {link.label}
+              </Link>
+            ) : (
+              <a
+                key={link.label}
+                href={link.href}
+                className="text-sm font-medium text-brown-light hover:text-sage transition-colors"
+              >
+                {link.label}
+              </a>
+            ),
+          )}
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
-          {user ? (
+          {user && (
             <>
               <span className="text-sm text-brown-light">
                 안녕하세요, <strong className="text-brown">{user.name}</strong>님
@@ -78,21 +95,6 @@ export default function Navbar() {
               >
                 로그아웃
               </button>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/login"
-                className="btn-secondary text-sm px-4 py-2"
-              >
-                로그인
-              </Link>
-              <Link
-                href="/register"
-                className="btn-primary text-sm px-5 py-2.5"
-              >
-                회원가입
-              </Link>
             </>
           )}
         </div>
@@ -108,29 +110,31 @@ export default function Navbar() {
 
       {menuOpen && (
         <div className="md:hidden glass border-t border-white/50 mt-3 px-6 py-4 flex flex-col gap-4">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={() => setMenuOpen(false)}
-              className="text-sm font-medium text-brown-light"
-            >
-              {link.label}
-            </a>
-          ))}
-          {user ? (
+          {navLinks.map((link) =>
+            link.isRoute ? (
+              <Link
+                key={link.label}
+                href={link.href}
+                onClick={() => setMenuOpen(false)}
+                className="text-sm font-medium text-brown-light"
+              >
+                {link.label}
+              </Link>
+            ) : (
+              <a
+                key={link.label}
+                href={link.href}
+                onClick={() => setMenuOpen(false)}
+                className="text-sm font-medium text-brown-light"
+              >
+                {link.label}
+              </a>
+            ),
+          )}
+          {user && (
             <button onClick={handleLogout} className="text-sm text-sage font-medium text-left">
               로그아웃
             </button>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <Link href="/login" className="btn-secondary text-sm px-4 py-2 w-fit">
-                로그인
-              </Link>
-              <Link href="/register" className="btn-primary text-sm px-5 py-2.5 w-fit">
-                회원가입
-              </Link>
-            </div>
           )}
         </div>
       )}

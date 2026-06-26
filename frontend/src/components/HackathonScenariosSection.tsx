@@ -34,7 +34,7 @@ const SCENARIOS: Scenario[] = [
     pet: "체리 · 말티즈 · 5kg",
     transport: "자차",
     style: "거점형 1박 2일",
-    highlight: "경유지 추천 · 문화부 산하 시설 필터링",
+    highlight: "경유지 추천 · 문화시설 입장 가능 여부 확인",
     dialogue: [
       { user: "코코야, 전주로 여행 갈 거야", coco: "이동 수단은 어떻게 하실 건가요?" },
       { user: "자차로 갈 거야", coco: "가시는 길에 체리와 함께 들르기 좋은 곳 추천해드릴게요!" },
@@ -42,11 +42,11 @@ const SCENARIOS: Scenario[] = [
     places: [
       { name: "수원 광교호수공원", ok: true, note: "경유 · 반려견 동반" },
       { name: "전주 한옥마을", ok: true, note: "문화시설 · 입장 가능 구역" },
-      { name: "전주 국립무형유산원", ok: true, note: "문화부 산하 · 야외" },
+      { name: "전주 국립무형유산원", ok: true, note: "야외 공간 · 반려견 동반" },
       { name: "전주 국립전주박물관", ok: true, note: "야외 조각공원" },
       { name: "한옥 게스트하우스", ok: true, note: "체리 5kg 입장 가능 ✅" },
     ],
-    features: ["자차 경유지 자동 추천", "문화부 산하 시설 필터링", "체중 기준 입장 가능 판단"],
+    features: ["자차 경유지 자동 추천", "문화시설 입장 가능 여부 확인", "체중 기준 입장 가능 판단"],
   },
   {
     id: "gyeongju",
@@ -86,7 +86,7 @@ const SCENARIOS: Scenario[] = [
     places: [
       { name: "제주도립미술관", ok: true, note: "야외 조각공원" },
       { name: "협재해수욕장", ok: true, note: "입장 가능 시간대 안내" },
-      { name: "이중섭미술관", ok: true, note: "문화부 연계 · 야외" },
+      { name: "이중섭미술관", ok: true, note: "야외 공간 · 반려견 동반" },
       { name: "반려견 동반 렌터카", ok: true, note: "업체 3곳 추천" },
       { name: "응급 동물병원", ok: true, note: "여행 중 자동 표시" },
     ],
@@ -106,10 +106,10 @@ const SCENARIOS: Scenario[] = [
       { user: "", coco: "내일 체크아웃 후 순천까지 30분이에요. 콩이 이동 스트레스 최소 구간입니다 🐾" },
     ],
     places: [
-      { name: "여수 예울마루", ok: true, note: "Day1 · 문화부 연계" },
+      { name: "여수 예울마루", ok: true, note: "Day1 · 야외 공연장" },
       { name: "순천만 국가정원", ok: true, note: "Day2 · 펫 동반 구역" },
       { name: "담양 한국대나무박물관", ok: true, note: "Day3 · 야외" },
-      { name: "통영 국제음악당", ok: true, note: "Day4 · 문화부 연계" },
+      { name: "통영 국제음악당", ok: true, note: "Day4 · 야외 공간" },
       { name: "거점별 펫 숙소 4곳", ok: true, note: "콩이 6kg 일괄 확인 ✅" },
     ],
     features: ["거점별 숙소 일괄 추천", "이동 스트레스 지수 안내", "매일 아침 코코 브리핑 알림"],
@@ -137,7 +137,7 @@ export default function HackathonScenariosSection() {
           className="text-center mb-10"
         >
           <span className="inline-block text-sm font-semibold text-sage bg-sage/10 px-4 py-1.5 rounded-full mb-4">
-            해커톤 시나리오 · 문화체육관광부
+            여행 유형별 추천
           </span>
           <h2 className="text-3xl md:text-4xl font-extrabold text-brown mb-4">
             문화시설 + 애견 동반,
@@ -145,8 +145,8 @@ export default function HackathonScenariosSection() {
             <span className="gradient-text">4가지 여행 유형</span>
           </h2>
           <p className="text-brown-light max-w-2xl mx-auto leading-relaxed">
-            국립박물관, 무형유산원, 문화전당 등 문화부 산하 시설 데이터를 활용해
-            반려견 정보 기반으로 맞춤 일정을 설계합니다.
+            국립박물관, 무형유산원, 문화전당처럼 강아지와 함께 갈 수 있는 곳만 골라
+            체리·몽이·두부·콩이에게 맞는 일정을 짜 드려요.
           </p>
         </motion.div>
 
@@ -328,10 +328,10 @@ export default function HackathonScenariosSection() {
           className="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-3"
         >
           {[
-            "문화부 산하 시설 데이터 활용",
-            "반려인 1,500만 시대 사회적 가치",
-            "애견 전용 LLM 코코 적용",
-            "전국 문화시설 펫 허용 DB 확장",
+            "전국 문화시설 펫 동반 정보",
+            "반려견 맞춤 일정 설계",
+            "코코 AI가 함께 안내",
+            "여행 스타일별 추천",
           ].map((point) => (
             <div
               key={point}

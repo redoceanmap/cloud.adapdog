@@ -1,0 +1,230 @@
+{
+  "main": {
+    "id": "eb7ed5efa3144c6e",
+    "type": "split",
+    "children": [
+      {
+        "id": "dd66ec726765b6d1",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "a016361f5c23e45c",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "docs/발자국_ERD.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "발자국_ERD"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "9d4c40dd027ee334",
+    "type": "split",
+    "children": [
+      {
+        "id": "e54b49c8c8c73e4c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "81cfc3a3ac2ddc95",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "파일 탐색기"
+            }
+          },
+          {
+            "id": "afc1daef8dbd0630",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "검색"
+            }
+          },
+          {
+            "id": "a785421a92d7219c",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "북마크"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "f1ce704bde5948f8",
+    "type": "split",
+    "children": [
+      {
+        "id": "ae27c6b8f657befe",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "dae4e65af5b25df8",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "docs/ERD.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "ERD 의 백링크"
+            }
+          },
+          {
+            "id": "a9e1802115030de7",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "docs/ERD.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "ERD 의 나가는 링크"
+            }
+          },
+          {
+            "id": "961498258f0780aa",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "태그"
+            }
+          },
+          {
+            "id": "0bf3317338d5fa7a",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "모든 속성"
+            }
+          },
+          {
+            "id": "a1b322317e41e4ca",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "docs/ERD.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "ERD 의 개요"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:빠른 전환기 열기": false,
+      "graph:그래프 뷰 열기": false,
+      "canvas:새 캔버스 만들기": false,
+      "daily-notes:오늘의 일일 노트 열기": false,
+      "templates:템플릿 삽입": false,
+      "command-palette:명령어 팔레트 열기": false,
+      "bases:새 베이스 생성하기": false
+    }
+  },
+  "active": "a016361f5c23e45c",
+  "lastOpenFiles": [
+    "www/dist/assets/index-W9LZtRZ2.js",
+    "www/dist/assets/index-ClJXRLjR.css",
+    "www/dist/assets/index-onsSMxpS.js",
+    "www/dist/assets/index-DlkNOUMw.js",
+    "www/dist/assets/index-Cy1dkJ6f.js",
+    "www/dist/assets/index-CzSy79xc.js",
+    "www/dist/index.html",
+    "www/dist/assets/index-q2MFUsdt.js",
+    "www/dist/assets/index-4opW9kWt.css",
+    "www/dist/assets",
+    "www/dist/assets/index-BhexNAfk.js",
+    "www/dist/pet-persona.png",
+    "www/public/pet-persona.png",
+    "www/dist/cherry-run.png",
+    "www/public/cherry-run.png",
+    "venv/lib/python3.13/site-packages/docx/templates/default-docx-template/docProps/thumbnail.jpeg",
+    "www/node_modules/lucide-react/README.md",
+    "www/node_modules/caniuse-lite/README.md",
+    "www/node_modules/recharts/README.md",
+    "www/node_modules/recharts/DEVELOPING.md",
+    "www/node_modules/recharts/CONTRIBUTING.md",
+    "www/node_modules/recharts/CHANGELOG.md",
+    "www/node_modules/recharts/AGENTS.md",
+    "www/node_modules/victory-vendor/README.md",
+    "www/node_modules/victory-vendor/CHANGELOG.md",
+    "www/node_modules/typescript/SECURITY.md",
+    "www/node_modules/typescript/README.md",
+    "www/node_modules/@esbuild/darwin-arm64/README.md",
+    "www/node_modules/@reduxjs/toolkit/README.md",
+    "www/node_modules/@reduxjs/toolkit/skills/orchestrate-side-effects/handle-side-effects/references/listener-workflows.md",
+    "www/node_modules/@reduxjs/toolkit/skills/model-redux-state/design-state-ownership/references/state-ownership.md",
+    "www/node_modules/@reduxjs/toolkit/skills/model-redux-state/build-slices-and-selectors/references/slice-patterns.md",
+    "www/node_modules/@reduxjs/toolkit/skills/manage-server-data/adopt-rtk-query/references/endpoint-lifecycle.md",
+    "www/node_modules/@reduxjs/toolkit/skills/build-modern-redux-apps/modern-redux/references/store-lifetime.md",
+    "www/node_modules/@reduxjs/toolkit/skills/orchestrate-side-effects/handle-side-effects/SKILL.md",
+    "www/node_modules/@reduxjs/toolkit/skills/model-redux-state/design-state-ownership/SKILL.md",
+    "www/node_modules/@reduxjs/toolkit/skills/model-redux-state/build-slices-and-selectors/SKILL.md",
+    "www/node_modules/@reduxjs/toolkit/skills/manage-server-data/adopt-rtk-query/SKILL.md",
+    "www/node_modules/@reduxjs/toolkit/skills/evolve-and-diagnose-redux-apps/migrate-to-modern-redux/SKILL.md",
+    "www/node_modules/@reduxjs/toolkit/skills/evolve-and-diagnose-redux-apps/debug-redux-toolkit-apps/SKILL.md",
+    "www/node_modules/@reduxjs/toolkit/skills/build-modern-redux-apps/redux-dataflow/SKILL.md"
+  ]
+}

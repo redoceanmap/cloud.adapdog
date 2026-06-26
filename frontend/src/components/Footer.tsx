@@ -1,8 +1,6 @@
 import { PawPrint } from "lucide-react";
-import Link from "next/link";
 
-export default function Footer() {
-  return (
+export default function Footer() {  return (
     <footer className="bg-cream border-t border-brown/5 py-12">
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -20,25 +18,16 @@ export default function Footer() {
             <a href="#ai-voice" className="hover:text-sage transition-colors">
               음성·응급
             </a>
-            <a href="#scenarios" className="hover:text-sage transition-colors">
-              시나리오
-            </a>
             <a href="#features" className="hover:text-sage transition-colors">
               차별점
             </a>
             <a href="#download" className="hover:text-sage transition-colors">
               다운로드
             </a>
-            <Link href="/login" className="hover:text-sage transition-colors">
-              로그인
-            </Link>
-            <Link href="/register" className="hover:text-sage transition-colors">
-              회원가입
-            </Link>
           </div>
 
           <p className="text-xs text-brown-light">
-            © 2025 발자국. All rights reserved.
+            © 2026 발자국. All rights reserved.
           </p>
         </div>
       </div>

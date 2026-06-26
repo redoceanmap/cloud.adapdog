@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
-  Brain,
   Building2,
   Camera,
+  MapPin,
+  MessageCircle,
   Mic,
   Phone,
   Shield,
@@ -14,10 +15,10 @@ import {
 } from "lucide-react";
 
 const VOICE_FLOW = [
-  { icon: Mic, label: "STT", desc: "사용자 음성 입력" },
-  { icon: Brain, label: "NLP / NLU", desc: "자연어 이해" },
-  { icon: Shield, label: "AI 답변", desc: "맞춤 응답 생성" },
-  { icon: Volume2, label: "TTS", desc: "음성으로 안내" },
+  { icon: Mic, label: "말하기", desc: "음성으로 물어보기" },
+  { icon: MessageCircle, label: "이해하기", desc: "말의 뜻 파악" },
+  { icon: Shield, label: "맞춤 안내", desc: "상황에 맞는 답변" },
+  { icon: Volume2, label: "들려주기", desc: "음성으로 설명" },
 ];
 
 interface EmergencyMsg {
@@ -57,19 +58,19 @@ const EMERGENCY_SCRIPT: EmergencyMsg[] = [
   {
     id: "act1",
     role: "action",
-    text: "30분 내 반복 구토는 응급 신호일 수 있습니다. 즉시 동물병원 방문 권장",
+    text: "30분 안에 여러 번 토했다면 응급일 수 있어요. 가능한 빨리 동물병원에 가 주세요.",
     variant: "warning",
   },
   {
     id: "act2",
     role: "action",
-    text: "비전 모델 사진 분석 결과 (신뢰도 78%) — 참고용, 진단 아님",
+    text: "보내주신 사진을 참고해 증상을 확인했어요. 정확한 진단은 수의사와 상담해 주세요.",
     variant: "hospital",
   },
   {
     id: "blocked",
     role: "system",
-    text: "약·용량 안내 차단 · 보호자 자가 처치 절대 권장 안 함",
+    text: "약이나 스스로 치료하는 방법은 안내하지 않아요. 꼭 동물병원을 방문해 주세요.",
     variant: "blocked",
   },
 ];
@@ -128,7 +129,7 @@ export default function AIVoiceEmergencySection() {
           className="text-center mb-14"
         >
           <span className="inline-block text-sm font-semibold text-sage-light bg-sage/20 px-4 py-1.5 rounded-full mb-4">
-            AI 음성 · 응급 대응
+            AI 음성 상담 · 응급 도움
           </span>
           <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
             말하면 듣고, 위급하면
@@ -136,8 +137,8 @@ export default function AIVoiceEmergencySection() {
             <span className="text-sage-light">즉시 안전하게</span>
           </h2>
           <p className="text-white/70 max-w-2xl mx-auto leading-relaxed">
-            음성 입력(STT)부터 자연어 이해(NLU), AI 답변, 음성 안내(TTS)까지.
-            야간 응급 상황에서는 안전 문구와 24시 동물병원을 최우선으로 연결합니다.
+            말로 물어보면 코코가 듣고, 상황에 맞게 답해 드려요.
+            밤늦은 응급 상황에서는 안전 안내와 가까운 24시 동물병원 연결을 먼저 도와드립니다.
           </p>
         </motion.div>
 
@@ -175,14 +176,14 @@ export default function AIVoiceEmergencySection() {
           >
             <div className="flex items-center gap-2 mb-4">
               <AlertTriangle className="w-5 h-5 text-coral-light" />
-              <span className="text-sm font-bold">페르소나: 30대 1인 가구 · 야간 응급</span>
+              <span className="text-sm font-bold">예시 · 밤늦은 응급 상황</span>
             </div>
 
             <div className="space-y-3 min-h-[360px]">
-              <AnimatePresence mode="popLayout">
+              <AnimatePresence mode="popLayout" initial={false}>
                 {visible.map((msg) => (
                   <motion.div
-                    key={msg.id}
+                    key={`${loopKey}-${msg.id}`}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className={
@@ -233,17 +234,19 @@ export default function AIVoiceEmergencySection() {
             viewport={{ once: true }}
             className="space-y-4"
           >
-            <AnimatePresence>
+            <AnimatePresence initial={false}>
               {showHospitals && (
                 <motion.div
+                  key={`hospitals-${loopKey}`}
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
                   className="bg-white/5 rounded-3xl border border-white/10 p-6"
                 >
                   <div className="flex items-center gap-2 mb-4">
                     <Building2 className="w-5 h-5 text-sage-light" />
                     <span className="text-sm font-bold">가까운 24시 동물병원</span>
-                    <span className="text-[10px] text-white/40 ml-auto">행정안전부 표준데이터</span>
+                    <span className="text-[10px] text-white/40 ml-auto">내 주변 병원 정보</span>
                   </div>
                   <div className="space-y-2">
                     {HOSPITALS.map((h, i) => (
@@ -273,19 +276,25 @@ export default function AIVoiceEmergencySection() {
 
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: "위치 정보", desc: "GPS 기반 병원 검색" },
-                { label: "비전 분석", desc: "사진 참고 (진단 아님)" },
-                { label: "약물 차단", desc: "시스템 레벨 안전장치" },
-                { label: "응급 우선", desc: "안전 문구 최우선 표시" },
-              ].map((item) => (
+                { label: "내 주변 병원", desc: "가까운 곳부터 안내", icon: MapPin },
+                { label: "사진 확인", desc: "보내주신 사진 참고", icon: Camera },
+                { label: "안전한 안내", desc: "위험한 조언은 하지 않아요", icon: Shield },
+                { label: "응급 우선", desc: "위급하면 병원 연결 먼저", icon: AlertTriangle },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
                 <div
                   key={item.label}
                   className="bg-white/5 rounded-xl p-3 border border-white/10"
                 >
-                  <div className="text-xs font-bold text-sage-light">{item.label}</div>
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-sage-light">
+                    <Icon className="w-3.5 h-3.5" />
+                    {item.label}
+                  </div>
                   <div className="text-[11px] text-white/50 mt-1">{item.desc}</div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           </motion.div>
         </div>
