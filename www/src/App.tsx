@@ -614,10 +614,11 @@ export default function App() {
 
 // 여정 타임라인 노드 — 출발/이동(경유지·역)/도착/코스 정류장 공통 모델.
 type JNode = {
-  tone: 'origin' | 'transit' | 'stopover' | 'arrive' | 'day' | 'stop' | 'sleep';
+  tone: 'origin' | 'transit' | 'stopover' | 'arrive' | 'day' | 'slot' | 'stop' | 'meal' | 'sleep';
   icon?: string; num?: number; time?: string;
   title: string; sub?: string; reason?: string; badges?: string[];
   similarity?: number; dist?: number; source?: string; onClick?: () => void; onRemove?: () => void;
+  isMeal?: boolean; imageUrl?: string | null; phone?: string | null; address?: string | null;
 };
 const RISK_TONE: Record<string, { c: string; bg: string; label: string }> = {
   high: { c: '#E0533F', bg: 'rgba(224,83,63,.12)', label: '위험' },
@@ -630,8 +631,17 @@ const TONE_STYLE: Record<JNode['tone'], { bg: string; fg: string }> = {
   stopover: { bg: 'rgba(34,165,101,.14)', fg: '#1B8A55' },
   arrive: { bg: 'var(--accent)', fg: '#fff' },
   day: { bg: 'var(--chip)', fg: 'var(--text)' },
+  slot: { bg: 'var(--chip)', fg: 'var(--text)' },
   stop: { bg: 'var(--accent)', fg: '#fff' },
+  meal: { bg: '#E8862B', fg: '#fff' },
   sleep: { bg: 'rgba(99,102,241,.16)', fg: '#6366F1' },
+};
+// 시간대 블록 — 아침/점심/저녁 서브헤더 라벨·아이콘·순서.
+const SLOT_ORDER = ['morning', 'lunch', 'dinner'] as const;
+const SLOT_META: Record<string, { label: string; icon: string }> = {
+  morning: { label: '아침', icon: 'wb_twilight' },
+  lunch: { label: '점심', icon: 'lunch_dining' },
+  dinner: { label: '저녁', icon: 'dinner_dining' },
 };
 
 // 내비형 여정 타임라인 — 서울 출발 → (경유지/도착역) → 전주 도착 → 코스 정류장.
@@ -656,10 +666,14 @@ function Itinerary({ items, live, liveCourse, plan, tCode, nights, dayByName, tr
     ? (liveCourse?.stops ?? []).map((s, i) => ({
         key: 'L' + i, name: s.name, time: `${i + 1}번째`, sub: s.category, reason: s.reason,
         similarity: s.similarity, dist: s.distance_from_prev_km, badges: [] as string[], source: s.source,
+        day: s.day ?? 1, slot: s.time_slot ?? 'morning', clock: s.clock ?? '',
+        isMeal: !!s.is_meal, imageUrl: s.image_url ?? null, phone: s.phone ?? null, address: s.address ?? null,
       }))
     : items.map((p) => ({
         key: p.key, name: p.name, time: p.time, sub: p.cat + (p.entry ? ` · ${p.entry}` : ''), reason: p.desc,
         similarity: 0, dist: 0, badges: p.badges ?? [], source: p.source,
+        day: 1, slot: 'morning' as string, clock: '',
+        isMeal: false, imageUrl: null as string | null, phone: null as string | null, address: null as string | null,
       }));
   const count = stops.length;
 
@@ -681,12 +695,39 @@ function Itinerary({ items, live, liveCourse, plan, tCode, nights, dayByName, tr
   nodes.push({ tone: 'arrive', icon: 'flag', title: '전주 도착', sub: `${stayLabel} · 코스 ${count}곳` });
 
   const pushStop = (s: typeof stops[number], n: number) => nodes.push({
-    tone: 'stop', num: n, time: s.time, title: s.name, sub: s.sub, reason: s.reason,
+    tone: s.isMeal ? 'meal' : 'stop', num: s.isMeal ? undefined : n, icon: s.isMeal ? 'restaurant' : undefined,
+    time: s.time, title: s.name, sub: s.sub, reason: s.reason,
     badges: s.badges, similarity: s.similarity, dist: s.dist, source: s.source,
+    isMeal: s.isMeal, imageUrl: s.imageUrl, phone: s.phone, address: s.address,
     onClick: () => onStop(s.key), onRemove: () => onRemove(s.name),
   });
 
-  if (nights >= 1 && stops.length > 1) {
+  if (live && count > 0) {
+    // 라이브 — 백엔드가 배정한 일자(day)·시간대(slot)로 Day → 아침/점심/저녁 블록 그룹핑.
+    const lodging = liveCourse?.lodging ?? [];
+    const days = Array.from(new Set(stops.map((s) => s.day))).sort((a, b) => a - b);
+    let num = 0;
+    days.forEach((d) => {
+      nodes.push({ tone: 'day', title: `Day ${d}`, sub: `${d}일차` });
+      const dayStops = stops.filter((s) => s.day === d);
+      SLOT_ORDER.forEach((slot) => {
+        const slotStops = dayStops.filter((s) => s.slot === slot);
+        if (!slotStops.length) return;
+        const clock = slotStops.find((s) => s.clock)?.clock ?? '';
+        nodes.push({ tone: 'slot', icon: SLOT_META[slot].icon, title: SLOT_META[slot].label, sub: clock });
+        slotStops.forEach((s) => { if (!s.isMeal) num += 1; pushStop(s, num); });
+      });
+      if (d !== days[days.length - 1]) {
+        const lod = lodging[d - 1] ?? lodging[0];
+        nodes.push({
+          tone: 'sleep', icon: 'bedtime', title: lod?.name ?? '펫 동반 숙소',
+          sub: `${d}박째 · 체리와 취침`,
+          reason: lod ? '반려동물 동반 숙소에서 하룻밤 묵어요. 대형견 체리도 함께 잘 수 있어요.' : '이날은 전주에서 1박 — 펫 동반 숙소를 추천했어요.',
+          source: lod?.source,
+        });
+      }
+    });
+  } else if (nights >= 1 && stops.length > 1) {
     // 다박 일정 — 정류장의 고정 일자(dayByName)로 묶고 밤마다 펫 동반 숙소(취침)를 넣는다.
     // 제외해도 다른 날 정류장이 끌려오지 않도록 슬라이싱이 아니라 고정 일자로 그룹핑한다.
     const lodging = liveCourse?.lodging ?? [];
@@ -757,6 +798,15 @@ function Itinerary({ items, live, liveCourse, plan, tCode, nights, dayByName, tr
                 </div>
               );
             }
+            if (n.tone === 'slot') {
+              return (
+                <div key={i} style={css('display:flex; align-items:center; gap:7px; margin:6px 0 12px 47px;')}>
+                  <span className="msr" style={css('font-size:16px; color:var(--muted);')}>{n.icon}</span>
+                  <span style={css('font:800 12.5px Pretendard; color:var(--text);')}>{n.title}</span>
+                  {n.sub && <span style={css('font:600 11px Pretendard; color:var(--faint);')}>{n.sub}</span>}
+                </div>
+              );
+            }
             return (
               <div key={i} style={css('display:flex; gap:15px;')}>
                 <div style={css('display:flex; flex-direction:column; align-items:center; flex:none;')}>
@@ -769,7 +819,15 @@ function Itinerary({ items, live, liveCourse, plan, tCode, nights, dayByName, tr
                   onClick={n.onClick}
                   style={css(`flex:1; min-width:0; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:13px 16px; margin-bottom:14px; box-shadow:var(--shadow); ${n.onClick ? 'cursor:pointer;' : ''}`)}
                 >
+                  {n.isMeal && n.imageUrl && (
+                    <img
+                      src={n.imageUrl} alt={n.title} loading="lazy"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      style={css('width:100%; height:130px; object-fit:cover; border-radius:11px; margin-bottom:11px; display:block;')}
+                    />
+                  )}
                   <div style={css('display:flex; align-items:center; gap:9px; flex-wrap:wrap;')}>
+                    {n.isMeal && <span className="msr" style={css('font-size:16px; color:#E8862B;')}>restaurant</span>}
                     {n.time && <span style={css('font:700 11px Pretendard; color:var(--accent);')}>{n.time}</span>}
                     <span style={css('font:700 15px Pretendard;')}>{n.title}</span>
                     {n.similarity != null && n.similarity > 0 && (
@@ -791,6 +849,20 @@ function Itinerary({ items, live, liveCourse, plan, tCode, nights, dayByName, tr
                       {n.badges.map((b) => (
                         <span key={b} style={css('font:600 10.5px Pretendard; color:var(--muted); background:var(--chip); padding:4px 9px; border-radius:999px;')}>{b}</span>
                       ))}
+                    </div>
+                  )}
+                  {n.isMeal && (n.phone || n.address) && (
+                    <div style={css('display:flex; gap:7px; flex-wrap:wrap; margin-top:9px;')}>
+                      {n.phone && (
+                        <span style={css('display:inline-flex; align-items:center; gap:4px; font:600 11px Pretendard; color:var(--muted); background:var(--chip); padding:4px 9px; border-radius:999px;')}>
+                          <span className="msr" style={css('font-size:13px;')}>call</span>{n.phone}
+                        </span>
+                      )}
+                      {n.address && (
+                        <span style={css('display:inline-flex; align-items:center; gap:4px; font:600 11px Pretendard; color:var(--muted); background:var(--chip); padding:4px 9px; border-radius:999px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;')}>
+                          <span className="msr" style={css('font-size:13px;')}>place</span>{n.address}
+                        </span>
+                      )}
                     </div>
                   )}
                   {(n.dist != null && n.dist > 0) || n.source ? (

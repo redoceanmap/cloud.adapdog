@@ -57,6 +57,7 @@ class TripPlanSchema(BaseModel):
     origin: str = Field("서울", description="출발지(데모 고정: 서울)")
     destination: Optional[str] = Field(None, description="목적지(예: 전주). 미정이면 null")
     transport: str = Field("unset", description="이동수단 ktx / bus / car / unset")
+    departure_time: Optional[str] = Field(None, description="서울 출발시각 'HH:MM'(미정이면 null)")
     lodging: str = Field("unset", description="숙박 overnight / daytrip / unset")
     nights: int = Field(0, ge=0, le=14, description="묵는 박 수(0=당일치기)")
 

@@ -5,7 +5,15 @@ from functools import lru_cache
 
 from fastapi import Depends
 
-from core.config import GEMINI_API_KEY, GEMINI_MODEL, TRAIL_CSV_PATH
+from core.config import (
+    GEMINI_API_KEY,
+    GEMINI_MODEL,
+    PETPLACE_CSV_PATH,
+    RESTAURANT_BASIC_CSV_PATH,
+    RESTAURANT_IMAGE_CSV_PATH,
+    TRAIL_CSV_PATH,
+)
+from map.adapter.outbound.repositories.restaurant_repository import CsvRestaurantRepository
 from map.adapter.outbound.repositories.route_planner_repository import (
     CsvTrailRepository,
     LodgingRepository,
@@ -15,6 +23,7 @@ from map.adapter.outbound.repositories.route_planner_repository import (
 from map.app.ports.input.cohort_recommendation_use_case import CohortRecommendationUseCase
 from map.app.ports.input.pet_place_use_case import PetPlaceUseCase
 from map.app.ports.input.route_planner_use_case import RoutePlannerUseCase
+from map.app.ports.output.restaurant_port import RestaurantPort
 from map.app.ports.output.route_planner_port import (
     LodgingPort,
     RouteLegsPort,
@@ -63,10 +72,23 @@ def get_route_legs_port() -> RouteLegsPort:
     return RouteLegsRepository()
 
 
+@lru_cache(maxsize=1)
+def get_restaurant_port() -> RestaurantPort:
+    """음식점 CSV repo는 무상태·내부 캐시 보유 → 싱글톤으로 1회만 생성(요청마다 CSV 재파싱 방지)."""
+    return CsvRestaurantRepository(
+        basic_csv=RESTAURANT_BASIC_CSV_PATH,
+        image_csv=RESTAURANT_IMAGE_CSV_PATH,
+        petplace_csv=PETPLACE_CSV_PATH,
+    )
+
+
 def get_route_planner_use_case(
     agent: RoutePlannerAgentPort = Depends(get_route_planner_agent),
     cohort: CohortRecommendationUseCase = Depends(get_cohort_recommendation_use_case),
     lodging: LodgingPort = Depends(get_lodging_port),
     legs: RouteLegsPort = Depends(get_route_legs_port),
+    restaurants: RestaurantPort = Depends(get_restaurant_port),
 ) -> RoutePlannerUseCase:
-    return RoutePlannerInteractor(agent=agent, cohort=cohort, lodging=lodging, legs=legs)
+    return RoutePlannerInteractor(
+        agent=agent, cohort=cohort, lodging=lodging, legs=legs, restaurants=restaurants,
+    )

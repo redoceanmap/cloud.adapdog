@@ -42,15 +42,18 @@ class TripPlan:
     origin: str = "서울"
     destination: Optional[str] = None
     transport: TransportMode = TransportMode.UNSET
+    departure_time: Optional[str] = None  # 서울 출발시각 "HH:MM" — 도착·식사시간 자동계산용.
     lodging: LodgingOption = LodgingOption.UNSET
     nights: int = 0  # 묵는 박 수(0=당일치기). OVERNIGHT일 때 1 이상.
 
     def next_stage(self) -> PlannerStage:
-        """다음에 채울 슬롯을 결정한다(목적지→이동수단→숙박→완성)."""
+        """다음에 채울 슬롯을 결정한다(목적지→이동수단→출발시간→숙박→완성)."""
         if not self.destination:
             return PlannerStage.ASK_DESTINATION
         if self.transport is TransportMode.UNSET:
             return PlannerStage.ASK_TRANSPORT
+        if not self.departure_time:
+            return PlannerStage.ASK_DEPARTURE_TIME
         if self.lodging is LodgingOption.UNSET:
             return PlannerStage.ASK_LODGING
         return PlannerStage.READY

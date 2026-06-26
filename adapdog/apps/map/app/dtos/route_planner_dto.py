@@ -89,6 +89,13 @@ class RouteStopDto:
     similarity: int = 0  # 닮은친구% — 같은 크기 코호트의 방문 인기도
     reason: str = ""     # 왜 이 장소 — 규칙 기반 한 줄(반려견 특징 반영)
     source: str = ""     # 출처 태그(예: 한국문화정보원 펫동반 문화시설)
+    day: int = 1                          # 며칠째(1부터)
+    time_slot: str = "morning"            # 시간대 블록(morning/lunch/dinner)
+    clock: str = ""                       # 기준 시각 "HH:MM"
+    is_meal: bool = False                 # 식사(음식점) 정류장 여부
+    image_url: Optional[str] = None       # 음식점 썸네일 URL(있을 때)
+    phone: Optional[str] = None           # 음식점 대표 전화
+    address: Optional[str] = None         # 음식점 주소
 
 
 @dataclass(frozen=True)
@@ -134,6 +141,7 @@ class TripPlanDto:
     origin: str
     destination: Optional[str]
     transport: str   # TransportMode 값(ktx/bus/car/unset)
+    departure_time: Optional[str]  # 서울 출발시각 "HH:MM"(미정이면 None)
     lodging: str     # LodgingOption 값(overnight/daytrip/unset)
     nights: int      # 묵는 박 수(0=당일치기)
     stage: str       # PlannerStage 값(다음에 채울 단계)
