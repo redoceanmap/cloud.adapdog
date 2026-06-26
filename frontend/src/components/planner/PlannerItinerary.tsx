@@ -1,8 +1,14 @@
 "use client";
 
+import { useMemo } from "react";
 import { Info, MapPin, Trash2 } from "lucide-react";
-import type { Pet, RoutePlanResponse, RouteStop } from "@/lib/planner-api";
+import type { Pet, RoutePlanResponse, RouteStop, TripPlan } from "@/lib/planner-api";
 import { categoryLabel } from "@/lib/planner-api";
+import {
+  itineraryStayLabel,
+  itineraryTripDays,
+  normalizeItineraryStops,
+} from "@/lib/planner-itinerary";
 
 const SLOT_ORDER = ["morning", "lunch", "afternoon", "dinner"] as const;
 const SLOT_LABEL: Record<string, string> = {
@@ -21,6 +27,8 @@ interface PlannerItineraryProps {
   pet: Pet;
   course: RoutePlanResponse;
   courseTitle: string;
+  nights?: number;
+  lodging?: TripPlan["lodging"];
   onSelectStop: (index: number) => void;
   onRemoveStop: (name: string) => void;
   onEmergency: () => void;
@@ -35,17 +43,26 @@ export default function PlannerItinerary({
   pet,
   course,
   courseTitle,
+  nights,
+  lodging,
   onSelectStop,
   onRemoveStop,
   onEmergency,
   saved = false,
 }: PlannerItineraryProps) {
-  const stops = course.stops;
+  const rawStops = course.stops;
+  const tripDays = useMemo(
+    () => itineraryTripDays(rawStops, { nights, lodging }),
+    [rawStops, nights, lodging],
+  );
+  const stops = useMemo(
+    () => normalizeItineraryStops(rawStops, tripDays),
+    [rawStops, tripDays],
+  );
+  const stayLabel = itineraryStayLabel(nights, lodging);
   const hasMock = stops.some((s) => s.is_mock);
-  const hasSlots = stops.some((s) => s.day != null || s.time_slot != null);
 
-  const grouped = (() => {
-    if (!hasSlots) return null;
+  const grouped = useMemo(() => {
     const days = Array.from(new Set(stops.map((s) => s.day ?? 1))).sort((a, b) => a - b);
     return days.map((day) => {
       const dayStops = stops
@@ -59,7 +76,7 @@ export default function PlannerItinerary({
       })).filter((s) => s.items.length > 0);
       return { day, slots };
     });
-  })();
+  }, [stops]);
 
   const renderStopCard = (stop: RouteStop, index: number) => (
     <div
@@ -146,7 +163,8 @@ export default function PlannerItinerary({
               {courseTitle}
             </h2>
             <p className="mt-1 text-sm" style={{ color: "var(--pw-muted)" }}>
-              {pet.name} · {pet.breed} · {course.region} · {stops.length}곳
+              {pet.name} · {pet.breed} · {course.region}
+              {stayLabel ? ` · ${stayLabel}` : ""} · {stops.length}곳
             </p>
           </div>
           {saved && (
@@ -180,74 +198,68 @@ export default function PlannerItinerary({
         )}
 
         <div className="relative mt-6">
-          {grouped ? (
-            grouped.map(({ day, slots }) => (
-              <div key={day} className="mb-6">
-                <div className="mb-3 flex items-center gap-2">
-                  <span className="text-sm font-extrabold" style={{ color: "var(--pw-accent)" }}>
-                    Day {day}
-                  </span>
-                  <div className="h-px flex-1" style={{ background: "var(--pw-border)" }} />
-                </div>
-                {slots.map(({ slot, label, clock, items }) => (
-                  <div key={slot} className="mb-4">
-                    <div className="mb-2 flex items-center gap-2 pl-11">
-                      <span className="text-xs font-bold" style={{ color: "var(--pw-text)" }}>
-                        {label}
-                      </span>
-                      {clock && (
-                        <span className="text-[11px]" style={{ color: "var(--pw-faint)" }}>
-                          {clock}
-                        </span>
-                      )}
-                    </div>
-                    {items.map(({ stop, index }) => {
-                      if (!stop.is_meal) stopNum += 1;
-                      return (
-                        <div key={stopKey(stop, index)} className="flex gap-4">
-                          <div className="flex flex-col items-center">
-                            {!stop.is_meal ? (
-                              <div
-                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                                style={{ background: "var(--pw-accent)" }}
-                              >
-                                {stopNum}
-                              </div>
-                            ) : (
-                              <div className="h-8 w-8 shrink-0" />
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">{renderStopCard(stop, index)}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
+          {grouped.map(({ day, slots }) => (
+            <div key={day} className="mb-6">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-sm font-extrabold" style={{ color: "var(--pw-accent)" }}>
+                  Day {day}
+                </span>
+                <span className="text-xs font-semibold" style={{ color: "var(--pw-muted)" }}>
+                  {day}일차
+                </span>
+                <div className="h-px flex-1" style={{ background: "var(--pw-border)" }} />
               </div>
-            ))
-          ) : (
-            <div className="space-y-0">
-              {stops.map((stop, index) => (
-                <div key={stopKey(stop, index)} className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                      style={{ background: "var(--pw-accent)" }}
-                    >
-                      {index + 1}
-                    </div>
-                    {index < stops.length - 1 && (
-                      <div
-                        className="my-1 w-0.5 flex-1 min-h-[14px]"
-                        style={{ background: "var(--pw-border)" }}
-                      />
+              {slots.map(({ slot, label, clock, items }) => (
+                <div key={slot} className="mb-4">
+                  <div className="mb-2 flex items-center gap-2 pl-11">
+                    <span className="text-xs font-bold" style={{ color: "var(--pw-text)" }}>
+                      {label}
+                    </span>
+                    {clock && (
+                      <span className="text-[11px]" style={{ color: "var(--pw-faint)" }}>
+                        {clock}
+                      </span>
                     )}
                   </div>
-                  <div className="min-w-0 flex-1">{renderStopCard(stop, index)}</div>
+                  {items.map(({ stop, index }) => {
+                    if (!stop.is_meal) stopNum += 1;
+                    return (
+                      <div key={stopKey(stop, index)} className="flex gap-4">
+                        <div className="flex flex-col items-center">
+                          {!stop.is_meal ? (
+                            <div
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                              style={{ background: "var(--pw-accent)" }}
+                            >
+                              {stopNum}
+                            </div>
+                          ) : (
+                            <div className="h-8 w-8 shrink-0" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">{renderStopCard(stop, index)}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               ))}
+              {tripDays > 1 && day < tripDays && course.lodging && course.lodging.length > 0 && (
+                <div
+                  className="mb-2 ml-11 rounded-2xl border px-4 py-3 text-sm"
+                  style={{
+                    borderColor: "var(--pw-border)",
+                    background: "var(--pw-panel)",
+                    color: "var(--pw-muted)",
+                  }}
+                >
+                  <span className="font-semibold" style={{ color: "var(--pw-text)" }}>
+                    {course.lodging[day - 1]?.name ?? course.lodging[0]?.name ?? "펫 동반 숙소"}
+                  </span>
+                  <span className="ml-2 text-xs">{day}박 · 체크인 후 휴식</span>
+                </div>
+              )}
             </div>
-          )}
+          ))}
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">

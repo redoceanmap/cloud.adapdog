@@ -19,6 +19,10 @@ export interface ItineraryStop {
   category: string;
   latitude: number;
   longitude: number;
+  day?: number;
+  time_slot?: RouteStop["time_slot"];
+  clock?: string;
+  is_meal?: boolean;
 }
 
 export interface RouteStop extends ItineraryStop {
@@ -169,6 +173,10 @@ export async function saveItinerary(
       category: s.category,
       latitude: s.latitude,
       longitude: s.longitude,
+      day: s.day,
+      time_slot: s.time_slot,
+      clock: s.clock,
+      is_meal: s.is_meal,
     })),
   };
   const res = await apiFetch("/trips/itinerary", {
@@ -203,6 +211,10 @@ export async function updateItinerary(
         category: s.category,
         latitude: s.latitude,
         longitude: s.longitude,
+        day: s.day,
+        time_slot: s.time_slot,
+        clock: s.clock,
+        is_meal: s.is_meal,
       })),
     }),
   });

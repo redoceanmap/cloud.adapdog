@@ -38,11 +38,16 @@ async def _prewarm_course_cache() -> None:
     """데모 코스(전주/대형견) 캐시를 백그라운드로 미리 채운다 — 첫 시연도 빠르게.
 
     서버 기동 후 /plan(= agent.plan)을 호출해 _PLAN_CACHE를 워밍. 부팅을 막지 않는다.
+    PREWARM_COURSE_CACHE=0 이면 비활성(개발 시 reload마다 INFO가 쌓이는 것 방지).
     """
     import json
     import urllib.request
 
+    if os.environ.get("PREWARM_COURSE_CACHE", "1").lower() in ("0", "false", "no"):
+        return
+
     await asyncio.sleep(2)  # 서버가 요청을 받기 시작할 때까지 잠깐 대기
+    warmed: list[int] = []
     for days in (2, 1):  # 1박(2일)·당일치기(1일) 둘 다 워밍
         try:
             body = json.dumps(
@@ -52,10 +57,12 @@ async def _prewarm_course_cache() -> None:
                 "http://127.0.0.1:8000/api/map/route-planner/plan",
                 data=body, headers={"Content-Type": "application/json"},
             )
-            await asyncio.to_thread(lambda: urllib.request.urlopen(req, timeout=30).read())
-            logger.info("[prewarm] 코스 캐시 워밍 완료 | days=%d", days)
+            await asyncio.to_thread(lambda r=req: urllib.request.urlopen(r, timeout=30).read())
+            warmed.append(days)
         except Exception as e:  # noqa: BLE001 — 워밍 실패는 서비스에 영향 없음
-            logger.warning("[prewarm] 코스 캐시 워밍 실패 | days=%d %s", days, e)
+            logger.warning("[prewarm] course cache warm failed | days=%d %s", days, e)
+    if warmed:
+        logger.debug("[prewarm] course cache warmed | days=%s", warmed)
 
 
 @asynccontextmanager

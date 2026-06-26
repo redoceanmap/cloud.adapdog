@@ -676,6 +676,8 @@ export default function PlannerWorkbench({
           pet={pet}
           course={wb.effectiveCourse}
           courseTitle={wb.courseTitle}
+          nights={wb.livePlan?.nights}
+          lodging={wb.livePlan?.lodging}
           onSelectStop={(index) => {
             setActiveTab("planner");
             wb.setActiveStopIndex(index);

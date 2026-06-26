@@ -87,6 +87,10 @@ export function plannerCourseToRoutePlan(course: PlannerCourse, pet: Pet): Route
       similarity: 0,
       reason: localStopReason(s.category),
       source: "한국문화정보원 펫동반 문화시설",
+      day: s.day,
+      time_slot: s.time_slot,
+      clock: s.clock,
+      is_meal: s.is_meal,
     })),
     recommended_trails: [],
   };
