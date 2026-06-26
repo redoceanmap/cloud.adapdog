@@ -452,7 +452,7 @@ export default function App() {
             </div>
           )}
 
-          {view === 'explore' && <Explore onText={handleUserText} hasCourse={!!effectiveCourse} courseNames={effectiveCourse?.stops.map((s) => s.name) ?? []} onAdd={addCourseStop} onRemove={removeCourseStop} />}
+          {view === 'explore' && <Explore onText={handleUserText} hasCourse={!!effectiveCourse} courseNames={effectiveCourse?.stops.map((s) => s.name) ?? []} days={Math.max(1, (livePlan?.nights ?? 0) + 1, ...(effectiveCourse?.stops.map((s) => s.day ?? 1) ?? [1]))} onAdd={addCourseStop} onRemove={removeCourseStop} />}
           {view === 'itinerary' && <Itinerary liveCourse={effectiveCourse} region={region} anchor={isJeonju ? null : destAnchor} tCode={tCode} nights={livePlan?.nights ?? 0} transport={transportLabel(tCode)} ready={ready} onStop={(k) => { app.setView('planner'); setFocus(k); }} onEmergency={() => { setEmg(true); setEmgStep('entry'); }} onRemove={removeCourseStop} />}
           {view === 'dog' && <Dog />}
 

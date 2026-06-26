@@ -30,16 +30,39 @@ interface Card {
   lng?: number;
 }
 
-export interface ExploreAddStop { name: string; category: string; latitude: number; longitude: number }
+export interface ExploreAddStop {
+  name: string; category: string; latitude: number; longitude: number;
+  day?: number; time_slot?: string; clock?: string; is_meal?: boolean;
+}
 
-export function Explore({ onText, hasCourse, courseNames, onAdd, onRemove }: {
+// 여정 시간대 블록 — Itinerary의 SLOT_ORDER/SLOT_META와 동일(기준 시각 포함).
+const SLOTS = [
+  { key: 'morning', label: '아침', clock: '09:00', icon: 'wb_twilight' },
+  { key: 'lunch', label: '점심', clock: '12:30', icon: 'lunch_dining' },
+  { key: 'afternoon', label: '오후', clock: '14:30', icon: 'wb_sunny' },
+  { key: 'dinner', label: '저녁', clock: '18:30', icon: 'dinner_dining' },
+] as const;
+
+export function Explore({ onText, hasCourse, courseNames, days, onAdd, onRemove }: {
   onText: (t: string) => void;
   hasCourse: boolean;
   courseNames: string[];
+  days: number;
   onAdd: (p: ExploreAddStop) => void;
   onRemove: (name: string) => void;
 }) {
   const [chip, setChip] = useState<Chip>('전체');
+  // 경로 추가 시 어느 날·언제 넣을지 고르는 피커(둘러보기 카드 → 여정 슬롯).
+  const [picking, setPicking] = useState<{ name: string; category: string; latitude: number; longitude: number } | null>(null);
+  const [pickDay, setPickDay] = useState(1);
+  const [pickSlot, setPickSlot] = useState<(typeof SLOTS)[number]['key']>('afternoon');
+  const openPicker = (p: { name: string; category: string; latitude: number; longitude: number }) => { setPickDay(1); setPickSlot('afternoon'); setPicking(p); };
+  const confirmAdd = () => {
+    if (!picking) return;
+    const slot = SLOTS.find((s) => s.key === pickSlot)!;
+    onAdd({ ...picking, day: pickDay, time_slot: slot.key, clock: slot.clock, is_meal: false });
+    setPicking(null);
+  };
   const [festivals, setFestivals] = useState<Festival[] | null>(null);
   const [trails, setTrails] = useState<WalkingTrail[] | null>(null);
   const [places, setPlaces] = useState<PetPlace[] | null>(null);
@@ -108,7 +131,7 @@ export function Explore({ onText, hasCourse, courseNames, onAdd, onRemove }: {
                         <span className="msr" style={css('font-size:16px;')}>remove_circle_outline</span>코스에서 제외
                       </div>
                     ) : (
-                      <div onClick={(ev) => { ev.stopPropagation(); onAdd({ name: e.name, category: e.cat || e.tag, latitude: e.lat!, longitude: e.lng! }); }} style={css('margin-top:11px; display:flex; align-items:center; justify-content:center; gap:5px; font:700 12.5px Pretendard; color:#fff; background:var(--accent); padding:9px; border-radius:11px; cursor:pointer;')}>
+                      <div onClick={(ev) => { ev.stopPropagation(); openPicker({ name: e.name, category: e.cat || e.tag, latitude: e.lat!, longitude: e.lng! }); }} style={css('margin-top:11px; display:flex; align-items:center; justify-content:center; gap:5px; font:700 12.5px Pretendard; color:#fff; background:var(--accent); padding:9px; border-radius:11px; cursor:pointer;')}>
                         <span className="msr" style={css('font-size:16px;')}>add_location_alt</span>이 경로 추가하기
                       </div>
                     )
@@ -122,6 +145,53 @@ export function Explore({ onText, hasCourse, courseNames, onAdd, onRemove }: {
         )}
         <div style={css('font:400 11px Pretendard; color:var(--faint); margin-top:20px;')}>데이터: 한국관광공사 반려동물 동반여행 · 한국문화정보원 펫동반 문화시설 · 한국관광공사 두루누비 · 지역 문화행사</div>
       </div>
+
+      {picking && (
+        <div onClick={() => setPicking(null)} style={css('position:fixed; inset:0; z-index:70; background:rgba(10,12,20,.5); display:flex; align-items:center; justify-content:center; padding:20px;')}>
+          <div onClick={(ev) => ev.stopPropagation()} style={{ ...css('width:min(420px,94%); background:var(--panel); border-radius:20px; overflow:hidden; box-shadow:0 30px 70px rgba(0,0,0,.35);'), animation: 'fadeup .2s ease' }}>
+            <div style={css('display:flex; align-items:center; gap:10px; padding:16px 18px; border-bottom:1px solid var(--border);')}>
+              <span className="msf" style={css('font-size:20px; color:var(--accent);')}>add_location_alt</span>
+              <div style={css('min-width:0;')}>
+                <div style={css('font:800 15px Pretendard; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;')}>{picking.name}</div>
+                <div style={css('font:500 11.5px Pretendard; color:var(--muted); margin-top:1px;')}>어느 날 · 언제 추가할까요?</div>
+              </div>
+              <div onClick={() => setPicking(null)} style={css('margin-left:auto; width:30px; height:30px; border-radius:9px; background:var(--chip); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--muted); flex:none;')}>
+                <span className="msr" style={css('font-size:18px;')}>close</span>
+              </div>
+            </div>
+            <div style={css('padding:18px;')}>
+              {days > 1 && (
+                <>
+                  <div style={css('font:700 12px Pretendard; color:var(--muted); margin-bottom:9px;')}>며칠째</div>
+                  <div className="sc" style={css('display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px;')}>
+                    {Array.from({ length: days }, (_, i) => i + 1).map((d) => {
+                      const on = pickDay === d;
+                      return (
+                        <div key={d} onClick={() => setPickDay(d)} style={css(`flex:none; font:700 13px Pretendard; padding:9px 16px; border-radius:11px; cursor:pointer; background:${on ? 'var(--accent)' : 'var(--panel-2)'}; color:${on ? '#fff' : 'var(--muted)'}; border:1px solid ${on ? 'var(--accent)' : 'var(--border)'};`)}>Day {d}</div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+              <div style={css('font:700 12px Pretendard; color:var(--muted); margin-bottom:9px;')}>시간대</div>
+              <div style={css('display:grid; grid-template-columns:repeat(2,1fr); gap:8px;')}>
+                {SLOTS.map((s) => {
+                  const on = pickSlot === s.key;
+                  return (
+                    <div key={s.key} onClick={() => setPickSlot(s.key)} style={css(`display:flex; align-items:center; gap:8px; font:700 13px Pretendard; padding:11px 13px; border-radius:12px; cursor:pointer; background:${on ? 'var(--accent-soft)' : 'var(--panel-2)'}; color:${on ? 'var(--accent)' : 'var(--text)'}; border:1px solid ${on ? 'var(--accent)' : 'var(--border)'};`)}>
+                      <span className="msr" style={css(`font-size:18px; color:${on ? 'var(--accent)' : 'var(--muted)'};`)}>{s.icon}</span>
+                      {s.label}<span style={css('font:600 11px Pretendard; color:var(--faint);')}>{s.clock}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div onClick={confirmAdd} style={css('margin-top:20px; background:var(--accent); color:#fff; font:700 14.5px Pretendard; text-align:center; padding:13px; border-radius:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;')}>
+                <span className="msr" style={css('font-size:18px;')}>check</span>{days > 1 ? `Day ${pickDay} ` : ''}{SLOTS.find((s) => s.key === pickSlot)!.label}에 추가
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
