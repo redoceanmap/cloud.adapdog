@@ -1,5 +1,19 @@
 from __future__ import annotations
 
-# 증상 체크 슬라이스는 별도 값 객체 없이 SymptomCheck 엔티티로 충분하다.
-# 심각도(Severity) 등급·가드레일 규칙 등 도메인 규칙이 필요해지면 여기에 VO를 추가한다.
-# (festival_vo와 동일하게, 프랙탈 구조 유지를 위한 자리 표시 모듈)
+from dataclasses import dataclass, field
+
+
+@dataclass(frozen=True)
+class SymptomTriage:
+    """보호자가 말한 증상에 대한 AI 응급 안내(참고용·진단 아님).
+
+    reply: 보호자에게 보여줄 대화체 안내("이런 증상일 수 있어요…").
+    possible_conditions: 짐작되는 원인 후보(확정 아님).
+    urgency: low | medium | high — 병원 방문 권고 강도.
+    advice: 지금 집에서 할 수 있는 주의사항 한두 줄.
+    """
+
+    reply: str
+    possible_conditions: list[str] = field(default_factory=list)
+    urgency: str = "medium"
+    advice: str = ""

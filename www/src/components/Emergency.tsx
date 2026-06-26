@@ -1,8 +1,9 @@
-// 응급 케어 모달 — 시안 디자인 유지 + 실데이터(safety-alert: 실 날씨 위험도 + 행안부 동물병원).
-import { useEffect, useState } from 'react';
+// 응급 케어 모달 — 시안 디자인 유지 + 실데이터(safety-alert: 실 날씨 위험도 + 행안부 동물병원)
+// + 증상 대화형 AI 안내(symptom-check/triage, 참고용·진단 아님).
+import { useEffect, useRef, useState } from 'react';
 import { css } from '../lib/css';
-import { checkSafety, getNearbyHospitals } from '../api/endpoints';
-import type { SafetyAlertResult, AnimalHospital } from '../api/types';
+import { checkSafety, getNearbyHospitals, symptomTriage } from '../api/endpoints';
+import type { SafetyAlertResult, AnimalHospital, SymptomTriageResult } from '../api/types';
 
 // 데모 현재 위치 — 전주 한옥마을(실제 GPS 대체). 거리순 정렬 기준점.
 const HERE = { lat: 35.8149, lng: 127.153 };
@@ -15,9 +16,46 @@ const RISK = {
   low: { c: '#22A565', title: '지금은 큰 위험 신호가 없어요', icon: 'verified' },
 } as const;
 
-export function Emergency({ step, setStep, onClose }: { step: 'entry' | 'result' | 'list'; setStep: (s: 'entry' | 'result' | 'list') => void; onClose: () => void }) {
+// 증상 대화 긴급도 → 색/문구.
+const URGENCY = {
+  high: { c: '#E0533F', label: '긴급 — 바로 병원' },
+  medium: { c: '#D98A00', label: '주의' },
+  low: { c: '#22A565', label: '경과 관찰' },
+} as const;
+
+type EmgStep = 'entry' | 'chat' | 'result' | 'list';
+type ChatMsg = { role: 'user' | 'ai'; content: string; urgency?: 'low' | 'medium' | 'high'; conditions?: string[] };
+
+export function Emergency({ step, setStep, onClose }: { step: EmgStep; setStep: (s: EmgStep) => void; onClose: () => void }) {
   const [safety, setSafety] = useState<SafetyAlertResult | null>(null);
   const [hospitals, setHospitals] = useState<AnimalHospital[] | null>(null);
+
+  // 증상 대화 상태.
+  const [chat, setChat] = useState<ChatMsg[]>([
+    { role: 'ai', content: '어디가 걱정되시나요? 체리의 증상을 편하게 말씀해 주세요. 증상을 듣고 짐작되는 원인과 지금 할 수 있는 주의사항을 함께 살펴볼게요. (참고용이며 진단이 아니에요)' },
+  ]);
+  const [draft, setDraft] = useState('');
+  const [thinking, setThinking] = useState(false);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' }); }, [chat, thinking]);
+
+  const sendSymptom = async () => {
+    const text = draft.trim();
+    if (!text || thinking) return;
+    const next: ChatMsg[] = [...chat, { role: 'user', content: text }];
+    setChat(next);
+    setDraft('');
+    setThinking(true);
+    try {
+      const wire = next.map((m) => ({ role: m.role, content: m.content }));
+      const r: SymptomTriageResult = await symptomTriage(wire, '골든 리트리버', 'large');
+      setChat((c) => [...c, { role: 'ai', content: r.reply, urgency: r.urgency, conditions: r.possible_conditions }]);
+    } catch {
+      setChat((c) => [...c, { role: 'ai', content: '안내를 불러오지 못했어요. 증상이 급하면 바로 가까운 동물병원에 연락해 주세요.', urgency: 'high' }]);
+    } finally {
+      setThinking(false);
+    }
+  };
 
   useEffect(() => {
     checkSafety({ region: '전주', pet_breed: '골든 리트리버', pet_size: 'large', latitude: HERE.lat, longitude: HERE.lng })
@@ -56,8 +94,62 @@ export function Emergency({ step, setStep, onClose }: { step: 'entry' | 'result'
                   </div>
                 )}
               </div>
-              <div onClick={() => setStep('result')} style={css('margin-top:20px; background:#FF6B5C; color:#fff; font:700 14.5px Pretendard; text-align:center; padding:14px; border-radius:14px; cursor:pointer;')}>증상 살펴보기</div>
+              <div onClick={() => setStep('chat')} style={css('margin-top:20px; background:#FF6B5C; color:#fff; font:700 14.5px Pretendard; text-align:center; padding:14px; border-radius:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px;')}>
+                <span className="msf" style={css('font-size:18px;')}>chat</span>증상 AI에게 물어보기
+              </div>
+              <div onClick={() => setStep('result')} style={css('margin-top:10px; background:var(--chip); color:var(--text); font:700 14.5px Pretendard; text-align:center; padding:14px; border-radius:14px; cursor:pointer;')}>오늘 안전·날씨 보기</div>
               <div onClick={() => setStep('list')} style={css('margin-top:10px; background:var(--chip); color:var(--text); font:700 14.5px Pretendard; text-align:center; padding:14px; border-radius:14px; cursor:pointer;')}>바로 병원 찾기</div>
+            </>
+          )}
+          {step === 'chat' && (
+            <>
+              <div ref={scrollRef} className="sc" style={css('max-height:46vh; min-height:230px; overflow-y:auto; display:flex; flex-direction:column; gap:11px; padding:2px;')}>
+                {chat.map((m, i) =>
+                  m.role === 'user' ? (
+                    <div key={i} style={css('align-self:flex-end; max-width:85%; background:var(--accent); color:var(--user-text); font:500 13px Pretendard; line-height:1.55; padding:10px 13px; border-radius:14px 14px 4px 14px;')}>{m.content}</div>
+                  ) : (
+                    <div key={i} style={css('align-self:flex-start; max-width:90%; display:flex; gap:8px; align-items:flex-start;')}>
+                      <div style={css('width:24px; height:24px; border-radius:7px; background:rgba(255,107,92,.14); flex:none; display:flex; align-items:center; justify-content:center; margin-top:1px;')}>
+                        <span className="msf" style={css('font-size:14px; color:#FF6B5C;')}>stethoscope</span>
+                      </div>
+                      <div style={css('min-width:0;')}>
+                        {m.urgency && (
+                          <span style={css(`display:inline-flex; align-items:center; gap:4px; font:700 10px Pretendard; color:#fff; background:${URGENCY[m.urgency].c}; padding:3px 8px; border-radius:999px; margin-bottom:6px;`)}>
+                            <span className="msf" style={css('font-size:12px;')}>{m.urgency === 'high' ? 'e911_emergency' : m.urgency === 'medium' ? 'warning' : 'verified'}</span>{URGENCY[m.urgency].label}
+                          </span>
+                        )}
+                        <div style={css('font:500 13px Pretendard; line-height:1.6; color:var(--text);')}>{m.content}</div>
+                        {m.conditions && m.conditions.length > 0 && (
+                          <div style={css('display:flex; gap:5px; flex-wrap:wrap; margin-top:7px;')}>
+                            {m.conditions.map((cnd) => (
+                              <span key={cnd} style={css('font:600 10.5px Pretendard; color:var(--muted); background:var(--chip); padding:4px 9px; border-radius:999px;')}>{cnd}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ),
+                )}
+                {thinking && (
+                  <div style={css('align-self:flex-start; display:flex; gap:6px; align-items:center; color:var(--muted); font:600 12px Pretendard; padding-left:32px;')}>
+                    <span className="msf" style={css('font-size:14px; color:#FF6B5C;')}>auto_awesome</span>증상을 살펴보는 중…
+                  </div>
+                )}
+              </div>
+              <div style={css('margin-top:10px; display:flex; align-items:center; gap:8px; background:var(--panel-2); border:1px solid var(--border); border-radius:14px; padding:6px 6px 6px 14px;')}>
+                <input
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') sendSymptom(); }}
+                  placeholder="예) 아침부터 헥헥거리고 침을 흘려요"
+                  style={css('flex:1; min-width:0; background:transparent; border:none; outline:none; font:500 13px Pretendard; color:var(--text);')}
+                />
+                <div onClick={sendSymptom} style={css(`width:34px; height:34px; border-radius:10px; background:${draft.trim() && !thinking ? '#FF6B5C' : 'var(--chip)'}; color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; flex:none;`)}>
+                  <span className="msf" style={css('font-size:18px;')}>arrow_upward</span>
+                </div>
+              </div>
+              <div style={css('margin-top:9px; background:rgba(255,107,92,.1); border:1px solid rgba(255,107,92,.3); border-radius:11px; padding:9px 12px; font:500 11px Pretendard; color:#A24433; line-height:1.5;')}>AI 참고용 정보이며 진단이 아닙니다. <b>반드시 수의사 진료</b>를 받으세요.</div>
+              <div onClick={() => setStep('list')} style={css('margin-top:10px; background:#FF6B5C; color:#fff; font:700 14px Pretendard; text-align:center; padding:13px; border-radius:14px; cursor:pointer;')}>가까운 병원 보기</div>
             </>
           )}
           {step === 'result' && (

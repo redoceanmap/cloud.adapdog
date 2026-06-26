@@ -89,7 +89,7 @@ export interface CourseAddStop {
 export type View = 'planner' | 'explore' | 'itinerary' | 'dog';
 export type DetailTab = 'overview' | 'policy' | 'location' | 'review';
 export type MobilePanel = 'chat' | 'detail' | 'map';
-export type EmgStep = 'entry' | 'result' | 'list';
+export type EmgStep = 'entry' | 'chat' | 'result' | 'list';
 
 export interface Msg {
   role: 'user' | 'ai';

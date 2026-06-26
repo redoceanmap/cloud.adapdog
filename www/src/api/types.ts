@@ -253,6 +253,15 @@ export interface SymptomCheck {
   created_at: string;
 }
 
+// 증상 대화형 안내(참고용·진단 아님)
+export interface SymptomTriageResult {
+  reply: string;
+  possible_conditions: string[];
+  urgency: 'low' | 'medium' | 'high';
+  advice: string;
+  is_diagnostic: boolean;
+}
+
 // ── 안전·위험 알리미(D 병원) ──
 export interface SafetyCheckRequest {
   region: string;

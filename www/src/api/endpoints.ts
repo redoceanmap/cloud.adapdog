@@ -29,6 +29,7 @@ import type {
   SafetyCheckRequest,
   StampSpot,
   SymptomCheck,
+  SymptomTriageResult,
   VisitedPlace,
   WalkingTrail,
 } from './types';
@@ -157,6 +158,17 @@ export const getAudioGuides = (facilityId: number) =>
 /** D6~D9 응급 증상 체크(참고용·진단 아님). */
 export const getSymptomChecks = (petId: number) =>
   apiGet<SymptomCheck[]>(`/care/symptom-check?pet_id=${petId}`);
+
+/** 증상 대화형 안내 — 증상을 말하면 AI가 짐작 원인·주의사항을 안내(참고용·진단 아님). */
+export const symptomTriage = (
+  messages: { role: string; content: string }[],
+  petBreed = '골든 리트리버', petSize = 'large',
+) =>
+  apiPost<SymptomTriageResult>('/care/symptom-check/triage', {
+    messages,
+    pet_breed: petBreed,
+    pet_size: petSize,
+  });
 
 /** D 안전·위험 알리미 — 지역 날씨 위험도 + 최근접 동물병원. */
 export const checkSafety = (req: SafetyCheckRequest) =>
