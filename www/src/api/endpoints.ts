@@ -90,12 +90,13 @@ export const optimizeRoute = (
 
 /** 정류장 스왑 — 특정 자리(같은 종류)의 다른 펫동반 후보를 거리순으로 받는다(더 멀리=offset 증가). */
 export const swapStop = (req: {
+  region?: string;
   stop_name: string; stop_category: string; stop_lat: number; stop_lng: number;
   kind?: string | null; exclude_names: string[]; offset?: number;
   pet_size?: string; pet_breed?: string; pet_traits?: string;
 }) =>
   apiPost<SwapAlternativesResponse>('/map/route-planner/swap', {
-    region: '전주',
+    region: req.region ?? '전주',
     stop_name: req.stop_name,
     stop_category: req.stop_category,
     stop_lat: req.stop_lat,

@@ -119,6 +119,7 @@ class RouteStopDto:
     time_slot: str = "morning"            # 시간대 블록(morning/lunch/dinner)
     clock: str = ""                       # 기준 시각 "HH:MM"
     is_meal: bool = False                 # 식사(음식점) 정류장 여부
+    is_mock: bool = False                 # 목업(MVP 데모용 예시) 정류장 여부 — 실데이터 부족분 채움
     image_url: Optional[str] = None       # 음식점 썸네일 URL(있을 때)
     phone: Optional[str] = None           # 음식점 대표 전화
     address: Optional[str] = None         # 음식점 주소

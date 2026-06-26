@@ -309,6 +309,7 @@ export function usePlannerApp() {
               ...courseAddedRef.current.map((s) => s.name),
             ].filter((n) => !courseRemovedRef.current.includes(n));
         const res = await swapStop({
+          region: liveCourseRef.current?.region ?? '전주',
           stop_name: target.name, stop_category: target.category,
           stop_lat: target.latitude, stop_lng: target.longitude,
           kind, exclude_names: exclude, offset,

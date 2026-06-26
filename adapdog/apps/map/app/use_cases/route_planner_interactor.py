@@ -112,7 +112,7 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
         plan = _apply_message(plan, latest)
         turn = await self._converse(schema, plan, pet_size)
         slots = _ground_slots(turn.slots, schema)
-        plan = _merge_slots(plan, slots)
+        plan = _merge_slots(plan, slots, latest)
         stage = plan.next_stage()
 
         # 2) 아직 필수 슬롯이 비면 LLM 답변(없으면 결정형 질문) + 빠른 선택칩만 돌려준다(코스 미생성).
@@ -337,7 +337,7 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
         prev: Coordinate | None = None
 
         def _emit(name, category, lat, lng, slot, clock, day, is_meal, reason, source,
-                  similarity=0, image_url=None, phone=None, address=None) -> None:
+                  similarity=0, image_url=None, phone=None, address=None, is_mock=False) -> None:
             nonlocal prev
             cur = Coordinate(lat, lng)
             dist = round(prev.distance_km_to(cur), 2) if prev is not None else 0.0
@@ -345,7 +345,7 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
             dtos.append(RouteStopDto(
                 len(dtos) + 1, name, category, lat, lng, dist, similarity,
                 reason=reason, source=source, day=day, time_slot=slot.value, clock=clock,
-                is_meal=is_meal, image_url=image_url, phone=phone, address=address,
+                is_meal=is_meal, is_mock=is_mock, image_url=image_url, phone=phone, address=address,
             ))
 
         def _sim(facility_id: int) -> int:
@@ -385,14 +385,50 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
         cafe_pool = list(buckets.cafe)
         used_ids: set[int] = set()
         used_meals: set[str] = set()
+        used_names: set[str] = set()  # 코스 전체 이름 중복 방지(식사·활동 풀이 달라 id로는 못 막음)
 
         # 식사 후보는 입장 판정(entry-verdict)과 같은 pet_place 풀로 교차검증 — 우리 아이를 못 받는
         # 식당(동반 불가/크기 미허용)은 코스에 넣지 않는다. entry-verdict의 '첫 이름매칭' 규칙을 그대로 따른다.
         place_pool = await self.pet_place.find_places(region)
 
+        # 실데이터 보강 — pet_place의 '관광' 카테고리(여행지·명소 등)를 야외 후보로 합친다(긴 일정 채움).
+        # 펫케어 상점(동물병원·약국·용품·미용·숙박 등)은 코스에 부적합하므로 화이트리스트로만 받는다.
+        # p.id(실 시설 id)를 그대로 써서 닮은친구%·버킷 중복 제거가 정상 동작한다.
+        sight_stops = [
+            PlannedStop(p.id, p.name, p.category, p.coordinate.latitude, p.coordinate.longitude)
+            for p in place_pool
+            if any(h in (p.category or "") for h in _SIGHT_CATEGORIES)
+        ]
+        outdoor_pool = _dedup_stops(outdoor_pool + sight_stops)
+
         def _meal_ok(name: str) -> bool:
             p = next((p for p in place_pool if name in p.name), None)
             return p is not None and p.accommodates(pet_size)
+
+        # 실데이터가 슬롯을 못 채울 때만 쓰는 라벨된 목업 폴백(MVP 전용). ref 인근에 결정적으로 배치.
+        mock_i = 0
+
+        def _emit_mock(pool, ref, slot, clock, day, is_meal) -> None:
+            nonlocal mock_i
+            base = ref or anchor or arrival
+            if base is None:
+                return
+            name, cat = pool[mock_i % len(pool)]
+            rounds = mock_i // len(pool)
+            if rounds:
+                name = f"{name} {rounds + 1}"  # 기본 이름 소진 시 번호로 유일성 보장(빈 슬롯 방지)
+            off = _MOCK_OFFSETS[mock_i % len(_MOCK_OFFSETS)]
+            mock_i += 1
+            if _norm_name(name) in used_names:
+                return
+            used_names.add(_norm_name(name))
+            reason = (
+                f"{slot.label} 식사로 들르기 좋은 펫 동반 예시 장소예요. · MVP 데모용 예시입니다(실데이터 아님)."
+                if is_meal else
+                "체리와 함께 쉬어가기 좋은 펫 동반 예시 장소예요. · MVP 데모용 예시입니다(실데이터 아님)."
+            )
+            _emit(name, cat, base.latitude + off[0], base.longitude + off[1],
+                  slot, clock, day, is_meal, reason, _MOCK_SOURCE, is_mock=True)
 
         for di, day_blocks in enumerate(schedule, start=1):
             prev = arrival if di == 1 else (anchor or arrival)  # Day1은 도착점, 이후는 숙소에서 출발
@@ -403,28 +439,34 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
                     if ref is not None:
                         # 인근 펫동반 식당 여러 곳 중 입장 판정상 우리 아이를 받는 가장 가까운 곳을 고른다.
                         cands = await self.restaurants.nearby_meal(ref, frozenset(used_meals), 15, pet_size)
-                        r = next((c for c in cands if _meal_ok(c.name)), None)
+                        r = next((c for c in cands if _meal_ok(c.name) and _norm_name(c.name) not in used_names), None)
                         if r is not None:
                             used_meals.add(r.name)
+                            used_names.add(_norm_name(r.name))
                             _emit(r.name, r.category, r.coordinate.latitude, r.coordinate.longitude,
                                   slot, clock, di, True, _meal_reason(r, slot), _SOURCE_TAG_RESTAURANT,
                                   image_url=r.image_url, phone=r.phone, address=r.address)
+                        else:
+                            _emit_mock(_MOCK_MEALS, ref, slot, clock, di, True)  # 실 식당 없음 → 라벨된 예시
                     continue
                 if kind is SlotKind.CAFE:
-                    pick = _take_nearest(cafe_pool, used_ids, ref)
+                    pick = _take_nearest(cafe_pool, used_ids, ref, used_names)
                 elif kind is SlotKind.CULTURE:
                     # 박물관 하루 1개 상한 — 넘으면 야외 명소로 대체해 실내 일색을 막는다.
                     if culture_today >= 1:
-                        pick = _take_nearest(outdoor_pool, used_ids, ref)
+                        pick = _take_nearest(outdoor_pool, used_ids, ref, used_names)
                     else:
-                        pick = _take_nearest(culture_pool, used_ids, ref) or _take_nearest(outdoor_pool, used_ids, ref)
+                        pick = _take_nearest(culture_pool, used_ids, ref, used_names) or _take_nearest(outdoor_pool, used_ids, ref, used_names)
                         if pick and _stop_kind(pick.category) == "culture":
                             culture_today += 1
                 else:  # OUTDOOR
-                    pick = _take_nearest(outdoor_pool, used_ids, ref) or _take_nearest(culture_pool, used_ids, ref)
+                    pick = _take_nearest(outdoor_pool, used_ids, ref, used_names) or _take_nearest(culture_pool, used_ids, ref, used_names)
                 if pick is not None:
                     used_ids.add(pick.id)
+                    used_names.add(_norm_name(pick.name))
                     _emit_sight(pick, slot, clock, di)
+                else:  # 실데이터 풀 고갈 → 종류에 맞는 라벨된 예시로 채움
+                    _emit_mock(_MOCK_CAFES if kind is SlotKind.CAFE else _MOCK_SIGHTS, ref, slot, clock, di, False)
 
         return _finalize(region, pet_size, plan, dtos, lodging, stopovers)
 
@@ -441,6 +483,34 @@ _SOURCE_TAG_RESTAURANT = "전주시 음식점 공공데이터"
 _SOURCE_TAG_PARK = "전국 도시공원 표준데이터"
 # 공원 PlannedStop id 오프셋 — 시설 id(코호트 키)와 겹치지 않게 큰 베이스를 더한다.
 _PARK_ID_BASE = 8_000_000
+
+# 실데이터 보강 — pet_place의 '관광' 카테고리만 야외 후보로 받는다(펫케어 상점 제외 화이트리스트).
+_SIGHT_CATEGORIES = (
+    "여행지", "관광", "명소", "공원", "정원", "수목", "산림", "호수", "유원지",
+    "해수욕", "폭포", "계곡", "둘레", "전망", "테마",
+)
+
+# 실데이터가 부족한 슬롯을 채우는 MVP 데모용 예시(목업) — 반드시 라벨로 명시한다(실데이터 아님).
+_MOCK_SOURCE = "예시 데이터 · MVP 전용(실데이터 아님)"
+_MOCK_MEALS = [
+    ("멍과 함께 식당", "식당"), ("댕댕이 백반", "식당"), ("반려애(愛) 한상", "식당"),
+    ("펫프렌즈 비스트로", "식당"), ("강아지환영 국수", "식당"), ("우리집 댕댕밥상", "식당"),
+    ("산책길 브런치", "식당"), ("동반 가능 한정식", "식당"),
+]
+_MOCK_CAFES = [
+    ("도그 가든 카페", "카페"), ("멍멍 라운지", "카페"), ("펫테라스 커피", "카페"),
+    ("산책 후 한잔", "카페"), ("바둑이 베이커리카페", "카페"), ("햇살 좋은 펫카페", "카페"),
+]
+_MOCK_SIGHTS = [
+    ("반려동물 산책 정원", "공원"), ("펫 어드벤처 파크", "테마파크"), ("강아지 놀이터 광장", "공원"),
+    ("멍멍 포토존 전망대", "전망대"), ("댕댕 숲길 산책로", "산책로"), ("애견 운동장 들판", "공원"),
+    ("반려견 호숫가 산책로", "산책로"), ("펫 프렌들리 수목원", "수목원"),
+]
+# 목업 좌표 분산용 결정적 오프셋(도 단위 ~수백m) — 지도에서 한 점에 뭉치지 않게.
+_MOCK_OFFSETS = [
+    (0.004, 0.004), (-0.005, 0.003), (0.003, -0.006), (-0.004, -0.004),
+    (0.006, 0.001), (-0.002, 0.006), (0.001, -0.005), (-0.006, -0.002),
+]
 
 
 def _finalize(
@@ -490,9 +560,20 @@ def _dedup_stops(stops: list[PlannedStop]) -> list[PlannedStop]:
     return out
 
 
-def _take_nearest(pool: list[PlannedStop], used_ids: set[int], ref: Coordinate | None) -> PlannedStop | None:
-    """후보 풀에서 미사용 중 기준점(ref)에 가장 가까운 정류장 하나(없으면 None)."""
-    cands = [s for s in pool if s.id not in used_ids]
+def _norm_name(n: str) -> str:
+    """이름 정규화(공백 제거) — 풀이 달라 id로 못 막는 교차 중복을 이름 기준으로 막는다."""
+    return "".join((n or "").split())
+
+
+def _take_nearest(
+    pool: list[PlannedStop], used_ids: set[int], ref: Coordinate | None,
+    used_names: set[str] = frozenset(),
+) -> PlannedStop | None:
+    """후보 풀에서 미사용 중 기준점(ref)에 가장 가까운 정류장 하나(없으면 None).
+
+    used_ids(같은 풀 중복)뿐 아니라 used_names(코스 전체 이름 중복)도 제외한다.
+    """
+    cands = [s for s in pool if s.id not in used_ids and _norm_name(s.name) not in used_names]
     if not cands:
         return None
     if ref is None:
@@ -561,10 +642,9 @@ _ARRIVAL_BY_TRANSPORT = {
 
 
 def _extract_region(text: str) -> str | None:
-    for h in _REGION_HINTS:
-        if h in text:
-            return h
-    return None
+    # 본문에서 가장 뒤(=가장 최근 언급)에 나온 지역. "전주말고 부산"이면 부산(바꾼 곳)을 고른다.
+    found = [(text.rfind(h), h) for h in _REGION_HINTS if h in text]
+    return max(found)[1] if found else None
 
 
 def _latest_user_message(schema: RouteChatSchema) -> str:
@@ -621,11 +701,20 @@ def _ground_slots(slots: dict, schema: RouteChatSchema) -> dict:
     return slots
 
 
-def _merge_slots(plan: TripPlan, slots: dict) -> TripPlan:
-    """LLM이 추출한 슬롯을 빈 슬롯에만 머지한다(이미 정해진 값은 절대 덮어쓰지 않음)."""
+def _merge_slots(plan: TripPlan, slots: dict, latest: str = "") -> TripPlan:
+    """LLM이 추출한 슬롯을 빈 슬롯에만 머지한다(이미 정해진 값은 덮어쓰지 않음).
+
+    예외 — 목적지: 사용자가 이번 발화에서 새 목적지를 말했으면 갱신한다(대화 중 변경 허용).
+    `_ground_slots`가 사용자가 실제 말한 목적지만 통과시키고, 여기에 '최신 발화에 등장' 조건을
+    더해 과거 지역 echo로 인한 오염을 막는다(비힌트 도시는 이 LLM 경로로 변경된다).
+    """
     if not slots:
         return plan
-    destination = plan.destination or (slots.get("destination") or None)
+    new_dest = slots.get("destination") or None
+    if new_dest and new_dest in latest:
+        destination = new_dest
+    else:
+        destination = plan.destination or new_dest
     transport = plan.transport
     if transport is TransportMode.UNSET and slots.get("transport"):
         transport = _safe_transport(str(slots["transport"]))
@@ -656,8 +745,12 @@ def _merge_slots(plan: TripPlan, slots: dict) -> TripPlan:
 
 
 def _apply_message(plan: TripPlan, latest: str) -> TripPlan:
-    """최신 메시지로 아직 비어 있는 슬롯을 모두 채운다(한 턴에 여러 개 말해도 수용)."""
-    destination = plan.destination or _extract_region(latest)
+    """최신 메시지로 아직 비어 있는 슬롯을 모두 채운다(한 턴에 여러 개 말해도 수용).
+
+    목적지는 예외 — 이번 발화에 지역이 있으면 기존 값을 덮어쓴다(대화 중 목적지 변경 허용).
+    결정형 substring 매칭이라 사용자가 실제로 친 도시만 잡으므로 환각 위험은 없다.
+    """
+    destination = _extract_region(latest) or plan.destination
     transport = plan.transport
     if transport is TransportMode.UNSET:
         transport = TransportMode.from_raw(latest)

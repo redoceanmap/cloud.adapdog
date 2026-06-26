@@ -1,6 +1,6 @@
 // 발자국 — standalone 시안 1:1 포팅. 데스크톱 윈도우 앱(상단 네비 + 3패널 플래너 +
 // 둘러보기/여정/내 강아지 + 응급 모달 + 다크모드 + 모바일 반응형). 로직은 usePlannerApp.
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { css } from './lib/css';
 import { transportLabel, journeyOrigin, journeyTransit, KTX_CORRIDOR, JEONJU_ANCHOR, type Place, type TransportCode } from './lib/places';
@@ -9,7 +9,7 @@ import { Emergency } from './components/Emergency';
 import { Explore } from './screens/Explore';
 import { NaverMap } from './components/NaverMap';
 import { fetchDrivingRoute } from './lib/routing';
-import { getReviews, checkEntry, getVisitedPlaces, checkSafety } from './api/endpoints';
+import { getReviews, checkEntry, getVisitedPlaces, checkSafety, searchPlaces } from './api/endpoints';
 import type { Review, RoutePlanResponse, RouteStop, LodgingPlace, EntryVerdictResult, VisitedPlace, SafetyAlertResult } from './api/types';
 
 const GRADS = [
@@ -41,7 +41,7 @@ function mapCourse(course: RoutePlanResponse | null): Place[] {
     day: `${i + 1}번째 코스`, time: '', icon: liveIcon(s.category), grad: GRADS[i % GRADS.length], label: s.name,
     desc: s.reason || '', badges: [], entry: '', entryNote: '', source: s.source || '한국문화정보원 펫동반 문화시설',
     mx: nx(s.longitude), my: ny(s.latitude), popular: [],
-    latitude: s.latitude, longitude: s.longitude,
+    latitude: s.latitude, longitude: s.longitude, isMock: !!s.is_mock,
   } as Place & { latitude: number; longitude: number }));
 }
 
@@ -138,49 +138,72 @@ export default function App() {
   const tCode = ({ ktx: 'KTX', bus: 'BUS', car: 'CAR', unset: null } as const)[livePlan?.transport ?? 'unset'];
   const courseCount = effectiveCourse?.stop_count ?? items.length;
   const ready = livePlan?.stage === 'ready';
+  // 목적지(코스 후=region, 코스 전=대화 중 destination). 지도·핀상세·스왑이 이 값을 따라간다.
+  const region = effectiveCourse?.region ?? livePlan?.destination ?? '전주';
+  const isJeonju = region === '전주';
 
   // 지도 2단계: (1) 여정 개요 = 서울 출발 → 경유지 → 전주 도착(단일 핀, 깔끔한 광역),
   // (2) 도착 핀 클릭 시 로컬 = 전주 코스 정류장(번호 핀). 전국 줌에서 핀이 뭉치는 걸 방지.
   const [localMap, setLocalMap] = useState(false);
   useEffect(() => { setLocalMap(false); }, [courseCount]); // 코스 바뀌면 개요로 복귀
 
+  // 목적지 도심 좌표 — 도시 펫시설 센트로이드(실데이터). 목적지가 바뀌면 1회 조회·캐시 → 전주 외 도시도 지도가 따라간다.
+  const [destAnchor, setDestAnchor] = useState<{ lat: number; lng: number } | null>(null);
+  const anchorCache = useRef<Record<string, { lat: number; lng: number }>>({});
+  useEffect(() => {
+    const d = livePlan?.destination;
+    if (!d) { setDestAnchor(null); return; }
+    const hit = anchorCache.current[d];
+    if (hit) { setDestAnchor(hit); return; }
+    let on = true;
+    searchPlaces(d).then((places) => {
+      if (!on || !places.length) return;
+      const anc = {
+        lat: places.reduce((a, p) => a + p.latitude, 0) / places.length,
+        lng: places.reduce((a, p) => a + p.longitude, 0) / places.length,
+      };
+      anchorCache.current[d] = anc;
+      setDestAnchor(anc);
+    }).catch(() => {});
+    return () => { on = false; };
+  }, [livePlan?.destination]);
+
   const journeyPoints = useMemo(() => {
-    // 로컬: 전주 도착 지점(KTX 전주역 / 고속터미널)에서 시작 → 코스 정류장(번호 핀).
-    // 실제로 내리는 곳에서부터 동선이 이어지도록 도착 앵커를 맨 앞에 둔다(자차는 역이 없어 코스만).
+    // 로컬: 도착 지점(전주 KTX 전주역 / 고속터미널)에서 시작 → 코스 정류장(번호 핀).
+    // 실제로 내리는 곳에서부터 동선이 이어지도록 도착 앵커를 맨 앞에 둔다(자차·전주 외 도시는 역 좌표가 없어 코스만).
     if (localMap) {
-      const arr = tCode === 'CAR' ? [] : journeyTransit(tCode).map((t) => ({
+      const arr = (tCode === 'CAR' || !isJeonju) ? [] : journeyTransit(tCode).map((t) => ({
         lat: t.lat, lng: t.lng, name: t.name, role: 'transit' as const, caption: `${t.name} 도착`, icon: t.icon,
       }));
       const stops = declutterPins(items.map((it, i) => ({ lat: it.latitude, lng: it.longitude, name: it.name, category: it.cat, order: i + 1 })));
       return [...arr, ...stops];
     }
-    // 여정 개요 — 교통수단별 출발(역/터미널/내위치)→이동(경유지 or 도착역)→전주 도착.
-    // 아직 코스가 없으면(대화 중) livePlan으로 서울→전주 매크로 경로를 점진적으로 그린다.
-    //  목적지만 정해짐 → 서울→전주 직선(미정), 이동수단 정해짐 → 도착역/터미널(KTX·버스) 추가.
+    // 여정 개요 — 교통수단별 출발(역/터미널/내위치)→이동(경유지 or 도착역)→목적지 도착.
+    // 아직 코스가 없으면(대화 중) livePlan으로 서울→목적지 매크로 경로를 점진적으로 그린다.
     if (!items.length) {
       if (!livePlan?.destination) return [];
-      return [
-        journeyOrigin(tCode),
-        ...journeyTransit(tCode),
-        { lat: JEONJU_ANCHOR.lat, lng: JEONJU_ANCHOR.lng, name: livePlan.destination, role: 'dest' as const, caption: `${livePlan.destination} 도착` },
-      ];
+      const dest = destAnchor ?? JEONJU_ANCHOR;
+      const destPin = { lat: dest.lat, lng: dest.lng, name: livePlan.destination, role: 'dest' as const, caption: `${livePlan.destination} 도착` };
+      // 전주 외 도시: 역·코리도어 좌표 미보유 → 서울(내 위치)→목적지 광역 직결.
+      if (!isJeonju) return [journeyOrigin(null), destPin];
+      // 전주: 목적지만 정해짐 → 서울→전주 직선(미정), 이동수단 정해짐 → 도착역/터미널 추가.
+      return [journeyOrigin(tCode), ...journeyTransit(tCode), destPin];
     }
-    // 자차 = 코리도어 경유지(실데이터), KTX/버스 = 도착역/터미널, 그 외 = 없음.
-    const mid = tCode === 'CAR'
-      ? (effectiveCourse?.stopovers ?? []).map((s) => ({ lat: s.latitude, lng: s.longitude, name: s.name, role: 'stopover' as const, caption: s.name }))
-      : journeyTransit(tCode);
     // 숙박이면 대표 숙소(lodging[0])를 도착 핀으로 → 지도가 서울→(경유지)→숙소로 그려진다.
     // 당일치기 등 숙소가 없으면 코스 중심 좌표로 폴백.
     const lodge = effectiveCourse?.lodging?.[0];
     const cLat = lodge?.latitude ?? items.reduce((a, p) => a + p.latitude, 0) / items.length;
     const cLng = lodge?.longitude ?? items.reduce((a, p) => a + p.longitude, 0) / items.length;
-    const destCaption = lodge ? `${lodge.name} 체크인` : `${effectiveCourse?.region ?? '전주'} 도착 · ${courseCount}곳`;
-    return [
-      journeyOrigin(tCode),
-      ...mid,
-      { lat: cLat, lng: cLng, name: lodge?.name ?? effectiveCourse?.region ?? '전주', role: 'dest' as const, caption: destCaption },
-    ];
-  }, [localMap, effectiveCourse, items, courseCount, tCode, livePlan]);
+    const destCaption = lodge ? `${lodge.name} 체크인` : `${region} 도착 · ${courseCount}곳`;
+    const destPin = { lat: cLat, lng: cLng, name: lodge?.name ?? region, role: 'dest' as const, caption: destCaption };
+    // 전주 외 도시: 경유지·역 좌표 미보유 → 서울(내 위치)→숙소 광역 직결.
+    if (!isJeonju) return [journeyOrigin(null), destPin];
+    // 자차 = 코리도어 경유지(실데이터), KTX/버스 = 도착역/터미널, 그 외 = 없음.
+    const mid = tCode === 'CAR'
+      ? (effectiveCourse?.stopovers ?? []).map((s) => ({ lat: s.latitude, lng: s.longitude, name: s.name, role: 'stopover' as const, caption: s.name }))
+      : journeyTransit(tCode);
+    return [journeyOrigin(tCode), ...mid, destPin];
+  }, [localMap, effectiveCourse, items, courseCount, tCode, livePlan, destAnchor, isJeonju, region]);
 
   // 실 경로선 — 어떤 구간이든 "땅으로 이동"하는 모습이 되도록 직선 대각선(=비행 느낌)을 없앤다.
   //  · 시내 코스 드릴다운: OSRM 도로 라우팅(실제 도로를 따라 정류장 연결).
@@ -191,8 +214,9 @@ export default function App() {
   useEffect(() => {
     const pts = journeyPoints.filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng)).map((p) => ({ lat: p.lat, lng: p.lng }));
     if (pts.length < 2) { setRoutePath(null); return; }
-    // 광역 KTX 구간 → 실제 정차역 코리도어(철도 근사). 도로 라우팅 호출 안 함.
-    if (!localMap && tCode === 'KTX') { setRoutePath(KTX_CORRIDOR); return; }
+    // 광역 KTX 구간(전주 한정) → 실제 정차역 코리도어(철도 근사). 도로 라우팅 호출 안 함.
+    // 전주 외 도시 KTX는 코리도어 좌표가 없어 직선 연결(NaverMap)로 광역 이동 표시.
+    if (!localMap && isJeonju && tCode === 'KTX') { setRoutePath(KTX_CORRIDOR); return; }
     // 시내 코스 + 자차/버스 광역 → OSRM 도로 라우팅.
     const usesRoad = localMap || tCode === 'CAR' || tCode === 'BUS';
     if (!usesRoad) { setRoutePath(null); return; }
@@ -200,7 +224,7 @@ export default function App() {
     setRoutePath(null);
     fetchDrivingRoute(pts).then((r) => on && setRoutePath(r)).catch(() => on && setRoutePath(null));
     return () => { on = false; };
-  }, [JSON.stringify(journeyPoints), tCode, localMap]);
+  }, [JSON.stringify(journeyPoints), tCode, localMap, isJeonju]);
 
   // 시설 후기 — 실데이터(/map/review, 장소명 매칭)
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -362,7 +386,7 @@ export default function App() {
 
               {/* CENTER · DETAIL */}
               <div className="sc" style={css('display:var(--detail-d); flex:var(--detail-flex); width:var(--detail-w); min-width:0; flex-direction:column; overflow-y:auto; background:var(--panel-2); border-right:1px solid var(--border);')}>
-                  <LiveDetail stop={c} hasCourse={items.length > 0} inCourse={!!effectiveCourse?.stops.some((s) => s.name === c.name)} reviews={reviews} onAdd={() => {
+                  <LiveDetail stop={c} region={region} hasCourse={items.length > 0} inCourse={!!effectiveCourse?.stops.some((s) => s.name === c.name)} reviews={reviews} onAdd={() => {
                     const cc = c as Place & { latitude: number; longitude: number };
                     if (effectiveCourse?.stops.some((s) => s.name === cc.name)) { removeCourseStop(cc.name); pushAi(`${cc.name}을(를) 코스에서 뺐어요.`); }
                     else { addCourseStop({ name: cc.name, category: cc.cat, latitude: cc.latitude, longitude: cc.longitude }); pushAi(`${cc.name}을(를) 코스에 담았어요.`); }
@@ -373,14 +397,14 @@ export default function App() {
               <div style={css('display:var(--map-d); flex:var(--map-flex); width:var(--map-w); min-width:0; position:relative; background:var(--map); overflow:hidden;')}>
                 {localMap && (
                   <div onClick={() => setLocalMap(false)} style={css('position:absolute; left:14px; top:14px; z-index:3; display:flex; align-items:center; gap:5px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:8px 12px; cursor:pointer; box-shadow:var(--shadow); font:700 12px Pretendard;')}>
-                    <span className="msr" style={css('font-size:17px; color:var(--accent);')}>arrow_back</span>여정으로 · 전주 {items.length}곳
+                    <span className="msr" style={css('font-size:17px; color:var(--accent);')}>arrow_back</span>여정으로 · {region} {items.length}곳
                   </div>
                 )}
                 <NaverMap
                   flush
                   path
                   routePath={routePath ?? undefined}
-                  label={localMap ? '' : `서울 → 전주 · ${transportLabel(tCode)}${courseCount ? ` · 실데이터 ${courseCount}곳` : ' · 경로 구성 중'}`}
+                  label={localMap ? '' : `서울 → ${region} · ${transportLabel(tCode)}${courseCount ? ` · 실데이터 ${courseCount}곳` : ' · 경로 구성 중'}`}
                   points={journeyPoints}
                   onSelect={(pt) => { if ((pt as any).role === 'dest') { setLocalMap(true); return; } const hit = items.find((x) => x.name === pt.name); if (hit) setFocus(hit.key); }}
                   fallback={
@@ -413,7 +437,7 @@ export default function App() {
                       <div style={css('position:absolute; left:14px; top:14px; display:flex; align-items:center; gap:7px; background:var(--panel); border:1px solid var(--border); border-radius:11px; padding:9px 13px; box-shadow:var(--shadow);')}>
                         <span className="msf" style={css('font-size:17px; color:var(--accent);')}>route</span>
                         <div style={css('line-height:1.2;')}>
-                          <div style={css('font:700 12px Pretendard;')}>서울 → 전주 · {transportLabel(tCode)}</div>
+                          <div style={css('font:700 12px Pretendard;')}>서울 → {region} · {transportLabel(tCode)}</div>
                           <div style={css('font:500 10.5px Pretendard; color:var(--muted);')}>{`실데이터 ${courseCount}곳`}</div>
                         </div>
                       </div>
@@ -429,7 +453,7 @@ export default function App() {
           )}
 
           {view === 'explore' && <Explore onText={handleUserText} hasCourse={!!effectiveCourse} courseNames={effectiveCourse?.stops.map((s) => s.name) ?? []} onAdd={addCourseStop} onRemove={removeCourseStop} />}
-          {view === 'itinerary' && <Itinerary liveCourse={effectiveCourse} tCode={tCode} nights={livePlan?.nights ?? 0} transport={transportLabel(tCode)} ready={ready} onStop={(k) => { app.setView('planner'); setFocus(k); }} onEmergency={() => { setEmg(true); setEmgStep('entry'); }} onRemove={removeCourseStop} />}
+          {view === 'itinerary' && <Itinerary liveCourse={effectiveCourse} region={region} anchor={isJeonju ? null : destAnchor} tCode={tCode} nights={livePlan?.nights ?? 0} transport={transportLabel(tCode)} ready={ready} onStop={(k) => { app.setView('planner'); setFocus(k); }} onEmergency={() => { setEmg(true); setEmgStep('entry'); }} onRemove={removeCourseStop} />}
           {view === 'dog' && <Dog />}
 
           {/* GLOBAL CHAT BAR — 플래너 외 모든 탭(둘러보기·여정·내 강아지) 중앙 하단에서 AI와 계속 대화 */}
@@ -486,6 +510,7 @@ type JNode = {
   title: string; sub?: string; reason?: string; badges?: string[];
   similarity?: number; dist?: number; source?: string; onClick?: () => void; onRemove?: () => void;
   isMeal?: boolean; imageUrl?: string | null; phone?: string | null; address?: string | null;
+  isMock?: boolean;
 };
 const RISK_TONE: Record<string, { c: string; bg: string; label: string }> = {
   high: { c: '#E0533F', bg: 'rgba(224,83,63,.12)', label: '위험' },
@@ -514,19 +539,20 @@ const SLOT_META: Record<string, { label: string; icon: string }> = {
 
 // 내비형 여정 타임라인 — 서울 출발 → (경유지/도착역) → 전주 도착 → 코스 정류장.
 // 각 노드에서 체리(대형견·더위 취약) 맞춤 정보를 실데이터로 노출. 백엔드 무변경.
-function Itinerary({ liveCourse, tCode, nights, transport, ready, onStop, onEmergency, onRemove }: {
+function Itinerary({ liveCourse, region, anchor, tCode, nights, transport, ready, onStop, onEmergency, onRemove }: {
   liveCourse: RoutePlanResponse | null;
+  region: string; anchor: { lat: number; lng: number } | null;
   tCode: TransportCode; nights: number; transport: string; ready: boolean;
   onStop: (k: string) => void; onEmergency: () => void; onRemove: (name: string) => void;
 }) {
   const [safety, setSafety] = useState<SafetyAlertResult | null>(null);
   useEffect(() => {
     let on = true;
-    checkSafety({ region: '전주', pet_breed: '골든 리트리버', pet_size: 'large', latitude: 35.8149, longitude: 127.153 })
+    checkSafety({ region, pet_breed: '골든 리트리버', pet_size: 'large', latitude: anchor?.lat ?? 35.8149, longitude: anchor?.lng ?? 127.153 })
       .then((s) => on && setSafety(s))
       .catch(() => {});
     return () => { on = false; };
-  }, []);
+  }, [region, anchor]);
 
   const origin = journeyOrigin(tCode);
   // 코스 정류장 — 백엔드 stops(닮은친구%·이유·이전 거리·일자·시간대).
@@ -535,8 +561,10 @@ function Itinerary({ liveCourse, tCode, nights, transport, ready, onStop, onEmer
     similarity: s.similarity, dist: s.distance_from_prev_km, badges: [] as string[], source: s.source,
     day: s.day ?? 1, slot: s.time_slot ?? 'morning', clock: s.clock ?? '',
     isMeal: !!s.is_meal, imageUrl: s.image_url ?? null, phone: s.phone ?? null, address: s.address ?? null,
+    isMock: !!s.is_mock,
   }));
   const count = stops.length;
+  const hasMock = stops.some((s) => s.isMock);
 
   // 노드 조립: 출발 → 이동(경유지/도착역) → 도착 → 코스.
   const nodes: JNode[] = [];
@@ -551,13 +579,13 @@ function Itinerary({ liveCourse, tCode, nights, transport, ready, onStop, onEmer
     for (const t of journeyTransit(tCode)) nodes.push({ tone: 'transit', icon: t.icon || 'train', title: t.name, sub: `${transport} 이동 · 도착` });
   }
   const stayLabel = nights >= 1 ? `${nights}박 ${nights + 1}일` : '당일치기';
-  nodes.push({ tone: 'arrive', icon: 'flag', title: '전주 도착', sub: `${stayLabel} · 코스 ${count}곳` });
+  nodes.push({ tone: 'arrive', icon: 'flag', title: `${region} 도착`, sub: `${stayLabel} · 코스 ${count}곳` });
 
   const pushStop = (s: typeof stops[number], n: number) => nodes.push({
     tone: s.isMeal ? 'meal' : 'stop', num: s.isMeal ? undefined : n, icon: s.isMeal ? 'restaurant' : undefined,
     time: s.time, title: s.name, sub: s.sub, reason: s.reason,
     badges: s.badges, similarity: s.similarity, dist: s.dist, source: s.source,
-    isMeal: s.isMeal, imageUrl: s.imageUrl, phone: s.phone, address: s.address,
+    isMeal: s.isMeal, imageUrl: s.imageUrl, phone: s.phone, address: s.address, isMock: s.isMock,
     onClick: () => onStop(s.key), onRemove: () => onRemove(s.name),
   });
 
@@ -581,7 +609,7 @@ function Itinerary({ liveCourse, tCode, nights, transport, ready, onStop, onEmer
         nodes.push({
           tone: 'sleep', icon: 'bedtime', title: lod?.name ?? '펫 동반 숙소',
           sub: `${d}박째 · 체리와 취침`,
-          reason: lod ? '반려동물 동반 숙소에서 하룻밤 묵어요. 대형견 체리도 함께 잘 수 있어요.' : '이날은 전주에서 1박 — 펫 동반 숙소를 추천했어요.',
+          reason: lod ? '반려동물 동반 숙소에서 하룻밤 묵어요. 대형견 체리도 함께 잘 수 있어요.' : `이날은 ${region}에서 1박 — 펫 동반 숙소를 추천했어요.`,
           source: lod?.source,
         });
       }
@@ -595,8 +623,8 @@ function Itinerary({ liveCourse, tCode, nights, transport, ready, onStop, onEmer
       <div style={css('max-width:760px; margin:0 auto;')}>
         <div style={css('display:flex; align-items:flex-end; justify-content:space-between;')}>
           <div>
-            <div style={css('font:800 24px Pretendard; letter-spacing:-0.02em;')}>전주 펫 동반 여정</div>
-            <div style={css('font:500 13px Pretendard; color:var(--muted); margin-top:6px;')}>체리 · 골든 리트리버 · 대형견 · 서울 → 전주 · {transport} · {count}곳</div>
+            <div style={css('font:800 24px Pretendard; letter-spacing:-0.02em;')}>{region} 펫 동반 여정</div>
+            <div style={css('font:500 13px Pretendard; color:var(--muted); margin-top:6px;')}>체리 · 골든 리트리버 · 대형견 · 서울 → {region} · {transport} · {count}곳</div>
           </div>
           <span style={css(`font:700 12px Pretendard; color:${ready ? '#1B8A55' : 'var(--accent)'}; background:${ready ? 'rgba(34,165,101,.12)' : 'var(--accent-soft)'}; padding:7px 13px; border-radius:999px;`)}>{ready ? '준비 완료' : '작성 중'}</span>
         </div>
@@ -609,7 +637,7 @@ function Itinerary({ liveCourse, tCode, nights, transport, ready, onStop, onEmer
             </div>
             <div style={css('flex:1; min-width:0;')}>
               <div style={css('display:flex; align-items:center; gap:8px;')}>
-                <span style={css('font:800 15px Pretendard;')}>오늘 전주 {Math.round(safety.temperature_c)}°C · {safety.condition}</span>
+                <span style={css('font:800 15px Pretendard;')}>오늘 {region} {Math.round(safety.temperature_c)}°C · {safety.condition}</span>
                 <span style={css(`font:700 10.5px Pretendard; color:${risk.c}; background:${risk.bg}; padding:3px 9px; border-radius:999px;`)}>{risk.label}</span>
               </div>
               <div style={css('font:500 12px Pretendard; color:var(--muted); margin-top:4px;')}>
@@ -620,6 +648,13 @@ function Itinerary({ liveCourse, tCode, nights, transport, ready, onStop, onEmer
         )}
 
         {count === 0 && <div style={css('margin-top:30px; font:600 14px Pretendard; color:var(--muted);')}>아직 코스가 없어요. 플래너에서 만들어 보세요.</div>}
+
+        {hasMock && (
+          <div style={css('margin-top:16px; display:flex; align-items:center; gap:10px; background:rgba(217,138,0,.08); border:1px solid rgba(217,138,0,.25); border-radius:14px; padding:12px 15px;')}>
+            <span className="msr" style={css('font-size:19px; color:#B26A00;')}>info</span>
+            <div style={css('font:600 12px Pretendard; color:#8A5600; line-height:1.5;')}>일부 항목은 실데이터가 부족해 <b>MVP 데모용 예시(예시 · MVP 전용)</b>로 채웠어요. 정식 버전에선 실 공공데이터로 대체됩니다.</div>
+          </div>
+        )}
 
         {/* 단계 타임라인 */}
         <div style={css('margin-top:22px; position:relative;')}>
@@ -666,6 +701,9 @@ function Itinerary({ liveCourse, tCode, nights, transport, ready, onStop, onEmer
                     {n.isMeal && <span className="msr" style={css('font-size:16px; color:#E8862B;')}>restaurant</span>}
                     {n.time && <span style={css('font:700 11px Pretendard; color:var(--accent);')}>{n.time}</span>}
                     <span style={css('font:700 15px Pretendard;')}>{n.title}</span>
+                    {n.isMock && (
+                      <span title="MVP 데모용 예시 데이터입니다(실데이터 아님)" style={css('font:700 10.5px Pretendard; color:#B26A00; background:rgba(217,138,0,.14); padding:3px 9px; border-radius:999px;')}>예시 · MVP 전용</span>
+                    )}
                     {n.similarity != null && n.similarity > 0 && (
                       <span style={css('font:700 10.5px Pretendard; color:var(--accent); background:var(--accent-soft); padding:3px 9px; border-radius:999px;')}>닮은친구 {n.similarity}%</span>
                     )}
@@ -724,7 +762,7 @@ function Itinerary({ liveCourse, tCode, nights, transport, ready, onStop, onEmer
             <div style={css('flex:1; min-width:0;')}>
               <div style={css('font:800 14px Pretendard;')}>여행 중 응급 상황이라면</div>
               <div style={css('font:500 12px Pretendard; color:var(--muted); margin-top:3px;')}>
-                {safety?.nearest_hospital ? `가장 가까운 병원 · ${safety.nearest_hospital}${safety.nearest_hospital_km != null ? ` ${safety.nearest_hospital_km}km` : ''}` : '전주 인근 동물병원을 거리순으로 안내해요'}
+                {safety?.nearest_hospital ? `가장 가까운 병원 · ${safety.nearest_hospital}${safety.nearest_hospital_km != null ? ` ${safety.nearest_hospital_km}km` : ''}` : `${region} 인근 동물병원을 거리순으로 안내해요`}
               </div>
             </div>
             <span className="msr" style={css('font-size:20px; color:var(--muted); flex:none;')}>chevron_right</span>
@@ -810,19 +848,21 @@ const LV = {
 } as const;
 
 // 실데이터 상세 — 백엔드 실 장소이므로 entry-verdict·review 가 정상 동작.
-function LiveDetail({ stop, hasCourse, inCourse, reviews, onAdd, onClose, onItin }: { stop: Place; hasCourse: boolean; inCourse: boolean; reviews: Review[]; onAdd: () => void; onClose: () => void; onItin: () => void }) {
+function LiveDetail({ stop, region, hasCourse, inCourse, reviews, onAdd, onClose, onItin }: { stop: Place; region: string; hasCourse: boolean; inCourse: boolean; reviews: Review[]; onAdd: () => void; onClose: () => void; onItin: () => void }) {
   const [verdict, setVerdict] = useState<EntryVerdictResult | null>(null);
   useEffect(() => {
     if (!hasCourse) return;
     let on = true;
     setVerdict(null);
-    checkEntry({ region: '전주', place_name: stop.name, pet_name: '체리', pet_size: 'large' })
+    // 목업(예시) 정류장은 실데이터가 아니라 입장 판정을 건너뛴다(잘못된 '시설 못 찾음' 방지).
+    if (stop.isMock) return;
+    checkEntry({ region, place_name: stop.name, pet_name: '체리', pet_size: 'large' })
       .then((v) => on && setVerdict(v))
       .catch(() => {});
     return () => {
       on = false;
     };
-  }, [stop.name, hasCourse]);
+  }, [stop.name, hasCourse, region, stop.isMock]);
 
   if (!hasCourse) {
     return (
@@ -842,7 +882,7 @@ function LiveDetail({ stop, hasCourse, inCourse, reviews, onAdd, onClose, onItin
       <div style={css('display:flex; align-items:center; gap:10px; padding:16px 18px 12px; flex:none;')}>
         <div onClick={onItin} style={css('display:flex; align-items:center; gap:7px; cursor:pointer;')}>
           <span className="msr" style={css('font-size:20px; color:var(--muted);')}>arrow_back</span>
-          <span style={css('font:700 14px Pretendard;')}>{stop.day} · 전주 코스</span>
+          <span style={css('font:700 14px Pretendard;')}>{stop.day} · {region} 코스</span>
         </div>
         <div onClick={onClose} style={css('margin-left:auto; width:30px; height:30px; border-radius:9px; background:var(--panel); display:flex; align-items:center; justify-content:center; color:var(--muted); cursor:pointer;')}>
           <span className="msr" style={css('font-size:18px;')}>close</span>
@@ -852,10 +892,11 @@ function LiveDetail({ stop, hasCourse, inCourse, reviews, onAdd, onClose, onItin
         <div style={css(`height:200px; border-radius:18px; background:${stop.grad}; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center;`)}>
           <div style={css('position:absolute; inset:0; background-image:repeating-linear-gradient(135deg, rgba(255,255,255,.10) 0 12px, rgba(255,255,255,0) 12px 24px);')} />
           <span className="msf" style={css('font-size:54px; color:rgba(255,255,255,.6);')}>{stop.icon}</span>
-          <span style={css('position:absolute; bottom:12px; left:14px; font:600 11px ui-monospace,monospace; color:rgba(255,255,255,.92); background:rgba(0,0,0,.22); padding:5px 10px; border-radius:8px;')}>실데이터 · {stop.cat}</span>
+          <span style={css(`position:absolute; bottom:12px; left:14px; font:600 11px ui-monospace,monospace; color:rgba(255,255,255,.92); background:${stop.isMock ? 'rgba(178,106,0,.55)' : 'rgba(0,0,0,.22)'}; padding:5px 10px; border-radius:8px;`)}>{stop.isMock ? '예시 · MVP 전용' : '실데이터'} · {stop.cat}</span>
         </div>
         <div style={css('display:flex; align-items:center; gap:9px; margin-top:16px; flex-wrap:wrap;')}>
           <div style={css('font:800 22px Pretendard; letter-spacing:-0.02em;')}>{stop.name}</div>
+          {stop.isMock && <span title="MVP 데모용 예시 데이터입니다(실데이터 아님)" style={css('font:700 11px Pretendard; color:#B26A00; background:rgba(217,138,0,.14); padding:4px 10px; border-radius:999px;')}>예시 · MVP 전용</span>}
           {avg && <span style={css('display:inline-flex; align-items:center; gap:3px; font:700 13px Pretendard;')}><span className="msf" style={css('font-size:15px; color:#F5B400;')}>star</span>{avg}</span>}
         </div>
         <div style={css('font:600 12.5px Pretendard; color:var(--muted); margin-top:7px;')}>{stop.cat}</div>

@@ -28,6 +28,7 @@ export interface Place {
   latitude: number;
   longitude: number;
   isLodging?: boolean;
+  isMock?: boolean; // 목업(MVP 데모용 예시) 정류장
   leg?: 'enroute' | 'jeonju'; // enroute=서울→전주 경유지, jeonju=전주 도착 코스
   popular: Popular[];
 }

@@ -37,6 +37,7 @@ export interface RouteStop {
   time_slot?: 'morning' | 'lunch' | 'afternoon' | 'dinner';   // 시간대 블록. 백엔드 생성 코스에만
   clock?: string;                               // 기준 시각 "HH:MM"
   is_meal?: boolean;                            // 식사(음식점) 정류장 여부
+  is_mock?: boolean;                            // 목업(MVP 데모용 예시) 정류장 여부 — 실데이터 부족분
   image_url?: string | null;                    // 음식점 썸네일 URL
   phone?: string | null;                        // 음식점 대표 전화
   address?: string | null;                      // 음식점 주소
