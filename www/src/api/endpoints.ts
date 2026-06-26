@@ -23,6 +23,7 @@ import type {
   RouteChatResponse,
   RoutePlanRequest,
   RoutePlanResponse,
+  SwapAlternativesResponse,
   TripPlan,
   SafetyAlertResult,
   SafetyCheckRequest,
@@ -85,6 +86,26 @@ export const optimizeRoute = (
     start_lat: start?.lat ?? null,
     start_lng: start?.lng ?? null,
     stops,
+  });
+
+/** 정류장 스왑 — 특정 자리(같은 종류)의 다른 펫동반 후보를 거리순으로 받는다(더 멀리=offset 증가). */
+export const swapStop = (req: {
+  stop_name: string; stop_category: string; stop_lat: number; stop_lng: number;
+  kind?: string | null; exclude_names: string[]; offset?: number;
+  pet_size?: string; pet_breed?: string; pet_traits?: string;
+}) =>
+  apiPost<SwapAlternativesResponse>('/map/route-planner/swap', {
+    region: '전주',
+    stop_name: req.stop_name,
+    stop_category: req.stop_category,
+    stop_lat: req.stop_lat,
+    stop_lng: req.stop_lng,
+    kind: req.kind ?? null,
+    exclude_names: req.exclude_names,
+    offset: req.offset ?? 0,
+    pet_size: req.pet_size ?? 'medium',
+    pet_breed: req.pet_breed ?? null,
+    pet_traits: req.pet_traits ?? null,
   });
 
 /** C5 입장 판정 — 시설×반려동물 규칙 기반 판정. */

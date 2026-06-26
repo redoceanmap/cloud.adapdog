@@ -61,3 +61,7 @@ ANIMAL_HOSPITAL_CSV_PATH = os.getenv("ANIMAL_HOSPITAL_CSV_PATH", os.path.join(_C
 RESTAURANT_BASIC_CSV_PATH = os.getenv("RESTAURANT_BASIC_CSV_PATH", os.path.join(_CSV_DIR, "전북특별자치도 전주시_음식점기본정보_20250604.csv"))
 # 전주시 음식점 이미지정보(식당명→이미지 URL) — 식사 카드 썸네일에 사용(cp949).
 RESTAURANT_IMAGE_CSV_PATH = os.getenv("RESTAURANT_IMAGE_CSV_PATH", os.path.join(_CSV_DIR, "전북특별자치도 전주시_음식점이미지정보_20220401.csv"))
+# 전주시 모범음식점(좌표·업태) — 식당명 매칭으로 restaurant.recommended 품질 플래그 적재(cp949).
+RESTAURANT_MODEL_CSV_PATH = os.getenv("RESTAURANT_MODEL_CSV_PATH", os.path.join(_CSV_DIR, "전북특별자치도 전주시_모범음식점_20260205.csv"))
+# 전국 도시공원 표준데이터(좌표·공원구분) — 플래너 야외(산책) 슬롯 후보에 사용(cp949).
+CITY_PARK_CSV_PATH = os.getenv("CITY_PARK_CSV_PATH", os.path.join(_CSV_DIR, "전국도시공원정보표준데이터.csv"))

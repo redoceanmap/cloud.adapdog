@@ -20,12 +20,16 @@ class RestaurantOrm(Base):
     latitude: Mapped[float] = mapped_column(Float, index=True)
     longitude: Mapped[float] = mapped_column(Float, index=True)
     region_id: Mapped[int | None] = mapped_column(ForeignKey("region.id"), index=True, nullable=True)
-    category_id: Mapped[int | None] = mapped_column(ForeignKey("category.id"), nullable=True)  # 업태(한식/카페…)
+    cuisine: Mapped[str | None] = mapped_column(String, nullable=True)  # 업태(한식/커피숍…) — 표시 라벨용. 시설 category 차원과 성격이 달라 비정규화 문자열로 보관.
     phone: Mapped[str | None] = mapped_column(String, nullable=True)
     road_address: Mapped[str | None] = mapped_column(String, nullable=True)
     jibun_address: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[str | None] = mapped_column(String, nullable=True)  # 식당상태(운영중 등)
+    # 대표 이미지(restaurant_image[min seq] 역정규화) — 카드 썸네일 조회를 2차 쿼리 없이.
+    thumbnail_url: Mapped[str | None] = mapped_column(String, nullable=True)
     pet_friendly: Mapped[bool] = mapped_column(Boolean, default=False)
+    # 전주시 모범음식점(위생·품질 지정) 매칭 여부 — 식사 슬롯에서 품질 신호로 우선 배치.
+    recommended: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class RestaurantImageOrm(Base):

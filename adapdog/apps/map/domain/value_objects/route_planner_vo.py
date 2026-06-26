@@ -120,21 +120,45 @@ def departure_time_from_raw(raw: Optional[str]) -> Optional[str]:
 
 
 class TimeSlot(str, Enum):
-    """하루를 나누는 시간대 블록 — 여정을 아침/점심/저녁으로 묶는다."""
+    """하루를 나누는 시간대 블록 — 여정을 아침/점심/오후/저녁으로 묶는다."""
 
     MORNING = "morning"
     LUNCH = "lunch"
+    AFTERNOON = "afternoon"
     DINNER = "dinner"
 
     @property
     def label(self) -> str:
-        return {TimeSlot.MORNING: "아침", TimeSlot.LUNCH: "점심", TimeSlot.DINNER: "저녁"}[self]
+        return {TimeSlot.MORNING: "아침", TimeSlot.LUNCH: "점심",
+                TimeSlot.AFTERNOON: "오후", TimeSlot.DINNER: "저녁"}[self]
 
 
-# 식사/블록 기준 시각(자정 기준 분). 서울→전주 이동 소요(분). 숙소 체크아웃(분).
-_SLOT_CLOCK = {TimeSlot.MORNING: 8 * 60 + 30, TimeSlot.LUNCH: 12 * 60 + 30, TimeSlot.DINNER: 18 * 60 + 30}
+class SlotKind(str, Enum):
+    """리듬 슬롯의 성격 — 코드가 하루 시간 배분을 소유하고, 슬롯마다 채울 업종을 정한다.
+
+    가이드(일정설계 §3): 시간 슬롯은 코드가, 슬롯 내용은 데이터가 채운다.
+    MEAL=식당, CAFE=카페 휴식, OUTDOOR=야외 명소·공원 산책, CULTURE=실내 문화(박물관·전시).
+    """
+
+    MEAL = "meal"
+    CAFE = "cafe"
+    OUTDOOR = "outdoor"
+    CULTURE = "culture"
+
+
+# 서울→전주 이동 소요(분). 숙소 체크아웃(분, 가이드: 11시 가정).
 _TRAVEL_MIN = {TransportMode.KTX: 100, TransportMode.BUS: 170, TransportMode.CAR: 180}
-_CHECKOUT_MIN = 10 * 60 + 30
+_CHECKOUT_MIN = 11 * 60
+
+# 하루 여행 리듬 — (시간대, 기준시각[분], 슬롯 성격). 사람의 자연스러운 하루:
+# 아침 산책 → 점심 식당 → 카페 휴식 → 오후 명소 → 저녁 식당. "탐방 일색" 대신 리듬을 강제한다.
+_DAY_RHYTHM: list[tuple[TimeSlot, int, SlotKind]] = [
+    (TimeSlot.MORNING, 9 * 60 + 30, SlotKind.OUTDOOR),
+    (TimeSlot.LUNCH, 12 * 60 + 30, SlotKind.MEAL),
+    (TimeSlot.AFTERNOON, 14 * 60 + 30, SlotKind.CAFE),
+    (TimeSlot.AFTERNOON, 16 * 60, SlotKind.CULTURE),
+    (TimeSlot.DINNER, 18 * 60 + 30, SlotKind.MEAL),
+]
 
 
 def _hhmm(minutes: int) -> str:
@@ -156,13 +180,14 @@ def meal_schedule(
     departure_time: Optional[str],
     days: int,
     return_time: Optional[str] = None,
-) -> list[list[tuple[TimeSlot, str, bool]]]:
-    """일자별 시간대 블록을 (슬롯, 'HH:MM', 식사여부) 리스트로 계산한다.
+    heat_sensitive: bool = False,
+) -> list[list[tuple[TimeSlot, str, SlotKind]]]:
+    """일자별 여행 리듬 블록을 (슬롯, 'HH:MM', 성격) 리스트로 계산한다.
 
-    - Day 1: 출발시각+이동시간으로 도착시각을 구해, 도착 이후 블록만 포함.
-    - 중간 날: 아침·점심·저녁 모두(아침은 식사 없이 관광).
-    - 마지막 날(다박): 체크아웃 10:30 이후 시작, 저녁 제외(귀가시각이 있으면 그 전까지).
-    - 식사는 점심·저녁 항상, 아침은 Day 1에 아침 식사 시간까지 도착했을 때만.
+    - Day 1: 출발+이동으로 도착시각을 구해, 도착 이후 리듬만 포함(도착→카페·명소→저녁).
+    - 중간 날: 아침 산책→점심→카페→오후 명소→저녁(풀 리듬, 활동 ~4개).
+    - 마지막 날(다박): 체크아웃 11시 이후만, 저녁 제외(귀가시각이 있으면 그 전까지).
+    - 더위 취약견: 비식사 활동을 한 개 덜어 하루를 더 여유롭게(가이드: 하루 4~5개, 노견·더위 3개).
     """
     arrival_min = None
     dep = _to_minutes(departure_time)
@@ -170,14 +195,13 @@ def meal_schedule(
         arrival_min = dep + _TRAVEL_MIN.get(transport, 150)
     ret_min = _to_minutes(return_time)
 
-    schedule: list[list[tuple[TimeSlot, str, bool]]] = []
+    schedule: list[list[tuple[TimeSlot, str, SlotKind]]] = []
     for d in range(1, days + 1):
         is_last = days > 1 and d == days
-        day_blocks: list[tuple[TimeSlot, str, bool]] = []
-        for slot in (TimeSlot.MORNING, TimeSlot.LUNCH, TimeSlot.DINNER):
-            clock = _SLOT_CLOCK[slot]
+        blocks: list[tuple[TimeSlot, str, SlotKind]] = []
+        for slot, clock, kind in _DAY_RHYTHM:
             if d == 1 and arrival_min is not None and clock < arrival_min:
-                continue  # 도착 전 블록은 건너뜀
+                continue  # 도착 전은 건너뜀
             if is_last:
                 if clock < _CHECKOUT_MIN:
                     continue  # 체크아웃 전은 건너뜀
@@ -185,12 +209,12 @@ def meal_schedule(
                     continue  # 귀가 후는 건너뜀
                 if ret_min is None and slot is TimeSlot.DINNER:
                     continue  # 귀가시각 미정이면 마지막 날 저녁 제외
-            has_meal = slot in (TimeSlot.LUNCH, TimeSlot.DINNER) or (
-                d == 1 and slot is TimeSlot.MORNING and arrival_min is not None
-                and arrival_min <= _SLOT_CLOCK[TimeSlot.MORNING]
-            )
-            day_blocks.append((slot, _hhmm(clock), has_meal))
-        if not day_blocks:  # 안전망 — 최소 점심 블록은 보장
-            day_blocks.append((TimeSlot.LUNCH, _hhmm(_SLOT_CLOCK[TimeSlot.LUNCH]), True))
-        schedule.append(day_blocks)
+            blocks.append((slot, _hhmm(clock), kind))
+        if heat_sensitive:  # 비식사 활동이 3개 이상이면 마지막 1개를 덜어 여유롭게
+            non_meal = [b for b in blocks if b[2] is not SlotKind.MEAL]
+            if len(non_meal) >= 3:
+                blocks.remove(non_meal[-1])
+        if not blocks:  # 안전망 — 최소 점심은 보장
+            blocks.append((TimeSlot.LUNCH, _hhmm(12 * 60 + 30), SlotKind.MEAL))
+        schedule.append(blocks)
     return schedule

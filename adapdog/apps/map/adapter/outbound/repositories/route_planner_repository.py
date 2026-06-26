@@ -12,7 +12,9 @@ from map.app.dtos.route_planner_dto import (
     AgentCoursePlan,
     ChatMessage,
     ChatTurn,
+    ConversationTurn,
     CourseBrief,
+    CourseBuckets,
     CourseStopRef,
     PlannedStop,
     TrailDto,
@@ -99,6 +101,125 @@ _SYSTEM_INSTRUCTION = (
     '최종 답변은 오직 JSON 한 개로만 출력하세요: '
     '{"ordered_place_ids": [정수...], "narrative": "한국어 한두 문장 설명"}'
 )
+
+
+# ── LLM 주도 대화(converse) ────────────────────────────────────────────────────
+# 가이드(프롬프트 엔지니어링): ROLE/TASK/RULES/EXAMPLES 4계층 + "예시 복사 금지" 명시.
+# 가이드(일정설계): "여행=이동+체류+휴식" 정의를 박아 도착지만 욱여넣는 편향을 차단.
+_CONVERSE_SYSTEM_INSTRUCTION = (
+    "# 역할(ROLE)\n"
+    "당신은 '발자국'의 반려견 동반여행 플래너입니다. 보호자와 자연스럽게 대화하며 "
+    "반려견 특성에 맞는 여행 계획을 함께 설계합니다. 강아지처럼 친근한 말투(~예요/~네요)를 쓰되, "
+    "안전·규정 안내는 단정하지 않고 정확하게 말합니다.\n\n"
+    "# 매 턴 할 일(TASK)\n"
+    "1) 사용자가 뭘 원하는지 파악한다. 2) 추천에 필요한데 빠진 정보를 찾는다. "
+    "3) 빠졌으면 1~2개의 짧은 질문으로 묻는다. 4) 새로 알게 된 정보는 slots에 담는다.\n\n"
+    "# 행동 규칙(RULES)\n"
+    "- 여행은 '이동 + 체류 + 휴식'의 합이다. 도착지만 보지 말고 출발지→이동→체류 전체를 그린다.\n"
+    "- 출발지는 서울로 고정이다. destination은 '사용자가 가고 싶다고 말한 여행지'만 넣는다. "
+    "출발지(서울)를 destination으로 넣지 말고, 사용자가 여행지를 말하지 않았으면 destination은 비운다(추측 금지).\n"
+    "- 정보 수집 우선순위: 목적지 → 이동수단 → 숙박(며칠·연박/이동) → 숙소 위치(예약했는지/추천 원하는지) "
+    "→ 강아지 이동 성향(차 잘 타는지/도보 위주) → 여행 스타일(맛집·카페/문화·역사/자연·힐링/혼합). "
+    "이 중 빠진 것을 자연스럽게 1~2개씩 묻되, 사용자가 한 번에 여러 개 말하면 한꺼번에 받는다.\n"
+    "- 출발 시각은 먼저 묻지 않는다(기본 오전 출발 가정). 사용자가 말하면 그때만 받는다.\n"
+    "- 사용자가 이미 말한 정보는 절대 다시 묻지 않는다. 추측해 채우지 말고 모르면 묻는다.\n"
+    "- 당일치기면 숙소 질문은 건너뛴다. 견종·체질이 추천에 영향을 주면 반영한다.\n"
+    "- 더위/추위 취약견은 날씨 안전 조언을 곁들이고, 노견·예민견·도보 선호는 무리 없는 동선을 권한다.\n"
+    "- 이모지는 강아지 발(🐾) 한 번만, 남발 금지. 칭찬 멘트(좋은 질문이에요 등)는 자제.\n"
+    "- 코스를 직접 나열하지 말 것. 코스 생성은 시스템이 따로 하니, 당신은 정보 수집·대화에 집중한다.\n\n"
+    "# 출력(FORMAT)\n"
+    "반드시 JSON 하나로만 답한다(설명·코드펜스 금지):\n"
+    '{"reply": "사용자에게 보일 한국어 답변(1~3문장)", '
+    '"slots": {"destination": "지역명 또는 생략", "transport": "ktx|bus|car 중 택1 또는 생략", '
+    '"nights": 박수(정수) 또는 생략, "lodging": "overnight|daytrip 또는 생략", '
+    '"lodging_pref": "숙소 취향·위치 또는 생략", "interests": "여행 스타일 또는 생략", '
+    '"pet_mobility": "도보 위주|광역 OK 또는 생략", "departure_time": "HH:MM(사용자가 말한 경우만)"}, '
+    '"suggestions": ["빠른 선택칩 1~3개"]}\n'
+    "- slots에는 '이번 사용자 메시지에서 새로 파악된' 키만 넣는다(없으면 빈 객체).\n"
+    "- '당일치기'면 nights=0, lodging=daytrip. 'N박'이면 nights=N, lodging=overnight.\n"
+    "- '차 힘들어해요/도보로'는 pet_mobility=\"도보 위주\", '차 잘 타요/잘 견뎌요'는 \"광역 OK\".\n\n"
+    "# 참고 예시(EXAMPLES — 절대 그대로 복사 금지, 톤·정보수집 패턴만 참고)\n"
+    "아래 예시의 견종·지역·문장을 가져다 쓰지 말고, 실제 사용자 입력에 맞춰 새로 생성하세요."
+)
+
+# few-shot은 history의 model 턴을 JSON으로 줘서 '형식 + 스타일'만 고정한다(가이드: 2~3개, 복붙 금지).
+# 주의: 예시에 특정 여행지를 넣지 않는다 — 약한 모델이 목적지를 그대로 복사하는 것을 막기 위함.
+_CONVERSE_FEWSHOT = [
+    {"role": "user", "parts": ["강아지랑 여행 가고 싶어요"]},
+    {"role": "model", "parts": [json.dumps({
+        "reply": "좋아요! 어디로 떠나고 싶으세요? 가고 싶은 지역만 알려주시면 딱 맞게 짜드릴게요 🐾",
+        "slots": {}, "suggestions": [],
+    }, ensure_ascii=False)]},
+    {"role": "user", "parts": ["자차로 갈 거예요"]},
+    {"role": "model", "parts": [json.dumps({
+        "reply": "자차면 강아지랑 편하게 다닐 수 있어요. 며칠 정도 묵으실 계획이세요?",
+        "slots": {"transport": "car"}, "suggestions": ["당일치기", "1박 2일", "2박 3일"],
+    }, ensure_ascii=False)]},
+]
+
+# Gemini 생성 설정 — 가이드: temperature 0.3 이하는 예시 복붙 경향, 0.7이 자연스러움·일관성 균형.
+_CHAT_GEN_CONFIG = {"temperature": 0.7, "top_p": 0.95, "top_k": 40}
+
+# 리듬 채움 분류 — 후보를 카페/문화(실내)/야외로 나눈다(카페는 식당 힌트와 분리해 좁게).
+_CULTURE_HINTS = ("박물관", "미술관", "전시", "문화원", "문예", "공연", "극장", "전당", "회관", "과학관", "유산")
+
+
+def _stop_kind(category: str) -> str:
+    """후보 업종 → 'cafe' | 'culture' | 'outdoor'(기본)."""
+    c = category or ""
+    if "카페" in c:
+        return "cafe"
+    if any(h in c for h in _CULTURE_HINTS):
+        return "culture"
+    return "outdoor"
+
+
+def _bucketize(pool: list[PetFriendlyPlace]) -> CourseBuckets:
+    """후보 풀을 업종별 PlannedStop 버킷으로 분류(리듬 채움용)."""
+    cafe: list[PlannedStop] = []
+    culture: list[PlannedStop] = []
+    outdoor: list[PlannedStop] = []
+    for p in pool:
+        kind = _stop_kind(p.category)
+        target = cafe if kind == "cafe" else culture if kind == "culture" else outdoor
+        target.append(_to_stop(p))
+    return CourseBuckets(cafe=cafe, outdoor=outdoor, culture=culture)
+
+
+def _alternatives(
+    places: list[PetFriendlyPlace], pet_size: PetSize, kind: str,
+    near: "Coordinate", exclude: set[str], offset: int, limit: int,
+) -> list[PlannedStop]:
+    """같은 종류(kind) 펫동반 후보를 near 기준 거리순으로 골라 offset 페이지를 반환(스왑용).
+
+    40개 캡 없이 지역 전체에서 kind 일치분만 거리순 정렬 → '더 멀리'는 offset 증가로 지원.
+    """
+    pool = [
+        p for p in places
+        if p.accommodates(pet_size) and not p.is_animal_hospital()
+        and _is_visitable(p.category) and _stop_kind(p.category) == kind
+        and p.name not in exclude
+    ]
+    pool.sort(key=lambda p: near.distance_km_to(p.coordinate))
+    return [_to_stop(p) for p in pool[offset: offset + limit]]
+
+
+def _parse_converse(text: str) -> ConversationTurn:
+    """converse JSON 응답을 ConversationTurn으로 — 관용 파싱(코드펜스·잡텍스트 허용)."""
+    match = re.search(r"\{.*\}", text or "", re.DOTALL)
+    if not match:
+        return ConversationTurn(reply=(text or "").strip()[:300])
+    try:
+        data = json.loads(match.group(0))
+    except json.JSONDecodeError:
+        return ConversationTurn(reply=(text or "").strip()[:300])
+    reply = str(data.get("reply", "")).strip()
+    raw_slots = data.get("slots") or {}
+    allowed = ("destination", "transport", "departure_time", "nights", "lodging",
+               "lodging_pref", "interests", "pet_mobility")
+    slots = {k: raw_slots[k] for k in allowed if raw_slots.get(k) not in (None, "", [])}
+    suggestions = [str(s) for s in (data.get("suggestions") or [])][:3]
+    return ConversationTurn(reply=reply, slots=slots, suggestions=suggestions)
 
 
 _CANDIDATE_CAP = 40  # 에이전트에 넘길 후보 상한(중심점 인근)
@@ -216,6 +337,22 @@ class RuleBasedRoutePlannerAgent(RoutePlannerAgentPort):
         logger.info("[RuleBasedRoutePlannerAgent] recommend | region=%s picks=%d", region, len(picks))
         return reply, [_to_stop(p) for p in picks]
 
+    async def converse(self, messages: list[ChatMessage], pet_profile: dict, known_plan: dict) -> ConversationTurn:
+        """LLM 없는 폴백 — 빈 턴을 돌려 인터랙터의 결정형 질문(_ask)으로 떨어지게 한다."""
+        return ConversationTurn()
+
+    async def find_buckets(self, region: str, pet_size: PetSize, transport: TransportMode) -> CourseBuckets:
+        brief = CourseBrief(region=region, days=1, pet_size=pet_size, pet_breed=None, transport=transport)
+        pool = _destinations(await self.pet_place.find_places(region), brief)
+        return _bucketize(pool)
+
+    async def find_alternatives(
+        self, region: str, pet_size: PetSize, kind: str, near: Coordinate,
+        exclude_names: set[str], offset: int, limit: int,
+    ) -> list[PlannedStop]:
+        places = await self.pet_place.find_places(region)
+        return _alternatives(places, pet_size, kind, near, exclude_names, offset, limit)
+
 
 class GeminiRoutePlannerAgent(RoutePlannerAgentPort):
     """Gemini 함수호출 기반 동선 에이전트.
@@ -287,7 +424,8 @@ class GeminiRoutePlannerAgent(RoutePlannerAgentPort):
                 "동선과 어울리면 설명(narrative)에 둘레길 1곳을 자연스럽게 녹여도 좋습니다.\n"
             )
         model = self._genai.GenerativeModel(
-            self.model_name, system_instruction=_SYSTEM_INSTRUCTION
+            self.model_name, system_instruction=_SYSTEM_INSTRUCTION,
+            generation_config=_CHAT_GEN_CONFIG,
         )
         transport_hint = _TRANSPORT_HINT.get(brief.transport, "")
         prompt = (
@@ -424,6 +562,50 @@ class GeminiRoutePlannerAgent(RoutePlannerAgentPort):
         )
         resp = model.generate_content(prompt)
         return _parse_recommend(resp.text, valid_ids={p.id for p in candidates})
+
+    async def converse(self, messages: list[ChatMessage], pet_profile: dict, known_plan: dict) -> ConversationTurn:
+        """LLM 주도 대화 — 구조화 출력(JSON)으로 자연 답변 + 슬롯 추출을 한 번에 받는다.
+
+        실패하면 빈 턴을 돌려 인터랙터의 결정형 질문으로 안전하게 떨어진다(서비스 유지).
+        """
+        try:
+            return await asyncio.to_thread(self._run_converse, messages, pet_profile, known_plan)
+        except Exception as e:  # noqa: BLE001 — Gemini 장애 시 결정형 폴백
+            logger.warning("[GeminiRoutePlannerAgent] converse 실패 → 결정형 폴백 | %s", e)
+            return ConversationTurn()
+
+    def _run_converse(self, messages: list[ChatMessage], pet_profile: dict, known_plan: dict) -> ConversationTurn:
+        profile = {k: v for k, v in (pet_profile or {}).items() if v}
+        known = {k: v for k, v in (known_plan or {}).items() if v not in (None, "", "unset", 0)}
+        transcript = "\n".join(
+            f"{'사용자' if m.role == 'user' else '어시스턴트'}: {m.content}" for m in messages
+        )
+        prompt = (
+            f"[반려견 프로필]\n{json.dumps(profile, ensure_ascii=False)}\n\n"
+            f"[지금까지 파악된 정보 — 이미 말한 것, 다시 묻지 마세요]\n{json.dumps(known, ensure_ascii=False)}\n\n"
+            f"[대화 기록]\n{transcript}\n\n"
+            "마지막 사용자 메시지에 답하고, 새로 파악한 정보만 slots에 담아 JSON으로만 답하세요."
+        )
+        model = self._genai.GenerativeModel(
+            self.model_name,
+            system_instruction=_CONVERSE_SYSTEM_INSTRUCTION,
+            generation_config={**_CHAT_GEN_CONFIG, "response_mime_type": "application/json"},
+        )
+        chat = model.start_chat(history=list(_CONVERSE_FEWSHOT))
+        resp = chat.send_message(prompt)
+        return _parse_converse(resp.text)
+
+    async def find_buckets(self, region: str, pet_size: PetSize, transport: TransportMode) -> CourseBuckets:
+        brief = CourseBrief(region=region, days=1, pet_size=pet_size, pet_breed=None, transport=transport)
+        pool = _destinations(await self.pet_place.find_places(region), brief)
+        return _bucketize(pool)
+
+    async def find_alternatives(
+        self, region: str, pet_size: PetSize, kind: str, near: Coordinate,
+        exclude_names: set[str], offset: int, limit: int,
+    ) -> list[PlannedStop]:
+        places = await self.pet_place.find_places(region)
+        return _alternatives(places, pet_size, kind, near, exclude_names, offset, limit)
 
 
 def _rule_recommend(
@@ -672,9 +854,10 @@ def _pick_spread_stopovers(pet_size: PetSize, k: int = 3) -> list[PetFriendlyPla
 
 
 def _seed_seoul_jeonju_stopovers() -> list[PetFriendlyPlace]:
-    """CSV 코리도어가 비었을 때만 쓰는 최소 폴백(실데이터 우선)."""
+    """CSV 코리도어가 비었을 때 폴백 + 휴게소 보강용 시드(실데이터 우선, 휴게소는 항상 시드에서)."""
     seeds = [
         (91001, "수원 광교호수공원", 37.2856, 127.0648, "여행지(공원)"),
+        (91002, "정안알밤휴게소(천안논산고속도로)", 36.4561, 127.1289, "휴게소"),
         (91003, "여산휴게소(호남고속도로)", 36.0625, 127.1167, "휴게소"),
     ]
     return [
@@ -684,14 +867,23 @@ def _seed_seoul_jeonju_stopovers() -> list[PetFriendlyPlace]:
     ]
 
 
+def _has_rest_stop(stops: list[PetFriendlyPlace]) -> bool:
+    return any("휴게" in (p.category or "") or "휴게" in p.name for p in stops)
+
+
 class RouteLegsRepository(RouteLegsPort):
-    """자차 경유지 — 서울→전주 경로 코리도어 위 실제 펫동반 문화시설(CSV). 시드는 폴백."""
+    """자차 경유지 — 서울→전주 경로 코리도어 위 실제 펫동반 문화시설(CSV) + 휴게소 1곳 보장."""
 
     async def stopovers(self, origin: str, destination: str, pet_size: PetSize) -> list[PetFriendlyPlace]:
         if "서울" in origin and "전주" in destination:
             stops = await asyncio.to_thread(_pick_spread_stopovers, pet_size)
             if not stops:  # CSV 부재/0건 → 시드 폴백
                 stops = [p for p in _seed_seoul_jeonju_stopovers() if p.accommodates(pet_size)]
+            elif not _has_rest_stop(stops):  # 가는 길 휴게소(화장실·급수·산책)를 진행 중간에 끼운다
+                rest = next((p for p in _seed_seoul_jeonju_stopovers()
+                             if "휴게" in p.name and p.accommodates(pet_size)), None)
+                if rest:
+                    stops.insert(min(1, len(stops)), rest)
         else:
             stops = []
         logger.info("[RouteLegsRepository] stopovers | %s→%s n=%d", origin, destination, len(stops))

@@ -8,8 +8,13 @@ from map.adapter.inbound.api.schemas.route_planner_schema import (
     RouteOptimizeSchema,
     RoutePlannerSchema,
     RouteRecommendSchema,
+    SwapStopSchema,
 )
-from map.app.dtos.route_planner_dto import RouteChatResponse, RoutePlanResponse
+from map.app.dtos.route_planner_dto import (
+    RouteChatResponse,
+    RoutePlanResponse,
+    SwapAlternativesResponse,
+)
 from map.app.ports.input.route_planner_use_case import RoutePlannerUseCase
 from map.dependencies.route_planner_provider import get_route_planner_use_case
 
@@ -49,6 +54,15 @@ async def recommend_route(
 ) -> RouteChatResponse:
     """코스 인지형 대화 추천 — 현재 코스를 분석해 대안을 '○○ 추가' 칩으로 제안(코스 재생성 X)."""
     return await use_case.recommend(schema)
+
+
+@route_planner_router.post("/swap")
+async def swap_stop(
+    schema: SwapStopSchema,
+    use_case: RoutePlannerUseCase = Depends(get_route_planner_use_case),
+) -> SwapAlternativesResponse:
+    """정류장 스왑 — 특정 자리(같은 종류)의 다른 펫동반 후보를 거리순으로 추천(더 멀리=offset)."""
+    return await use_case.swap(schema)
 
 
 @route_planner_router.get("/myself", tags=["자기소개 (연동 검증)"])

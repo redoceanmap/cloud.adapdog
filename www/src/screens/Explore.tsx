@@ -32,9 +32,8 @@ interface Card {
 
 export interface ExploreAddStop { name: string; category: string; latitude: number; longitude: number }
 
-export function Explore({ onText, live, hasCourse, courseNames, onAdd, onRemove }: {
+export function Explore({ onText, hasCourse, courseNames, onAdd, onRemove }: {
   onText: (t: string) => void;
-  live: boolean;
   hasCourse: boolean;
   courseNames: string[];
   onAdd: (p: ExploreAddStop) => void;
@@ -89,7 +88,7 @@ export function Explore({ onText, live, hasCourse, courseNames, onAdd, onRemove 
         ) : (
           <div style={css('display:grid; grid-template-columns:repeat(auto-fill,minmax(232px,1fr)); gap:16px; margin-top:18px;')}>
             {shown.map((e, i) => {
-              const editable = live && hasCourse && e.addable && e.lat != null && e.lng != null;
+              const editable = hasCourse && e.addable && e.lat != null && e.lng != null;
               const inCourse = editable && courseNames.includes(e.name);
               const nudge = () => onText(e.group === '축제' ? '축제 넣어줘' : e.group === '둘레길' ? '산책 추가' : e.group === '맛집' ? '맛집 추가' : e.group === '관광' ? '한옥마을 추가' : e.group === '숙박' ? '1박' : '박물관 추가');
               return (
