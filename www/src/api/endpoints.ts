@@ -1,6 +1,7 @@
 // 데모 핵심 경로 엔드포인트 래퍼.
 import { apiGet, apiPost } from './client';
 import type {
+  AnimalHospitalList,
   AudioGuide,
   BreedPrediction,
   BreedPreview,
@@ -16,6 +17,7 @@ import type {
   PetPlace,
   PetStamp,
   PolicyCardResult,
+  NearbyHospitalRequest,
   Reservation,
   Review,
   RouteChatResponse,
@@ -49,6 +51,22 @@ export const chatRoute = (
 ) =>
   apiPost<RouteChatResponse>('/map/route-planner/chat', {
     messages,
+    plan: plan ?? null,
+    pet_size: petSize,
+    pet_breed: petBreed ?? null,
+    pet_traits: petTraits ?? null,
+  });
+
+/** 코스 인지형 대화 추천 — 현재 코스를 분석해 대안을 '○○ 추가' 칩으로 제안(코스 재생성 X). */
+export const recommendRoute = (
+  messages: ChatMessage[],
+  currentCourse: { name: string; category: string; latitude: number; longitude: number }[],
+  petSize = 'medium', petBreed?: string, petTraits?: string,
+  plan?: TripPlan | null,
+) =>
+  apiPost<RouteChatResponse>('/map/route-planner/recommend', {
+    messages,
+    current_course: currentCourse,
     plan: plan ?? null,
     pet_size: petSize,
     pet_breed: petBreed ?? null,
@@ -121,6 +139,10 @@ export const getSymptomChecks = (petId: number) =>
 /** D 안전·위험 알리미 — 지역 날씨 위험도 + 최근접 동물병원. */
 export const checkSafety = (req: SafetyCheckRequest) =>
   apiPost<SafetyAlertResult>('/map/safety-alert/check', req);
+
+/** 응급 — 현재 위치 기준 가까운(영업 중) 동물병원 거리순(행안부 표준데이터). */
+export const getNearbyHospitals = (req: NearbyHospitalRequest) =>
+  apiPost<AnimalHospitalList>('/map/animal-hospital/nearby', req);
 
 // ── 코스 저장(C) ──
 /** C 저장된 추천 코스. */

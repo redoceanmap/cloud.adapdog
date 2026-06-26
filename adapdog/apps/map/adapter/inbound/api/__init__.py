@@ -20,6 +20,7 @@ def __getattr__(name: str):
 def _build_map_router():
     from fastapi import APIRouter
 
+    from map.adapter.inbound.api.v1.animal_hospital_router import animal_hospital_router
     from map.adapter.inbound.api.v1.audio_guide_router import audio_guide_router
     from map.adapter.inbound.api.v1.cohort_recommendation_router import cohort_recommendation_router
     from map.adapter.inbound.api.v1.entry_verdict_router import entry_verdict_router
@@ -48,4 +49,5 @@ def _build_map_router():
     router.include_router(stamp_spot_router)
     router.include_router(visited_place_router)
     router.include_router(review_router)
+    router.include_router(animal_hospital_router)
     return router

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from enum import Enum
 from typing import Optional
 
@@ -52,18 +53,28 @@ class LodgingOption(str, Enum):
     UNSET = "unset"
 
     @classmethod
-    def from_raw(cls, raw: Optional[str]) -> "LodgingOption":
-        """대화 문장에서 숙박 여부를 추출. 못 찾으면 UNSET(다시 물어봄)."""
+    def nights_from_raw(cls, raw: Optional[str]) -> Optional[int]:
+        """대화 문장에서 묵는 박 수를 추출. 당일치기=0, "N박"=N, 일반 숙박 표현=1,
+        결정 못 하면 None(다시 물어봄). '박'은 '박물관'과 충돌하므로 숫자+박만 본다."""
         if not raw:
-            return cls.UNSET
+            return None
         text = raw.strip().lower()
         if any(k in text for k in ("당일", "당일치기", "안 자", "안자", "데이트립", "하루만")):
-            return cls.DAYTRIP
-        # '박'은 '박물관'과 충돌하므로 '1박'·'박2일' 등 구체 토큰만 본다.
-        if any(k in text for k in ("1박", "2박", "박2일", "박3일", "숙박", "자고", "잘래",
-                                   "잘 거", "잘거", "묵", "하룻밤", "오버나잇")):
-            return cls.OVERNIGHT
-        return cls.UNSET
+            return 0
+        m = re.search(r"(\d+)\s*박", text)
+        if m:
+            return max(0, int(m.group(1)))
+        if any(k in text for k in ("숙박", "자고", "잘래", "잘 거", "잘거", "묵", "하룻밤", "오버나잇")):
+            return 1
+        return None
+
+    @classmethod
+    def from_raw(cls, raw: Optional[str]) -> "LodgingOption":
+        """대화 문장에서 숙박 여부를 추출. 못 찾으면 UNSET(다시 물어봄)."""
+        nights = cls.nights_from_raw(raw)
+        if nights is None:
+            return cls.UNSET
+        return cls.DAYTRIP if nights == 0 else cls.OVERNIGHT
 
     @property
     def label(self) -> str:

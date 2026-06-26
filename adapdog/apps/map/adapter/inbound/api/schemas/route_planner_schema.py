@@ -58,6 +58,7 @@ class TripPlanSchema(BaseModel):
     destination: Optional[str] = Field(None, description="목적지(예: 전주). 미정이면 null")
     transport: str = Field("unset", description="이동수단 ktx / bus / car / unset")
     lodging: str = Field("unset", description="숙박 overnight / daytrip / unset")
+    nights: int = Field(0, ge=0, le=14, description="묵는 박 수(0=당일치기)")
 
 
 class RouteChatSchema(BaseModel):
@@ -73,6 +74,37 @@ class RouteChatSchema(BaseModel):
         "json_schema_extra": {
             "example": {
                 "messages": [{"role": "user", "content": "체리랑 전주 한옥마을 반나절 코스 짜줘"}],
+                "pet_size": "large",
+                "pet_breed": "골든 리트리버",
+            }
+        }
+    }
+
+
+class CurrentStopSchema(BaseModel):
+    """추천 분석용 현재 코스의 한 정류장(이름·카테고리만 있으면 됨)."""
+
+    name: str
+    category: str = ""
+    latitude: float = 0.0
+    longitude: float = 0.0
+
+
+class RouteRecommendSchema(BaseModel):
+    """코스 인지형 대화 추천 요청 — 현재 코스를 분석해 대안을 칩으로 제안(코스 재생성 X)."""
+
+    messages: list[ChatMessageSchema] = Field(..., description="대화 기록(시간순). 마지막이 최신 사용자 메시지")
+    current_course: list[CurrentStopSchema] = Field(default_factory=list, description="사용자가 편집 중인 현재 코스")
+    plan: Optional[TripPlanSchema] = Field(None, description="누적 상태(지역·이동수단). 코스 echo·지역 추정용")
+    pet_size: str = Field("medium", description="반려견 크기 (small / medium / large)")
+    pet_breed: Optional[str] = Field(None, description="견종 (선택)")
+    pet_traits: Optional[str] = Field(None, description="반려견 특징 요약(활동성향·사회성·체질)")
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "messages": [{"role": "user", "content": "박물관이 너무 많은데 카페나 공원 추천해줘"}],
+                "current_course": [{"name": "전주전통술박물관", "category": "박물관"}],
                 "pet_size": "large",
                 "pet_breed": "골든 리트리버",
             }

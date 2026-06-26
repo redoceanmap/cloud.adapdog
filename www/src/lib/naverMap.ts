@@ -26,6 +26,25 @@ export function categoryStyle(category?: string): { label: string; color: string
   return DEFAULT_PIN;
 }
 
+// ── 업종별 핀 아이콘(Material Symbol) — 숙소/음식점/카페/공원/박물관을 한눈에 구별. ──
+const CATEGORY_ICONS: { match: string[]; icon: string }[] = [
+  { match: ['카페'], icon: 'local_cafe' },
+  { match: ['식당', '음식', '맛집', '레스토랑'], icon: 'restaurant' },
+  { match: ['미술', '박물', '전시', '갤러리', '문화', '문예', '유산'], icon: 'museum' },
+  { match: ['숙박', '펜션', '호텔', '스테이', '게스트', '민박', '리조트'], icon: 'hotel' },
+  { match: ['공원', '여행', '관광', '명소', '둘레', '호수', '정원', '수목', '산림', '숲'], icon: 'park' },
+  { match: ['용품', '마트', '쇼핑', '펫샵'], icon: 'shopping_bag' },
+  { match: ['미용', '그루밍'], icon: 'content_cut' },
+  { match: ['병원', '동물병원'], icon: 'local_hospital' },
+];
+
+/** 카테고리 문자열 → 핀 아이콘 이름. 없으면 발바닥(pets). */
+export function categoryIcon(category?: string): string {
+  const c = category || '';
+  for (const cat of CATEGORY_ICONS) if (cat.match.some((m) => c.includes(m))) return cat.icon;
+  return 'pets';
+}
+
 let loadPromise: Promise<any> | null = null;
 
 function injectScript(keyType: string): Promise<any> {

@@ -7,6 +7,7 @@ from map.adapter.inbound.api.schemas.route_planner_schema import (
     RouteChatSchema,
     RouteOptimizeSchema,
     RoutePlannerSchema,
+    RouteRecommendSchema,
 )
 from map.app.dtos.route_planner_dto import RouteChatResponse, RoutePlanResponse
 from map.app.ports.input.route_planner_use_case import RoutePlannerUseCase
@@ -39,6 +40,15 @@ async def chat_route(
 ) -> RouteChatResponse:
     """대화형 AI 동선 플래너 — 대화 기록을 받아 답변하고, 코스 확정 시 함께 반환."""
     return await use_case.chat(schema)
+
+
+@route_planner_router.post("/recommend")
+async def recommend_route(
+    schema: RouteRecommendSchema,
+    use_case: RoutePlannerUseCase = Depends(get_route_planner_use_case),
+) -> RouteChatResponse:
+    """코스 인지형 대화 추천 — 현재 코스를 분석해 대안을 '○○ 추가' 칩으로 제안(코스 재생성 X)."""
+    return await use_case.recommend(schema)
 
 
 @route_planner_router.get("/myself", tags=["자기소개 (연동 검증)"])

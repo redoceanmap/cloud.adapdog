@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { css } from './lib/css';
-import { PLACES, transportLabel, transportSub, type Place } from './lib/places';
-import { usePlannerApp } from './hooks/usePlannerApp';
+import { PLACES, transportLabel, transportSub, buildJourney, journeyOrigin, journeyTransit, KTX_CORRIDOR, type Place, type TransportCode, type TripPlan } from './lib/places';
+import { usePlannerApp, type CourseAddStop } from './hooks/usePlannerApp';
 import { Emergency } from './components/Emergency';
 import { Explore } from './screens/Explore';
-import { getReviews, checkEntry, getVisitedPlaces, getCareReminders } from './api/endpoints';
-import type { Review, RoutePlanResponse, EntryVerdictResult, VisitedPlace, CareReminder } from './api/types';
+import { NaverMap } from './components/NaverMap';
+import { fetchDrivingRoute } from './lib/routing';
+import { getReviews, checkEntry, getVisitedPlaces, checkSafety } from './api/endpoints';
+import type { Review, RoutePlanResponse, EntryVerdictResult, VisitedPlace, SafetyAlertResult } from './api/types';
 
 const GRADS = [
   'linear-gradient(135deg,#F6D9A6,#E7B776)', 'linear-gradient(135deg,#C9B6E4,#A98FD0)',
@@ -36,6 +38,56 @@ function mapCourse(course: RoutePlanResponse | null): Place[] {
   } as Place & { latitude: number; longitude: number }));
 }
 
+// 시내 코스 핀이 ~40m 이내로 겹치면 번호 핀이 포개져 안 보인다.
+// 이미 찍은 핀과 너무 가까운 핀을 인덱스 기반 작은 원형으로 미세 분산(좌표 약 35~45m).
+function declutterPins<T extends { lat: number; lng: number }>(pts: T[]): T[] {
+  const MIN = 0.0004; // ≈ 40m. 이보다 가까우면 겹침으로 간주.
+  const placed: { lat: number; lng: number }[] = [];
+  return pts.map((p) => {
+    let { lat, lng } = p;
+    let dup = 0;
+    while (placed.some((q) => Math.abs(q.lat - lat) < MIN && Math.abs(q.lng - lng) < MIN)) {
+      dup += 1;
+      const ang = dup * 2.39996; // 황금각 → 겹친 핀들이 골고루 퍼짐
+      lat = p.lat + Math.sin(ang) * MIN * (1 + dup * 0.15);
+      lng = p.lng + Math.cos(ang) * MIN * (1 + dup * 0.15);
+    }
+    placed.push({ lat, lng });
+    return { ...p, lat, lng };
+  });
+}
+
+// 두 좌표 간 거리(km) — 직접 추가/제외 후 이전 정류장 거리 재계산용.
+function haversineKm(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }): number {
+  const R = 6371, toRad = (d: number) => (d * Math.PI) / 180;
+  const dLa = toRad(b.latitude - a.latitude), dLo = toRad(b.longitude - a.longitude);
+  const s = Math.sin(dLa / 2) ** 2 + Math.cos(toRad(a.latitude)) * Math.cos(toRad(b.latitude)) * Math.sin(dLo / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+// 백엔드 _stop_reason 미러 — 둘러보기에서 직접 추가한 곳의 추천 이유(업종·체리 특징).
+function localStopReason(category: string): string {
+  const c = category || '';
+  if (/박물관|미술관|전시|유산원|문화원|과학관/.test(c)) return '실내 전시가 있어 더위에 약한 체리가 시원하게 둘러보기 좋아요(야외 마당 동반, 실내 전시관은 제한).';
+  if (/공원|호수|정원|수목|산책|둘레|천|강/.test(c)) return '평지 야외라 대형견 체리가 목줄 산책하기 좋아요. 그늘·급수를 확인하세요.';
+  if (/문예회관|공연|극장|전당|회관/.test(c)) return '야외 행사·마당은 동반 가능하고 실내 공연장은 제한돼요.';
+  if (/카페|식당|맛집|음식/.test(c)) return '동반석이 있어 체리와 함께 쉬어가기 좋아요(테라스·목줄 확인).';
+  if (/여행지|관광|명소|유적|사적/.test(c)) return '야외 명소라 대형견 체리와 목줄 산책으로 둘러보기 좋아요.';
+  return '반려동물 동반 가능으로 등록된 곳이라 체리와 함께 입장할 수 있어요.';
+}
+
+// 실데이터 코스에 사용자 편집(제외 이름·추가 장소)을 얹어 유효 코스를 만든다. 순서·이전거리 재계산.
+function withCourseEdits(course: RoutePlanResponse | null, removed: string[], added: CourseAddStop[]): RoutePlanResponse | null {
+  if (!course) return course;
+  const kept = course.stops.filter((s) => !removed.includes(s.name));
+  const extra = added
+    .filter((p) => !removed.includes(p.name) && !kept.some((s) => s.name === p.name))
+    .map((p) => ({ order: 0, name: p.name, category: p.category, latitude: p.latitude, longitude: p.longitude, distance_from_prev_km: 0, similarity: 0, reason: localStopReason(p.category), source: '한국문화정보원 펫동반 문화시설' }));
+  const merged = [...kept, ...extra];
+  const stops = merged.map((s, i) => ({ ...s, order: i + 1, distance_from_prev_km: i === 0 ? 0 : Math.round(haversineKm(merged[i - 1], s) * 100) / 100 }));
+  return { ...course, stops, stop_count: stops.length };
+}
+
 const PAW = (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--accent)">
     <ellipse cx="12" cy="16" rx="5.5" ry="4.5" />
@@ -51,18 +103,88 @@ const DARK: Record<string, string> = { bg: '#08080A', panel: '#101014', 'panel-2
 
 export default function App() {
   const app = usePlannerApp();
-  const { dark, isMobile, mobilePanel, setMobilePanel, view, go, detailTab, setDetailTab, focusPlace, setFocus, input, setInput, listening, messages, suggestions, plan, emg, setEmg, emgStep, setEmgStep, handleUserText, startVoice, resetChat, setDark, dataMode, toggleMode, liveCourse, livePlan, liveLoading } = app;
+  const { dark, isMobile, mobilePanel, setMobilePanel, view, go, detailTab, setDetailTab, focusPlace, setFocus, input, setInput, listening, messages, suggestions, plan, emg, setEmg, emgStep, setEmgStep, handleUserText, startVoice, resetChat, setDark, dataMode, toggleMode, liveCourse, livePlan, liveLoading, voiceEnabled, toggleVoice, courseRemoved, courseAdded, addCourseStop, removeCourseStop, pushAi } = app;
 
   const live = dataMode === 'live';
 
+  // 전역 채팅 바(플래너 외 탭)에서 보여줄 최근 AI 응답 한 줄.
+  const lastAiMsg = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) if (messages[i].role === 'ai') return messages[i].text;
+    return '';
+  }, [messages]);
+
+  // 실데이터 코스 + 사용자 편집(둘러보기/여정 추가·제외) = 유효 코스. 이후 지도/패널/여정이 공유.
+  const effectiveCourse = useMemo(() => withCourseEdits(liveCourse, courseRemoved, courseAdded), [liveCourse, courseRemoved, courseAdded]);
+  // 원본 코스 기준 각 정류장의 고정 일자(이름→Day). 편집(제외)해도 다른 날이 안 끌려오도록 고정.
+  const dayByName = useMemo(() => {
+    const m: Record<string, number> = {};
+    const orig = liveCourse?.stops ?? [];
+    const daysCount = (live ? (livePlan?.nights ?? 0) : 0) + 1;
+    const per = Math.max(1, Math.ceil(orig.length / daysCount));
+    orig.forEach((s, i) => { m[s.name] = Math.min(daysCount, Math.floor(i / per) + 1); });
+    return m;
+  }, [liveCourse, live, livePlan]);
   // 실데이터 모드: 백엔드 course → Place 형태 매핑(지도/패널 공용, lat/lng 정규화)
-  const liveItems = useMemo(() => mapCourse(liveCourse), [liveCourse]);
+  const liveItems = useMemo(() => mapCourse(effectiveCourse), [effectiveCourse]);
 
   const items = live ? liveItems : plan.itinerary.map((k) => PLACES[k]).filter(Boolean);
-  const c = live ? (liveItems.find((p) => p.key === focusPlace) ?? liveItems[0] ?? PLACES.cafe) : PLACES[focusPlace] || PLACES.cafe;
+  const c = live ? (liveItems.find((p) => p.key === focusPlace) ?? liveItems[0] ?? PLACES.village) : PLACES[focusPlace] || PLACES.village;
   const tCode = live ? ({ ktx: 'KTX', bus: 'BUS', car: 'CAR', unset: null } as const)[livePlan?.transport ?? 'unset'] : plan.transport;
-  const courseCount = live ? (liveCourse?.stop_count ?? items.length) : items.length;
+  const courseCount = live ? (effectiveCourse?.stop_count ?? items.length) : items.length;
   const ready = live ? livePlan?.stage === 'ready' : plan.status === 'READY';
+
+  // 지도 2단계: (1) 여정 개요 = 서울 출발 → 경유지 → 전주 도착(단일 핀, 깔끔한 광역),
+  // (2) 도착 핀 클릭 시 로컬 = 전주 코스 정류장(번호 핀). 전국 줌에서 핀이 뭉치는 걸 방지.
+  const [localMap, setLocalMap] = useState(false);
+  useEffect(() => { setLocalMap(false); }, [live, courseCount]); // 모드/코스 바뀌면 개요로 복귀
+
+  const journeyPoints = useMemo(() => {
+    // 로컬: 전주 도착 지점(KTX 전주역 / 고속터미널)에서 시작 → 코스 정류장(번호 핀).
+    // 실제로 내리는 곳에서부터 동선이 이어지도록 도착 앵커를 맨 앞에 둔다(자차는 역이 없어 코스만).
+    if (localMap) {
+      const arr = tCode === 'CAR' ? [] : journeyTransit(tCode).map((t) => ({
+        lat: t.lat, lng: t.lng, name: t.name, role: 'transit' as const, caption: `${t.name} 도착`, icon: t.icon,
+      }));
+      const stops = declutterPins(items.map((it, i) => ({ lat: it.latitude, lng: it.longitude, name: it.name, category: it.cat, order: i + 1 })));
+      return [...arr, ...stops];
+    }
+    // 여정 개요 — 데모/라이브 모두 교통수단별 출발(역/터미널/내위치)→이동(경유지 or 도착역)→전주 도착.
+    if (live) {
+      if (!liveItems.length) return [];
+      // 자차 = 코리도어 경유지(실데이터), KTX/버스 = 도착역/터미널, 그 외 = 없음.
+      const mid = tCode === 'CAR'
+        ? (effectiveCourse?.stopovers ?? []).map((s) => ({ lat: s.latitude, lng: s.longitude, name: s.name, role: 'stopover' as const, caption: s.name }))
+        : journeyTransit(tCode);
+      const cLat = liveItems.reduce((a, p) => a + p.latitude, 0) / liveItems.length;
+      const cLng = liveItems.reduce((a, p) => a + p.longitude, 0) / liveItems.length;
+      return [
+        journeyOrigin(tCode),
+        ...mid,
+        { lat: cLat, lng: cLng, name: '전주', role: 'dest' as const, caption: `전주 도착 · ${courseCount}곳` },
+      ];
+    }
+    return buildJourney(plan, items.length);
+  }, [localMap, live, liveItems, effectiveCourse, plan, items, courseCount, tCode]);
+
+  // 실 경로선 — 어떤 구간이든 "땅으로 이동"하는 모습이 되도록 직선 대각선(=비행 느낌)을 없앤다.
+  //  · 시내 코스 드릴다운: OSRM 도로 라우팅(실제 도로를 따라 정류장 연결).
+  //  · 서울→전주 자차/버스 광역: OSRM 도로 라우팅(고속도로/국도).
+  //  · 서울→전주 KTX: 철도라 도로 라우팅 대상이 아니므로 실제 정차역 코리도어로 경로를 그린다.
+  // 실패 시 직선 폴백.
+  const [routePath, setRoutePath] = useState<{ lat: number; lng: number }[] | null>(null);
+  useEffect(() => {
+    const pts = journeyPoints.filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng)).map((p) => ({ lat: p.lat, lng: p.lng }));
+    if (pts.length < 2) { setRoutePath(null); return; }
+    // 광역 KTX 구간 → 실제 정차역 코리도어(철도 근사). 도로 라우팅 호출 안 함.
+    if (!localMap && tCode === 'KTX') { setRoutePath(KTX_CORRIDOR); return; }
+    // 시내 코스 + 자차/버스 광역 → OSRM 도로 라우팅.
+    const usesRoad = localMap || tCode === 'CAR' || tCode === 'BUS';
+    if (!usesRoad) { setRoutePath(null); return; }
+    let on = true;
+    setRoutePath(null);
+    fetchDrivingRoute(pts).then((r) => on && setRoutePath(r)).catch(() => on && setRoutePath(null));
+    return () => { on = false; };
+  }, [JSON.stringify(journeyPoints), tCode, localMap]);
 
   // 시설 후기 — 실데이터(/map/review, 장소명 매칭)
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -124,6 +246,9 @@ export default function App() {
             {navItem('dog', '내 강아지')}
           </div>
           <div style={css('margin-left:auto; display:flex; align-items:center; gap:8px;')}>
+            <div onClick={toggleVoice} title={voiceEnabled ? '음성 안내 끄기' : '음성 안내 켜기'} style={css(`width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:${voiceEnabled ? 'var(--accent)' : 'var(--muted)'}; background:${voiceEnabled ? 'var(--accent-soft)' : 'var(--chip)'};`)}>
+              <span className="msr" style={css('font-size:20px;')}>{voiceEnabled ? 'volume_up' : 'volume_off'}</span>
+            </div>
             <div onClick={() => setDark(!dark)} title="테마" style={css('width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--muted); background:var(--chip);')}>
               <span className="msr" style={css('font-size:20px;')}>{dark ? 'light_mode' : 'dark_mode'}</span>
             </div>
@@ -178,7 +303,7 @@ export default function App() {
                               <span className="msf" style={css('font-size:18px; color:#fff;')}>map</span>
                             </div>
                             <div style={css('min-width:0;')}>
-                              <div style={css('font:700 13px Pretendard;')}>{live ? `${liveCourse?.region ?? '전주'} 펫 동반 코스` : '전주 1박 펫 동반 코스'}</div>
+                              <div style={css('font:700 13px Pretendard;')}>{live ? `${effectiveCourse?.region ?? '전주'} 펫 동반 코스` : '전주 1박 펫 동반 코스'}</div>
                               <div style={css('font:500 11px Pretendard; color:var(--muted); margin-top:1px;')}>{courseCount}곳 · 입장 가능 · 출처 확인됨</div>
                             </div>
                             <span className="msr" style={css('font-size:18px; color:var(--muted); margin-left:4px;')}>chevron_right</span>
@@ -225,7 +350,11 @@ export default function App() {
               {/* CENTER · DETAIL */}
               <div className="sc" style={css('display:var(--detail-d); flex:var(--detail-flex); width:var(--detail-w); min-width:0; flex-direction:column; overflow-y:auto; background:var(--panel-2); border-right:1px solid var(--border);')}>
                 {live ? (
-                  <LiveDetail stop={c} hasCourse={liveItems.length > 0} reviews={reviews} onAdd={() => handleUserText('추가 ' + c.name)} onClose={() => isMobile && setMobilePanel('chat')} onItin={() => go('itinerary')} />
+                  <LiveDetail stop={c} hasCourse={liveItems.length > 0} inCourse={!!effectiveCourse?.stops.some((s) => s.name === c.name)} reviews={reviews} onAdd={() => {
+                    const cc = c as Place & { latitude: number; longitude: number };
+                    if (effectiveCourse?.stops.some((s) => s.name === cc.name)) { removeCourseStop(cc.name); pushAi(`${cc.name}을(를) 코스에서 뺐어요.`); }
+                    else { addCourseStop({ name: cc.name, category: cc.cat, latitude: cc.latitude, longitude: cc.longitude }); pushAi(`${cc.name}을(를) 코스에 담았어요.`); }
+                  }} onClose={() => isMobile && setMobilePanel('chat')} onItin={() => go('itinerary')} />
                 ) : (
                   <>
                 <div style={css('display:flex; align-items:center; gap:10px; padding:16px 18px 12px; flex:none;')}>
@@ -373,55 +502,91 @@ export default function App() {
                 )}
               </div>
 
-              {/* RIGHT · MAP */}
+              {/* RIGHT · MAP — 실 네이버 지도(키 도메인 제한/로드 실패 시 아래 SVG로 폴백) */}
               <div style={css('display:var(--map-d); flex:var(--map-flex); width:var(--map-w); min-width:0; position:relative; background:var(--map); overflow:hidden;')}>
-                <svg viewBox="0 0 400 700" preserveAspectRatio="xMidYMid slice" style={css('position:absolute; inset:0; width:100%; height:100%;')}>
-                  <path d="M-20 140 H420 M-20 360 H420 M-20 540 H420 M90 -20 V720 M250 -20 V720 M340 -20 V720" stroke="var(--map-road)" strokeWidth="10" fill="none" />
-                  <path d="M-20 250 C 120 280, 200 420, 420 460" stroke="var(--map-road)" strokeWidth="14" fill="none" opacity=".7" />
-                  <path d="M40 60 L 360 640" stroke="var(--map-road)" strokeWidth="3" strokeDasharray="2 10" fill="none" />
-                </svg>
-                <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={css('position:absolute; inset:0; width:100%; height:100%;')}>
-                  <polyline points={items.map((it) => it.mx + ',' + it.my).join(' ')} fill="none" stroke="var(--accent)" strokeWidth=".6" strokeLinecap="round" strokeDasharray="1 2.4" opacity=".85" />
-                </svg>
-                {items.map((it) => {
-                  const focused = it.key === focusPlace;
-                  return (
-                    <div key={it.key} onClick={() => setFocus(it.key)} style={css(`position:absolute; left:${it.mx}%; top:${it.my}%; transform:translate(-50%,-100%); cursor:pointer; z-index:${focused ? 5 : 2};`)}>
-                      {focused ? (
-                        <div style={css('position:relative; width:54px; height:54px; border-radius:50% 50% 50% 6px; background:var(--accent); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(59,91,254,.45); border:3px solid var(--panel);')}>
-                          <span className="msf" style={css('font-size:24px; color:#fff;')}>{it.icon}</span>
-                          <span style={{ position: 'absolute', inset: -6, borderRadius: '50%', border: '2px solid var(--accent)', animation: 'ping 1.8s ease-out infinite' }} />
-                        </div>
-                      ) : (
-                        <div style={css('width:34px; height:34px; border-radius:50% 50% 50% 4px; background:var(--panel); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(20,22,40,.18); border:1px solid var(--border);')}>
-                          <span className="msf" style={css('font-size:17px; color:var(--accent);')}>{it.icon}</span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-                <div style={css('position:absolute; left:14px; top:14px; display:flex; align-items:center; gap:7px; background:var(--panel); border:1px solid var(--border); border-radius:11px; padding:9px 13px; box-shadow:var(--shadow);')}>
-                  <span className="msf" style={css('font-size:17px; color:var(--accent);')}>route</span>
-                  <div style={css('line-height:1.2;')}>
-                    <div style={css('font:700 12px Pretendard;')}>서울 → 전주 · {transportLabel(tCode)}</div>
-                    <div style={css('font:500 10.5px Pretendard; color:var(--muted);')}>{live ? `실데이터 ${courseCount}곳` : transportSub(tCode)}</div>
+                {localMap && (
+                  <div onClick={() => setLocalMap(false)} style={css('position:absolute; left:14px; top:14px; z-index:3; display:flex; align-items:center; gap:5px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:8px 12px; cursor:pointer; box-shadow:var(--shadow); font:700 12px Pretendard;')}>
+                    <span className="msr" style={css('font-size:17px; color:var(--accent);')}>arrow_back</span>여정으로 · 전주 {items.length}곳
                   </div>
-                </div>
-                {items.length === 0 && (
-                  <div style={css('position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font:600 13px Pretendard; color:var(--muted); text-align:center; padding:0 30px;')}>{live ? '채팅에서 "전주로 갈거야"라고 말하면 실데이터 코스가 그려져요' : '코스가 확정되면 지도에 표시돼요'}</div>
                 )}
-                <div style={css('position:absolute; right:14px; bottom:14px; display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--border); border-radius:11px; overflow:hidden; box-shadow:var(--shadow);')}>
-                  <div style={css('width:38px; height:38px; display:flex; align-items:center; justify-content:center; color:var(--muted); border-bottom:1px solid var(--border);')}><span className="msr" style={css('font-size:20px;')}>add</span></div>
-                  <div style={css('width:38px; height:38px; display:flex; align-items:center; justify-content:center; color:var(--muted);')}><span className="msr" style={css('font-size:20px;')}>remove</span></div>
-                </div>
-                <div style={css('position:absolute; left:14px; bottom:14px; font:600 10px ui-monospace,monospace; color:var(--muted); background:var(--panel); padding:5px 9px; border-radius:7px; border:1px solid var(--border);')}>GPS 아님 · 좌표 보간 경로</div>
+                <NaverMap
+                  flush
+                  path
+                  routePath={routePath ?? undefined}
+                  label={localMap ? '' : `서울 → 전주 · ${transportLabel(tCode)}${live ? ` · 실데이터 ${courseCount}곳` : ''}`}
+                  points={journeyPoints}
+                  onSelect={(pt) => { if ((pt as any).role === 'dest') { setLocalMap(true); return; } const hit = items.find((x) => x.name === pt.name); if (hit) setFocus(hit.key); }}
+                  fallback={
+                    <>
+                      <svg viewBox="0 0 400 700" preserveAspectRatio="xMidYMid slice" style={css('position:absolute; inset:0; width:100%; height:100%;')}>
+                        <path d="M-20 140 H420 M-20 360 H420 M-20 540 H420 M90 -20 V720 M250 -20 V720 M340 -20 V720" stroke="var(--map-road)" strokeWidth="10" fill="none" />
+                        <path d="M-20 250 C 120 280, 200 420, 420 460" stroke="var(--map-road)" strokeWidth="14" fill="none" opacity=".7" />
+                        <path d="M40 60 L 360 640" stroke="var(--map-road)" strokeWidth="3" strokeDasharray="2 10" fill="none" />
+                      </svg>
+                      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={css('position:absolute; inset:0; width:100%; height:100%;')}>
+                        <polyline points={items.map((it) => it.mx + ',' + it.my).join(' ')} fill="none" stroke="var(--accent)" strokeWidth=".6" strokeLinecap="round" strokeDasharray="1 2.4" opacity=".85" />
+                      </svg>
+                      {items.map((it) => {
+                        const focused = it.key === focusPlace;
+                        return (
+                          <div key={it.key} onClick={() => setFocus(it.key)} style={css(`position:absolute; left:${it.mx}%; top:${it.my}%; transform:translate(-50%,-100%); cursor:pointer; z-index:${focused ? 5 : 2};`)}>
+                            {focused ? (
+                              <div style={css('position:relative; width:54px; height:54px; border-radius:50% 50% 50% 6px; background:var(--accent); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(59,91,254,.45); border:3px solid var(--panel);')}>
+                                <span className="msf" style={css('font-size:24px; color:#fff;')}>{it.icon}</span>
+                                <span style={{ position: 'absolute', inset: -6, borderRadius: '50%', border: '2px solid var(--accent)', animation: 'ping 1.8s ease-out infinite' }} />
+                              </div>
+                            ) : (
+                              <div style={css('width:34px; height:34px; border-radius:50% 50% 50% 4px; background:var(--panel); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(20,22,40,.18); border:1px solid var(--border);')}>
+                                <span className="msf" style={css('font-size:17px; color:var(--accent);')}>{it.icon}</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      <div style={css('position:absolute; left:14px; top:14px; display:flex; align-items:center; gap:7px; background:var(--panel); border:1px solid var(--border); border-radius:11px; padding:9px 13px; box-shadow:var(--shadow);')}>
+                        <span className="msf" style={css('font-size:17px; color:var(--accent);')}>route</span>
+                        <div style={css('line-height:1.2;')}>
+                          <div style={css('font:700 12px Pretendard;')}>서울 → 전주 · {transportLabel(tCode)}</div>
+                          <div style={css('font:500 10.5px Pretendard; color:var(--muted);')}>{live ? `실데이터 ${courseCount}곳` : transportSub(tCode)}</div>
+                        </div>
+                      </div>
+                      {items.length === 0 && (
+                        <div style={css('position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font:600 13px Pretendard; color:var(--muted); text-align:center; padding:0 30px;')}>{live ? '채팅에서 "전주로 갈거야"라고 말하면 실데이터 코스가 그려져요' : '코스가 확정되면 지도에 표시돼요'}</div>
+                      )}
+                      <div style={css('position:absolute; left:14px; bottom:14px; font:600 10px ui-monospace,monospace; color:var(--muted); background:var(--panel); padding:5px 9px; border-radius:7px; border:1px solid var(--border);')}>GPS 아님 · 좌표 보간 경로</div>
+                    </>
+                  }
+                />
               </div>
             </div>
           )}
 
-          {view === 'explore' && <Explore onText={handleUserText} />}
-          {view === 'itinerary' && <Itinerary items={items} transport={transportLabel(tCode)} ready={ready} onStop={(k) => { app.setView('planner'); setFocus(k); }} />}
+          {view === 'explore' && <Explore onText={handleUserText} live={live} hasCourse={!!effectiveCourse} courseNames={effectiveCourse?.stops.map((s) => s.name) ?? []} onAdd={addCourseStop} onRemove={removeCourseStop} />}
+          {view === 'itinerary' && <Itinerary items={items} live={live} liveCourse={effectiveCourse} plan={plan} tCode={tCode} nights={live ? (livePlan?.nights ?? 0) : 0} dayByName={dayByName} transport={transportLabel(tCode)} ready={ready} onStop={(k) => { app.setView('planner'); setFocus(k); }} onEmergency={() => { setEmg(true); setEmgStep('entry'); }} onRemove={(name) => (live ? removeCourseStop(name) : handleUserText(`${name} 빼줘`))} />}
           {view === 'dog' && <Dog />}
+
+          {/* GLOBAL CHAT BAR — 플래너 외 모든 탭(둘러보기·여정·내 강아지) 중앙 하단에서 AI와 계속 대화 */}
+          {view !== 'planner' && (
+            <div style={css('position:absolute; left:0; right:0; bottom:0; display:flex; justify-content:center; padding:0 20px 20px; pointer-events:none; z-index:35;')}>
+              <div style={css('width:min(660px,100%); pointer-events:auto;')}>
+                {lastAiMsg && (
+                  <div style={css('margin:0 auto 10px; background:var(--panel); border:1px solid var(--border); border-radius:15px; padding:11px 14px; box-shadow:0 8px 26px rgba(20,22,40,.16); display:flex; gap:9px; align-items:flex-start;')}>
+                    <span className="msf" style={css('font-size:17px; color:var(--accent); flex:none; margin-top:1px;')}>auto_awesome</span>
+                    <div style={{ ...css('font:500 12.5px Pretendard; color:var(--text); line-height:1.55;'), display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{lastAiMsg}</div>
+                  </div>
+                )}
+                <div style={css('display:flex; align-items:center; gap:9px; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:7px 7px 7px 16px; box-shadow:0 12px 32px rgba(20,22,40,.2);')}>
+                  <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { const v = input.trim(); if (v) handleUserText(v); } }} placeholder={live ? 'AI와 대화하며 코스를 편집해요…' : '무엇이든 물어보세요…'} style={css('flex:1; min-width:0; background:transparent; border:none; outline:none; font:500 14px Pretendard; color:var(--text);')} />
+                  <div onClick={startVoice} style={css(`width:36px; height:36px; border-radius:11px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:${listening ? '#fff' : 'var(--muted)'}; background:${listening ? '#FF6B5C' : 'var(--chip)'};`)}>
+                    <span className="msf" style={css('font-size:19px;')}>mic</span>
+                  </div>
+                  <div onClick={() => { const v = input.trim(); if (v) handleUserText(v); }} style={css('width:36px; height:36px; border-radius:11px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer;')}>
+                    <span className="msf" style={css('font-size:19px;')}>arrow_upward</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* MOBILE PANEL NAV (planner only) */}
           <div style={css('display:var(--mobnav-d); position:absolute; left:0; right:0; bottom:0; height:60px; background:var(--panel); border-top:1px solid var(--border); align-items:center; z-index:30;')}>
@@ -447,56 +612,231 @@ export default function App() {
   );
 }
 
-function Itinerary({ items, transport, ready, onStop }: { items: Place[]; transport: string; ready: boolean; onStop: (k: string) => void }) {
+// 여정 타임라인 노드 — 출발/이동(경유지·역)/도착/코스 정류장 공통 모델.
+type JNode = {
+  tone: 'origin' | 'transit' | 'stopover' | 'arrive' | 'day' | 'stop' | 'sleep';
+  icon?: string; num?: number; time?: string;
+  title: string; sub?: string; reason?: string; badges?: string[];
+  similarity?: number; dist?: number; source?: string; onClick?: () => void; onRemove?: () => void;
+};
+const RISK_TONE: Record<string, { c: string; bg: string; label: string }> = {
+  high: { c: '#E0533F', bg: 'rgba(224,83,63,.12)', label: '위험' },
+  moderate: { c: '#D98A00', bg: 'rgba(217,138,0,.12)', label: '주의' },
+  low: { c: '#1B8A55', bg: 'rgba(34,165,101,.12)', label: '양호' },
+};
+const TONE_STYLE: Record<JNode['tone'], { bg: string; fg: string }> = {
+  origin: { bg: '#1A1A1D', fg: '#fff' },
+  transit: { bg: 'var(--accent-soft)', fg: 'var(--accent)' },
+  stopover: { bg: 'rgba(34,165,101,.14)', fg: '#1B8A55' },
+  arrive: { bg: 'var(--accent)', fg: '#fff' },
+  day: { bg: 'var(--chip)', fg: 'var(--text)' },
+  stop: { bg: 'var(--accent)', fg: '#fff' },
+  sleep: { bg: 'rgba(99,102,241,.16)', fg: '#6366F1' },
+};
+
+// 내비형 여정 타임라인 — 서울 출발 → (경유지/도착역) → 전주 도착 → 코스 정류장.
+// 각 노드에서 체리(대형견·더위 취약) 맞춤 정보를 실데이터로 노출. 백엔드 무변경.
+function Itinerary({ items, live, liveCourse, plan, tCode, nights, dayByName, transport, ready, onStop, onEmergency, onRemove }: {
+  items: Place[]; live: boolean; liveCourse: RoutePlanResponse | null; plan: TripPlan;
+  tCode: TransportCode; nights: number; dayByName: Record<string, number>; transport: string; ready: boolean;
+  onStop: (k: string) => void; onEmergency: () => void; onRemove: (name: string) => void;
+}) {
+  const [safety, setSafety] = useState<SafetyAlertResult | null>(null);
+  useEffect(() => {
+    let on = true;
+    checkSafety({ region: '전주', pet_breed: '골든 리트리버', pet_size: 'large', latitude: 35.8149, longitude: 127.153 })
+      .then((s) => on && setSafety(s))
+      .catch(() => {});
+    return () => { on = false; };
+  }, []);
+
+  const origin = journeyOrigin(tCode);
+  // 코스 정류장 — 라이브는 stops(닮은친구%·이유·이전 거리), 데모는 PLACES(시간·입장·배지).
+  const stops = live
+    ? (liveCourse?.stops ?? []).map((s, i) => ({
+        key: 'L' + i, name: s.name, time: `${i + 1}번째`, sub: s.category, reason: s.reason,
+        similarity: s.similarity, dist: s.distance_from_prev_km, badges: [] as string[], source: s.source,
+      }))
+    : items.map((p) => ({
+        key: p.key, name: p.name, time: p.time, sub: p.cat + (p.entry ? ` · ${p.entry}` : ''), reason: p.desc,
+        similarity: 0, dist: 0, badges: p.badges ?? [], source: p.source,
+      }));
+  const count = stops.length;
+
+  // 노드 조립: 출발 → 이동(경유지/도착역) → 도착 → 코스.
+  const nodes: JNode[] = [];
+  nodes.push({
+    tone: 'origin', icon: origin.icon, title: origin.name, sub: `${transport} · 출발`,
+    reason: '대형견 체리는 장거리 이동이 부담돼요. 2시간마다 휴식·급수, 차내 환기를 챙겨주세요.',
+  });
+  if (tCode === 'CAR') {
+    const stopovers = live
+      ? (liveCourse?.stopovers ?? []).map((s) => ({ name: s.name, sub: s.category, reason: s.reason, badges: [] as string[] }))
+      : plan.stopovers.map((k) => PLACES[k]).filter(Boolean).map((p) => ({ name: p.name, sub: p.cat, reason: p.desc, badges: p.badges ?? [] }));
+    for (const m of stopovers) nodes.push({ tone: 'stopover', icon: 'pets', title: m.name, sub: m.sub, reason: m.reason, badges: m.badges });
+  } else {
+    for (const t of journeyTransit(tCode)) nodes.push({ tone: 'transit', icon: t.icon || 'train', title: t.name, sub: `${transport} 이동 · 도착` });
+  }
+  const stayLabel = nights >= 1 ? `${nights}박 ${nights + 1}일` : '당일치기';
+  nodes.push({ tone: 'arrive', icon: 'flag', title: '전주 도착', sub: `${stayLabel} · 코스 ${count}곳` });
+
+  const pushStop = (s: typeof stops[number], n: number) => nodes.push({
+    tone: 'stop', num: n, time: s.time, title: s.name, sub: s.sub, reason: s.reason,
+    badges: s.badges, similarity: s.similarity, dist: s.dist, source: s.source,
+    onClick: () => onStop(s.key), onRemove: () => onRemove(s.name),
+  });
+
+  if (nights >= 1 && stops.length > 1) {
+    // 다박 일정 — 정류장의 고정 일자(dayByName)로 묶고 밤마다 펫 동반 숙소(취침)를 넣는다.
+    // 제외해도 다른 날 정류장이 끌려오지 않도록 슬라이싱이 아니라 고정 일자로 그룹핑한다.
+    const lodging = liveCourse?.lodging ?? [];
+    const daysCount = nights + 1;
+    let num = 0;
+    for (let d = 1; d <= daysCount; d++) {
+      const dayStops = stops.filter((s) => (dayByName[s.name] ?? daysCount) === d);
+      if (!dayStops.length) continue;
+      nodes.push({ tone: 'day', title: `Day ${d}`, sub: `${d}일차` });
+      dayStops.forEach((s) => { num += 1; pushStop(s, num); });
+      if (d < daysCount) {
+        const lod = lodging[d - 1] ?? lodging[0];
+        nodes.push({
+          tone: 'sleep', icon: 'bedtime', title: lod?.name ?? '펫 동반 숙소',
+          sub: `${d}박째 · 체리와 취침`,
+          reason: lod ? '반려동물 동반 숙소에서 하룻밤 묵어요. 대형견 체리도 함께 잘 수 있어요.' : '이날은 전주에서 1박 — 펫 동반 숙소를 추천했어요.',
+          source: lod?.source,
+        });
+      }
+    }
+  } else {
+    stops.forEach((s, i) => pushStop(s, i + 1));
+  }
+
+  const risk = safety ? (RISK_TONE[safety.risk_level] ?? RISK_TONE.moderate) : null;
+
   return (
-    <div className="sc" style={css('flex:1; min-width:0; overflow-y:auto; padding:26px 30px 40px;')}>
+    <div className="sc" style={css('flex:1; min-width:0; overflow-y:auto; padding:26px 30px 130px;')}>
       <div style={css('max-width:760px; margin:0 auto;')}>
         <div style={css('display:flex; align-items:flex-end; justify-content:space-between;')}>
           <div>
-            <div style={css('font:800 24px Pretendard; letter-spacing:-0.02em;')}>전주 펫 동반 코스</div>
-            <div style={css('font:500 13px Pretendard; color:var(--muted); margin-top:6px;')}>체리 · 서울 → 전주 · {transport} · {items.length}곳</div>
+            <div style={css('font:800 24px Pretendard; letter-spacing:-0.02em;')}>전주 펫 동반 여정</div>
+            <div style={css('font:500 13px Pretendard; color:var(--muted); margin-top:6px;')}>체리 · 골든 리트리버 · 대형견 · 서울 → 전주 · {transport} · {count}곳</div>
           </div>
           <span style={css(`font:700 12px Pretendard; color:${ready ? '#1B8A55' : 'var(--accent)'}; background:${ready ? 'rgba(34,165,101,.12)' : 'var(--accent-soft)'}; padding:7px 13px; border-radius:999px;`)}>{ready ? '준비 완료' : '작성 중'}</span>
         </div>
-        {items.length === 0 && <div style={css('margin-top:30px; font:600 14px Pretendard; color:var(--muted);')}>아직 코스가 없어요. 플래너에서 만들어 보세요.</div>}
-        <div style={css('margin-top:22px; position:relative;')}>
-          {items.map((t, i) => (
-            <div key={t.key} style={css('display:flex; gap:15px;')}>
-              <div style={css('display:flex; flex-direction:column; align-items:center; flex:none;')}>
-                <div style={css('width:30px; height:30px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font:800 12px Pretendard;')}>{i + 1}</div>
-                <div style={css('width:2px; flex:1; background:var(--border); margin:4px 0;')} />
+
+        {/* 오늘 전주 컨디션 — 실 날씨 위험도(더위 취약 체리 맞춤) */}
+        {safety && risk && (
+          <div style={css(`margin-top:18px; display:flex; align-items:center; gap:13px; background:var(--panel); border:1px solid var(--border); border-left:4px solid ${risk.c}; border-radius:16px; padding:15px 17px; box-shadow:var(--shadow);`)}>
+            <div style={css(`width:42px; height:42px; border-radius:12px; background:${risk.bg}; color:${risk.c}; display:flex; align-items:center; justify-content:center; flex:none;`)}>
+              <span className="msf" style={css('font-size:23px;')}>sunny</span>
+            </div>
+            <div style={css('flex:1; min-width:0;')}>
+              <div style={css('display:flex; align-items:center; gap:8px;')}>
+                <span style={css('font:800 15px Pretendard;')}>오늘 전주 {Math.round(safety.temperature_c)}°C · {safety.condition}</span>
+                <span style={css(`font:700 10.5px Pretendard; color:${risk.c}; background:${risk.bg}; padding:3px 9px; border-radius:999px;`)}>{risk.label}</span>
               </div>
-              <div onClick={() => onStop(t.key)} style={css('flex:1; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:14px 16px; margin-bottom:14px; cursor:pointer; box-shadow:var(--shadow);')}>
-                <div style={css('display:flex; align-items:center; gap:9px;')}>
-                  <span style={css('font:700 11px Pretendard; color:var(--accent);')}>{t.time}</span>
-                  <span style={css('font:700 15px Pretendard;')}>{t.name}</span>
-                  {t.isLodging && <span style={css('font:600 10px Pretendard; color:var(--accent); background:var(--accent-soft); padding:3px 8px; border-radius:999px;')}>숙소</span>}
-                </div>
-                <div style={css('font:500 12px Pretendard; color:var(--muted); margin-top:5px;')}>{t.cat}{t.entry ? ` · ${t.entry}` : ''}</div>
-                <div style={css('font:400 10.5px Pretendard; color:var(--faint); margin-top:8px;')}>출처: {t.source}</div>
+              <div style={css('font:500 12px Pretendard; color:var(--muted); margin-top:4px;')}>
+                {safety.reasons?.length ? safety.reasons.join(' · ') : '체리는 더위에 약해요 — 그늘·수분을 자주 챙겨주세요.'}
               </div>
             </div>
-          ))}
+          </div>
+        )}
+
+        {count === 0 && <div style={css('margin-top:30px; font:600 14px Pretendard; color:var(--muted);')}>아직 코스가 없어요. 플래너에서 만들어 보세요.</div>}
+
+        {/* 단계 타임라인 */}
+        <div style={css('margin-top:22px; position:relative;')}>
+          {nodes.map((n, i) => {
+            const ts = TONE_STYLE[n.tone];
+            const last = i === nodes.length - 1;
+            if (n.tone === 'day') {
+              return (
+                <div key={i} style={css('display:flex; align-items:center; gap:10px; margin:10px 0 14px 0;')}>
+                  <span style={css('font:800 14px Pretendard; color:var(--accent);')}>{n.title}</span>
+                  <div style={css('flex:1; height:1px; background:var(--border);')} />
+                </div>
+              );
+            }
+            return (
+              <div key={i} style={css('display:flex; gap:15px;')}>
+                <div style={css('display:flex; flex-direction:column; align-items:center; flex:none;')}>
+                  <div style={css(`width:32px; height:32px; border-radius:50%; background:${ts.bg}; color:${ts.fg}; display:flex; align-items:center; justify-content:center; font:800 12px Pretendard; flex:none;`)}>
+                    {n.num != null ? n.num : <span className="msf" style={css('font-size:17px;')}>{n.icon}</span>}
+                  </div>
+                  {!last && <div style={css('width:2px; flex:1; background:var(--border); margin:4px 0; min-height:14px;')} />}
+                </div>
+                <div
+                  onClick={n.onClick}
+                  style={css(`flex:1; min-width:0; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:13px 16px; margin-bottom:14px; box-shadow:var(--shadow); ${n.onClick ? 'cursor:pointer;' : ''}`)}
+                >
+                  <div style={css('display:flex; align-items:center; gap:9px; flex-wrap:wrap;')}>
+                    {n.time && <span style={css('font:700 11px Pretendard; color:var(--accent);')}>{n.time}</span>}
+                    <span style={css('font:700 15px Pretendard;')}>{n.title}</span>
+                    {n.similarity != null && n.similarity > 0 && (
+                      <span style={css('font:700 10.5px Pretendard; color:var(--accent); background:var(--accent-soft); padding:3px 9px; border-radius:999px;')}>닮은친구 {n.similarity}%</span>
+                    )}
+                    {n.onRemove && (
+                      <span
+                        onClick={(e) => { e.stopPropagation(); n.onRemove!(); }}
+                        style={css('margin-left:auto; display:inline-flex; align-items:center; gap:3px; font:700 11px Pretendard; color:#D23B34; background:rgba(210,59,52,.1); padding:5px 10px; border-radius:999px; cursor:pointer;')}
+                      >
+                        <span className="msr" style={css('font-size:14px;')}>remove_circle_outline</span>제외
+                      </span>
+                    )}
+                  </div>
+                  {n.sub && <div style={css('font:500 12px Pretendard; color:var(--muted); margin-top:5px;')}>{n.sub}</div>}
+                  {n.reason && <div style={css('font:500 12.5px Pretendard; color:var(--text); margin-top:8px; line-height:1.5;')}>{n.reason}</div>}
+                  {n.badges && n.badges.length > 0 && (
+                    <div style={css('display:flex; gap:6px; flex-wrap:wrap; margin-top:9px;')}>
+                      {n.badges.map((b) => (
+                        <span key={b} style={css('font:600 10.5px Pretendard; color:var(--muted); background:var(--chip); padding:4px 9px; border-radius:999px;')}>{b}</span>
+                      ))}
+                    </div>
+                  )}
+                  {(n.dist != null && n.dist > 0) || n.source ? (
+                    <div style={css('font:400 10.5px Pretendard; color:var(--faint); margin-top:9px;')}>
+                      {n.dist != null && n.dist > 0 ? `이전에서 ${n.dist}km` : ''}{n.dist != null && n.dist > 0 && n.source ? ' · ' : ''}{n.source ? `출처: ${n.source}` : ''}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
         </div>
+
+        {/* 응급 푸터 — 경로 인근 응급 동물병원(행안부 표준데이터) */}
+        {count > 0 && (
+          <div
+            onClick={onEmergency}
+            style={css('margin-top:6px; display:flex; align-items:center; gap:13px; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:15px 17px; box-shadow:var(--shadow); cursor:pointer;')}
+          >
+            <div style={css('width:42px; height:42px; border-radius:12px; background:rgba(255,107,92,.12); color:#FF6B5C; display:flex; align-items:center; justify-content:center; flex:none;')}>
+              <span className="msf" style={css('font-size:22px;')}>emergency</span>
+            </div>
+            <div style={css('flex:1; min-width:0;')}>
+              <div style={css('font:800 14px Pretendard;')}>여행 중 응급 상황이라면</div>
+              <div style={css('font:500 12px Pretendard; color:var(--muted); margin-top:3px;')}>
+                {safety?.nearest_hospital ? `가장 가까운 병원 · ${safety.nearest_hospital}${safety.nearest_hospital_km != null ? ` ${safety.nearest_hospital_km}km` : ''}` : '전주 인근 동물병원을 거리순으로 안내해요'}
+              </div>
+            </div>
+            <span className="msr" style={css('font-size:20px; color:var(--muted); flex:none;')}>chevron_right</span>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-const CARE_ICON: Record<string, string> = { water: 'water_drop', rest: 'park', feed: 'restaurant', walk: 'pets', meal: 'restaurant', heat: 'sunny' };
-
 function Dog() {
   const [visited, setVisited] = useState<VisitedPlace[]>([]);
-  const [care, setCare] = useState<CareReminder[]>([]);
   useEffect(() => {
     getVisitedPlaces(1).then(setVisited).catch(() => setVisited([]));
-    getCareReminders(1).then(setCare).catch(() => setCare([]));
   }, []);
   const regions = new Set(visited.map((v) => v.region).filter(Boolean)).size;
   const totalVisits = visited.reduce((s, v) => s + v.visit_count, 0);
 
   return (
-    <div className="sc" style={css('flex:1; min-width:0; overflow-y:auto; padding:26px 30px 40px;')}>
+    <div className="sc" style={css('flex:1; min-width:0; overflow-y:auto; padding:26px 30px 130px;')}>
       <div style={css('max-width:880px; margin:0 auto;')}>
         <div style={css('display:flex; gap:18px; align-items:center; background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:22px; box-shadow:var(--shadow);')}>
           <img src="/pet-persona.png" alt="체리" style={css('width:84px; height:84px; border-radius:50%; object-fit:cover; background:linear-gradient(135deg,#F8D9A8,#EBB06A); flex:none;')} />
@@ -512,7 +852,7 @@ function Dog() {
             </div>
           </div>
         </div>
-        <div style={css('display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px;')}>
+        <div style={css('margin-top:18px;')}>
           <div style={css('background:var(--panel); border:1px solid var(--border); border-radius:18px; padding:18px; box-shadow:var(--shadow);')}>
             <div style={css('display:flex; align-items:center; gap:8px; font:800 15px Pretendard;')}><span className="msf" style={css('font-size:18px; color:var(--accent);')}>map</span>발자국 지도</div>
             <FootprintMap places={visited} />
@@ -522,26 +862,6 @@ function Dog() {
               ))}
             </div>
             <div style={css('font:400 10.5px Pretendard; color:var(--faint); margin-top:10px;')}>데이터: 방문기록 집계(실좌표)</div>
-          </div>
-          <div style={css('background:var(--panel); border:1px solid var(--border); border-radius:18px; padding:18px; box-shadow:var(--shadow);')}>
-            <div style={css('display:flex; align-items:center; gap:8px; font:800 15px Pretendard;')}><span className="msf" style={css('font-size:18px; color:var(--accent);')}>notifications_active</span>케어 알림</div>
-            <div style={css('margin-top:12px; display:flex; flex-direction:column; gap:10px;')}>
-              {care.length === 0 && <div style={css('font:500 12px Pretendard; color:var(--muted);')}>등록된 알림이 없어요.</div>}
-              {care.map((r) => {
-                const heat = r.type === 'rest' || r.type === 'heat';
-                return (
-                  <div key={r.id} style={css('display:flex; align-items:center; gap:11px;')}>
-                    <div style={css(`width:36px; height:36px; border-radius:10px; background:${heat ? 'rgba(255,107,92,.12)' : 'var(--accent-soft)'}; color:${heat ? '#FF6B5C' : 'var(--accent)'}; display:flex; align-items:center; justify-content:center;`)}><span className="msf" style={css('font-size:18px;')}>{CARE_ICON[r.type] ?? 'notifications'}</span></div>
-                    <div style={css('flex:1;')}>
-                      <div style={css('font:700 13px Pretendard;')}>{r.label}</div>
-                      <div style={css('font:500 11px Pretendard; color:var(--muted);')}>{r.scheduled_time} · {r.interval_min}분 간격</div>
-                    </div>
-                    <div style={css(`width:42px; height:25px; border-radius:999px; background:${r.enabled ? 'var(--accent)' : 'var(--border)'}; position:relative; flex:none;`)}><div style={css(`position:absolute; top:3px; ${r.enabled ? 'right:3px' : 'left:3px'}; width:19px; height:19px; border-radius:50%; background:#fff;`)} /></div>
-                  </div>
-                );
-              })}
-            </div>
-            <div style={css('font:400 10.5px Pretendard; color:var(--faint); margin-top:14px;')}>데이터: 케어 알림 스케줄 · 체질 연동</div>
           </div>
         </div>
       </div>
@@ -582,7 +902,7 @@ const LV = {
 } as const;
 
 // 실데이터 상세 — 백엔드 실 장소이므로 entry-verdict·review 가 정상 동작.
-function LiveDetail({ stop, hasCourse, reviews, onAdd, onClose, onItin }: { stop: Place; hasCourse: boolean; reviews: Review[]; onAdd: () => void; onClose: () => void; onItin: () => void }) {
+function LiveDetail({ stop, hasCourse, inCourse, reviews, onAdd, onClose, onItin }: { stop: Place; hasCourse: boolean; inCourse: boolean; reviews: Review[]; onAdd: () => void; onClose: () => void; onItin: () => void }) {
   const [verdict, setVerdict] = useState<EntryVerdictResult | null>(null);
   useEffect(() => {
     if (!hasCourse) return;
@@ -651,6 +971,25 @@ function LiveDetail({ stop, hasCourse, reviews, onAdd, onClose, onItin }: { stop
             ))}
           </div>
         )}
+        {verdict && verdict.alternatives && verdict.alternatives.length > 0 && (
+          <div style={css('margin-top:14px; background:var(--accent-soft); border:1px solid var(--border); border-radius:13px; padding:13px 15px;')}>
+            <div style={css('display:flex; align-items:center; gap:7px; font:800 13px Pretendard; color:var(--accent);')}>
+              <span className="msf" style={css('font-size:16px;')}>alt_route</span>체리가 못 들어가요 · 대신 가까운 곳
+            </div>
+            <div style={css('display:flex; flex-direction:column; gap:8px; margin-top:10px;')}>
+              {verdict.alternatives.map((a, i) => (
+                <div key={i} style={css('display:flex; align-items:center; gap:9px; background:var(--panel); border-radius:10px; padding:9px 11px;')}>
+                  <span className="msf" style={css('font-size:16px; color:var(--accent);')}>pets</span>
+                  <div style={css('min-width:0;')}>
+                    <div style={css('font:700 13px Pretendard; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;')}>{a.name}</div>
+                    <div style={css('font:500 11px Pretendard; color:var(--muted); margin-top:1px;')}>{a.category}</div>
+                  </div>
+                  <span style={css('margin-left:auto; font:600 11.5px Pretendard; color:var(--text); flex:none;')}>{a.distance_km < 1 ? `${Math.round(a.distance_km * 1000)}m` : `${a.distance_km}km`}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {stop.desc && (
           <>
             <div style={css('font:800 15px Pretendard; margin:18px 0 9px;')}>추천 이유</div>
@@ -675,8 +1014,8 @@ function LiveDetail({ stop, hasCourse, reviews, onAdd, onClose, onItin }: { stop
         <div style={css('font:400 11px Pretendard; color:var(--faint); margin-top:16px;')}>데이터: {stop.source} · 입장 판정은 규칙으로 확인</div>
       </div>
       <div style={css('padding:0 18px 18px; flex:none;')}>
-        <div onClick={onAdd} style={css('background:var(--accent); color:#fff; font:700 14.5px Pretendard; text-align:center; padding:14px; border-radius:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;')}>
-          <span className="msf" style={css('font-size:19px;')}>add_location_alt</span>이 장소 코스에 담기
+        <div onClick={onAdd} style={css(`font:700 14.5px Pretendard; text-align:center; padding:14px; border-radius:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; ${inCourse ? 'background:rgba(210,59,52,.1); color:#D23B34;' : 'background:var(--accent); color:#fff;'}`)}>
+          <span className="msf" style={css('font-size:19px;')}>{inCourse ? 'remove_circle_outline' : 'add_location_alt'}</span>{inCourse ? '코스에서 제외' : '이 장소 코스에 담기'}
         </div>
       </div>
     </>

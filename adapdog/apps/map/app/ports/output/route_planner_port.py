@@ -4,7 +4,14 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from core.introduction import Introduction
-from map.app.dtos.route_planner_dto import AgentCoursePlan, ChatMessage, ChatTurn, CourseBrief
+from map.app.dtos.route_planner_dto import (
+    AgentCoursePlan,
+    ChatMessage,
+    ChatTurn,
+    CourseBrief,
+    CourseStopRef,
+    PlannedStop,
+)
 from map.domain.entities.pet_place_entity import PetFriendlyPlace
 from map.domain.entities.route_planner_entity import Trail
 from map.domain.value_objects.pet_place_vo import PetSize
@@ -27,6 +34,22 @@ class RoutePlannerAgentPort(ABC):
         pet_traits: Optional[str] = None,
     ) -> ChatTurn:
         """대화 기록을 받아 대화형으로 응답하고, 코스 확정 시 동선 계획을 함께 반환한다."""
+        ...
+
+    @abstractmethod
+    async def recommend(
+        self,
+        region: str,
+        messages: list[ChatMessage],
+        current_course: list[CourseStopRef],
+        pet_size: PetSize,
+        pet_breed: Optional[str],
+        pet_traits: Optional[str] = None,
+    ) -> tuple[str, list[PlannedStop]]:
+        """현재 코스를 분석해 대화형 추천 멘트 + 추천 정류장(후보 중에서만)을 반환한다.
+
+        코스를 재생성하지 않는다 — 분석/제안만. 추천 정류장은 칩으로 제시된다.
+        """
         ...
 
     async def introduce_myself(self) -> Introduction:

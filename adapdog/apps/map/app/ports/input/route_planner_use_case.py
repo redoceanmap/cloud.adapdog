@@ -11,6 +11,7 @@ if TYPE_CHECKING:
         RouteChatSchema,
         RouteOptimizeSchema,
         RoutePlannerSchema,
+        RouteRecommendSchema,
     )
 
 
@@ -25,6 +26,11 @@ class RoutePlannerUseCase(ABC):
     @abstractmethod
     async def chat(self, schema: "RouteChatSchema") -> RouteChatResponse:
         """대화 기록을 받아 대화형으로 응답하고, 코스가 확정되면 함께 반환한다."""
+        ...
+
+    @abstractmethod
+    async def recommend(self, schema: "RouteRecommendSchema") -> RouteChatResponse:
+        """현재 코스를 분석해 대화형으로 대안을 추천한다(코스 재생성 없이 추천 칩만)."""
         ...
 
     @abstractmethod

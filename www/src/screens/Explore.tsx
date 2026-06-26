@@ -11,8 +11,8 @@ const GRADS = [
   'linear-gradient(135deg,#C9B6E4,#A98FD0)', 'linear-gradient(135deg,#BFD3F0,#8FAEE0)',
   'linear-gradient(135deg,#F4C6BE,#E89B8E)',
 ];
-const CAT_ICON: Record<string, string> = { 박물관: 'museum', 미술관: 'palette', 문예회관: 'theater_comedy', 여행지: 'landscape', 식당: 'restaurant', 숙박: 'hotel', 축제: 'festival', 둘레길: 'forest' };
-const CHIPS = ['전체', '문화시설', '축제', '둘레길', '식당', '숙박'] as const;
+const CAT_ICON: Record<string, string> = { 박물관: 'museum', 미술관: 'palette', 문예회관: 'theater_comedy', 여행지: 'landscape', 식당: 'restaurant', 카페: 'local_cafe', 숙박: 'hotel', 축제: 'festival', 둘레길: 'forest' };
+const CHIPS = ['전체', '문화시설', '관광', '맛집', '둘레길', '숙박', '축제'] as const;
 type Chip = (typeof CHIPS)[number];
 
 interface Card {
@@ -24,9 +24,22 @@ interface Card {
   grad: string;
   source: string;
   pet?: boolean;
+  addable?: boolean; // 좌표가 있어 코스에 직접 담을 수 있는 실 시설
+  cat?: string;
+  lat?: number;
+  lng?: number;
 }
 
-export function Explore({ onText }: { onText: (t: string) => void }) {
+export interface ExploreAddStop { name: string; category: string; latitude: number; longitude: number }
+
+export function Explore({ onText, live, hasCourse, courseNames, onAdd, onRemove }: {
+  onText: (t: string) => void;
+  live: boolean;
+  hasCourse: boolean;
+  courseNames: string[];
+  onAdd: (p: ExploreAddStop) => void;
+  onRemove: (name: string) => void;
+}) {
   const [chip, setChip] = useState<Chip>('전체');
   const [festivals, setFestivals] = useState<Festival[] | null>(null);
   const [trails, setTrails] = useState<WalkingTrail[] | null>(null);
@@ -44,20 +57,20 @@ export function Explore({ onText }: { onText: (t: string) => void }) {
     const out: Card[] = [];
     (festivals ?? []).forEach((f, i) => out.push({ group: '축제', name: f.name, sub: `${f.start_date} ~ ${f.end_date}${f.pet_allowed ? ' · 동반 가능' : ''}`, tag: '축제', icon: 'festival', grad: GRADS[i % GRADS.length], source: f.source, pet: f.pet_allowed }));
     (trails ?? []).slice(0, 8).forEach((t, i) => out.push({ group: '둘레길', name: t.name, sub: `${t.distance_km}km · ${t.difficulty} · ${t.duration}`, tag: '둘레길', icon: 'forest', grad: GRADS[(i + 2) % GRADS.length], source: '한국관광공사 두루누비' }));
-    const cult = ['박물관', '미술관', '문예회관', '여행지'];
     const pick = (cats: string[], group: Chip, n: number) =>
       (places ?? []).filter((p) => cats.some((c) => p.category.includes(c))).slice(0, n)
-        .forEach((p, i) => out.push({ group, name: p.name, sub: `${p.category} · 펫 동반`, tag: p.category, icon: CAT_ICON[p.category] ?? 'pets', grad: GRADS[(i + 4) % GRADS.length], source: '한국문화정보원 펫동반 문화시설' }));
-    pick(cult, '문화시설', 9);
-    pick(['식당'], '식당', 6);
-    pick(['숙박'], '숙박', 6);
+        .forEach((p, i) => out.push({ group, name: p.name, sub: `${p.category} · 펫 동반`, tag: p.category, icon: CAT_ICON[p.category] ?? 'pets', grad: GRADS[(i + 4) % GRADS.length], source: '한국문화정보원 펫동반 문화시설', pet: true, addable: true, cat: p.category, lat: p.latitude, lng: p.longitude }));
+    pick(['박물관', '미술관', '문예회관'], '문화시설', 9);
+    pick(['여행지'], '관광', 9);          // 펫 동반 관광 명소
+    pick(['식당', '카페'], '맛집', 9);     // 펫 동반 식당 + 카페
+    pick(['숙박', '펜션'], '숙박', 9);
     return out;
   }, [festivals, trails, places]);
 
   const shown = chip === '전체' ? cards : cards.filter((c) => c.group === chip);
 
   return (
-    <div className="sc" style={css('flex:1; min-width:0; overflow-y:auto; padding:26px 30px 40px;')}>
+    <div className="sc" style={css('flex:1; min-width:0; overflow-y:auto; padding:26px 30px 130px;')}>
       <div style={css('max-width:1040px; margin:0 auto;')}>
         <div style={css('font:800 24px Pretendard; letter-spacing:-0.02em;')}>둘러보기</div>
         <div style={css('font:500 14px Pretendard; color:var(--muted); margin-top:6px;')}>플래너가 추천에 쓰는 전주 공공 문화데이터를 미리 구경해요. 칩으로 종류를 골라보세요.</div>
@@ -75,8 +88,12 @@ export function Explore({ onText }: { onText: (t: string) => void }) {
           <div style={css('padding:50px 0; text-align:center; font:600 14px Pretendard; color:var(--muted);')}>전주 공공데이터 불러오는 중…</div>
         ) : (
           <div style={css('display:grid; grid-template-columns:repeat(auto-fill,minmax(232px,1fr)); gap:16px; margin-top:18px;')}>
-            {shown.map((e, i) => (
-              <div key={e.name + i} onClick={() => onText(e.group === '축제' ? '축제 넣어줘' : e.group === '둘레길' ? '산책 추가' : e.group === '식당' ? '맛집 추가' : '카페 추가')} style={css('background:var(--panel); border:1px solid var(--border); border-radius:18px; overflow:hidden; cursor:pointer; box-shadow:var(--shadow);')}>
+            {shown.map((e, i) => {
+              const editable = live && hasCourse && e.addable && e.lat != null && e.lng != null;
+              const inCourse = editable && courseNames.includes(e.name);
+              const nudge = () => onText(e.group === '축제' ? '축제 넣어줘' : e.group === '둘레길' ? '산책 추가' : e.group === '맛집' ? '맛집 추가' : e.group === '관광' ? '한옥마을 추가' : e.group === '숙박' ? '1박' : '박물관 추가');
+              return (
+              <div key={e.name + i} onClick={editable ? undefined : nudge} style={css(`background:var(--panel); border:1px solid var(--border); border-radius:18px; overflow:hidden; box-shadow:var(--shadow); ${editable ? '' : 'cursor:pointer;'}`)}>
                 <div style={css(`height:128px; background:${e.grad}; position:relative;`)}>
                   <span style={css('position:absolute; top:11px; left:12px; font:600 10.5px Pretendard; color:#fff; background:rgba(0,0,0,.28); padding:5px 10px; border-radius:999px;')}>{e.tag}</span>
                   {e.pet && <span style={css('position:absolute; top:11px; right:12px; font:700 9.5px Pretendard; color:#1B8A55; background:rgba(255,255,255,.92); padding:4px 9px; border-radius:999px;')}>동반 OK</span>}
@@ -86,9 +103,21 @@ export function Explore({ onText }: { onText: (t: string) => void }) {
                   <div style={css('font:700 15px Pretendard; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;')}>{e.name}</div>
                   <div style={css('font:500 12px Pretendard; color:var(--muted); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;')}>{e.sub}</div>
                   <div style={css('font:400 10px Pretendard; color:var(--faint); margin-top:9px;')}>출처: {e.source}</div>
+                  {editable && (
+                    inCourse ? (
+                      <div onClick={(ev) => { ev.stopPropagation(); onRemove(e.name); }} style={css('margin-top:11px; display:flex; align-items:center; justify-content:center; gap:5px; font:700 12.5px Pretendard; color:#D23B34; background:rgba(210,59,52,.1); padding:9px; border-radius:11px; cursor:pointer;')}>
+                        <span className="msr" style={css('font-size:16px;')}>remove_circle_outline</span>코스에서 제외
+                      </div>
+                    ) : (
+                      <div onClick={(ev) => { ev.stopPropagation(); onAdd({ name: e.name, category: e.cat || e.tag, latitude: e.lat!, longitude: e.lng! }); }} style={css('margin-top:11px; display:flex; align-items:center; justify-content:center; gap:5px; font:700 12.5px Pretendard; color:#fff; background:var(--accent); padding:9px; border-radius:11px; cursor:pointer;')}>
+                        <span className="msr" style={css('font-size:16px;')}>add_location_alt</span>이 경로 추가하기
+                      </div>
+                    )
+                  )}
                 </div>
               </div>
-            ))}
+              );
+            })}
             {shown.length === 0 && <div style={css('grid-column:1/-1; padding:30px 0; text-align:center; font:600 13px Pretendard; color:var(--muted);')}>이 종류의 데이터가 없어요.</div>}
           </div>
         )}

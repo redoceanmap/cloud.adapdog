@@ -43,6 +43,7 @@ class TripPlan:
     destination: Optional[str] = None
     transport: TransportMode = TransportMode.UNSET
     lodging: LodgingOption = LodgingOption.UNSET
+    nights: int = 0  # 묵는 박 수(0=당일치기). OVERNIGHT일 때 1 이상.
 
     def next_stage(self) -> PlannerStage:
         """다음에 채울 슬롯을 결정한다(목적지→이동수단→숙박→완성)."""

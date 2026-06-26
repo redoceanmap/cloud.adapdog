@@ -4,7 +4,7 @@ import logging
 
 from core.introduction import Introduction
 from map.adapter.inbound.api.schemas.entry_verdict_schema import EntryVerdictSchema
-from map.app.dtos.entry_verdict_dto import EntryVerdictResponse
+from map.app.dtos.entry_verdict_dto import EntryAlternativeDto, EntryVerdictResponse
 from map.app.ports.input.entry_verdict_use_case import EntryVerdictUseCase
 from map.app.ports.input.pet_place_use_case import PetPlaceUseCase
 from map.app.ports.output.entry_verdict_port import VerdictMessagePort
@@ -37,13 +37,34 @@ class EntryVerdictInteractor(EntryVerdictUseCase):
             )
 
         verdict = EntryVerdict.judge(place, schema.pet_name, pet_size)
-        logger.info("[EntryVerdictInteractor] %s × %s → %s", place.name, pet_size.value, verdict.verdict.value)
+        # 입장 불가 시: 같은 지역에서 이 견을 받아주는 인근 시설을 거리순 대안으로 제시(시나리오 2).
+        alternatives: list[EntryAlternativeDto] = []
+        if verdict.verdict == VerdictType.DENIED:
+            cands = [
+                p for p in places
+                if p.name != place.name and p.accommodates(pet_size) and not p.is_vet_hospital()
+            ]
+            cands.sort(key=lambda p: (
+                p.category != place.category,  # 같은 업종 우선
+                place.coordinate.distance_km_to(p.coordinate),
+            ))
+            alternatives = [
+                EntryAlternativeDto(
+                    name=p.name, category=p.category,
+                    latitude=p.coordinate.latitude, longitude=p.coordinate.longitude,
+                    distance_km=round(place.coordinate.distance_km_to(p.coordinate), 2),
+                )
+                for p in cands[:3]
+            ]
+        logger.info("[EntryVerdictInteractor] %s × %s → %s (대안 %d)",
+                    place.name, pet_size.value, verdict.verdict.value, len(alternatives))
         return EntryVerdictResponse(
             place_name=verdict.place_name,
             pet_name=verdict.pet_name,
             verdict=verdict.verdict.value,
             conditions=verdict.conditions,
             message=self.message.render(verdict),
+            alternatives=alternatives,
         )
 
     async def introduce_myself(self) -> Introduction:

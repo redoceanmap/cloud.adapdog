@@ -1,8 +1,13 @@
 // 응급 케어 모달 — 시안 디자인 유지 + 실데이터(safety-alert: 실 날씨 위험도 + 행안부 동물병원).
 import { useEffect, useState } from 'react';
 import { css } from '../lib/css';
-import { checkSafety } from '../api/endpoints';
-import type { SafetyAlertResult } from '../api/types';
+import { checkSafety, getNearbyHospitals } from '../api/endpoints';
+import type { SafetyAlertResult, AnimalHospital } from '../api/types';
+
+// 데모 현재 위치 — 전주 한옥마을(실제 GPS 대체). 거리순 정렬 기준점.
+const HERE = { lat: 35.8149, lng: 127.153 };
+const telHref = (phone: string) => 'tel:' + (phone || '').replace(/[^0-9]/g, '');
+const mapHref = (h: AnimalHospital) => `https://map.naver.com/v5/search/${encodeURIComponent(h.name)}`;
 
 const RISK = {
   high: { c: '#E0533F', title: '지금 즉시 동물병원 방문 권장', icon: 'e911_emergency' },
@@ -12,11 +17,15 @@ const RISK = {
 
 export function Emergency({ step, setStep, onClose }: { step: 'entry' | 'result' | 'list'; setStep: (s: 'entry' | 'result' | 'list') => void; onClose: () => void }) {
   const [safety, setSafety] = useState<SafetyAlertResult | null>(null);
+  const [hospitals, setHospitals] = useState<AnimalHospital[] | null>(null);
 
   useEffect(() => {
-    checkSafety({ region: '전주', pet_breed: '골든 리트리버', pet_size: 'large' })
+    checkSafety({ region: '전주', pet_breed: '골든 리트리버', pet_size: 'large', latitude: HERE.lat, longitude: HERE.lng })
       .then(setSafety)
       .catch(() => {});
+    getNearbyHospitals({ region: '전주', latitude: HERE.lat, longitude: HERE.lng, open_only: true, limit: 5 })
+      .then((r) => setHospitals(r.hospitals))
+      .catch(() => setHospitals([]));
   }, []);
 
   const r = safety ? RISK[(safety.risk_level as keyof typeof RISK)] ?? RISK.moderate : null;
@@ -81,33 +90,31 @@ export function Emergency({ step, setStep, onClose }: { step: 'entry' | 'result'
           )}
           {step === 'list' && (
             <>
-              {!safety ? (
-                <div style={css('color:var(--muted); font:500 13px Pretendard; padding:8px 0;')}>전주 인근 동물병원 찾는 중…</div>
+              {hospitals === null ? (
+                <div style={css('color:var(--muted); font:500 13px Pretendard; padding:8px 0;')}>전주 한옥마을 인근 동물병원 찾는 중…</div>
+              ) : hospitals.length === 0 ? (
+                <div style={css('color:var(--muted); font:500 13px Pretendard; padding:8px 0;')}>인근 영업 중 동물병원을 찾지 못했어요.</div>
               ) : (
                 <div style={css('display:flex; flex-direction:column; gap:10px;')}>
-                  <div style={css('background:var(--panel-2); border:2px solid #FF6B5C; border-radius:14px; padding:14px;')}>
-                    <div style={css('display:flex; align-items:center; justify-content:space-between;')}>
-                      <div style={css('font:700 14px Pretendard;')}>{safety.nearest_hospital ?? '전주 인근 동물병원'}</div>
-                      <span style={css('font:600 10px Pretendard; color:#fff; background:#E0533F; padding:4px 9px; border-radius:999px;')}>최근접</span>
+                  {hospitals.map((h, i) => (
+                    <div key={i} style={css(`background:var(--panel-2); border:${i === 0 ? '2px solid #FF6B5C' : '1px solid var(--border)'}; border-radius:14px; padding:13px 14px;`)}>
+                      <div style={css('display:flex; align-items:center; gap:8px;')}>
+                        <span style={css(`font:700 11px Pretendard; color:#fff; background:${i === 0 ? '#E0533F' : 'var(--faint)'}; width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex:none;`)}>{i + 1}</span>
+                        <div style={css('font:700 14px Pretendard; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;')}>{h.name}</div>
+                        {h.is_24h && <span style={css('font:700 9.5px Pretendard; color:#fff; background:#E0533F; padding:3px 7px; border-radius:999px; flex:none;')}>24시</span>}
+                      </div>
+                      <div style={css('display:flex; align-items:center; gap:9px; margin-top:8px;')}>
+                        {h.distance_km != null && <span style={css('font:600 11.5px Pretendard; color:var(--text);')}>{h.distance_km < 1 ? `${Math.round(h.distance_km * 1000)}m` : `${h.distance_km}km`}</span>}
+                        <span style={css('display:inline-flex; align-items:center; gap:3px; font:600 11px Pretendard; color:#22A565;')}><span style={css('width:6px; height:6px; border-radius:50%; background:#22A565;')} />영업 중</span>
+                        {h.phone && <a href={telHref(h.phone)} style={css('margin-left:auto; display:inline-flex; align-items:center; gap:3px; font:700 11.5px Pretendard; color:var(--accent); text-decoration:none;')}><span className="msf" style={css('font-size:14px;')}>call</span>전화</a>}
+                        <a href={mapHref(h)} target="_blank" rel="noreferrer" style={css(`${h.phone ? '' : 'margin-left:auto;'} display:inline-flex; align-items:center; gap:3px; font:700 11.5px Pretendard; color:var(--accent); text-decoration:none;`)}><span className="msf" style={css('font-size:14px;')}>directions</span>길 안내</a>
+                      </div>
+                      {h.road_address && <div style={css('font:500 11px Pretendard; color:var(--muted); margin-top:6px;')}>{h.road_address}</div>}
                     </div>
-                    <div style={css('display:flex; align-items:center; gap:9px; margin-top:7px;')}>
-                      <span style={css('font:500 11.5px Pretendard; color:var(--muted);')}>{safety.nearest_hospital_km != null ? `${safety.nearest_hospital_km}km` : '전주 인근'}</span>
-                      <span style={css('display:inline-flex; align-items:center; gap:3px; font:600 11px Pretendard; color:#22A565;')}><span style={css('width:6px; height:6px; border-radius:50%; background:#22A565;')} />영업 중</span>
-                      <a href="tel:063" style={css('margin-left:auto; font:700 11px Pretendard; color:var(--accent); text-decoration:none;')}>전화</a>
-                    </div>
-                  </div>
-                  <div style={css('background:var(--panel-2); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; align-items:center; gap:11px;')}>
-                    <div style={css('width:38px; height:38px; border-radius:11px; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; flex:none;')}>
-                      <span className="msf" style={css('font-size:19px;')}>local_hospital</span>
-                    </div>
-                    <div>
-                      <div style={css('font:700 14px Pretendard;')}>전주 인근 동물병원 {safety.hospital_count}곳</div>
-                      <div style={css('font:500 11.5px Pretendard; color:var(--muted); margin-top:2px;')}>위치 기반 실시간 안내</div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               )}
-              <div style={css('font:400 10.5px Pretendard; color:var(--faint); margin-top:12px;')}>데이터: 행정안전부 전국 동물병원 표준데이터 · 기상 위험도</div>
+              <div style={css('font:400 10.5px Pretendard; color:var(--faint); margin-top:12px;')}>데이터: 행정안전부 전국 동물병원 표준데이터 · 현재 위치(전주 한옥마을) 거리순</div>
             </>
           )}
         </div>

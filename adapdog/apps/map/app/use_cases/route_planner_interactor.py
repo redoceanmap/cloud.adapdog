@@ -8,10 +8,13 @@ from map.adapter.inbound.api.schemas.route_planner_schema import (
     RouteChatSchema,
     RouteOptimizeSchema,
     RoutePlannerSchema,
+    RouteRecommendSchema,
 )
 from map.app.dtos.route_planner_dto import (
     AgentCoursePlan,
+    ChatMessage,
     CourseBrief,
+    CourseStopRef,
     LodgingDto,
     PlannedStop,
     RouteChatResponse,
@@ -99,6 +102,23 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
         reply = _ready_reply(plan, course)
         return RouteChatResponse(reply=reply, plan=_to_plan_dto(plan), suggestions=[], course=course)
 
+    async def recommend(self, schema: RouteRecommendSchema) -> RouteChatResponse:
+        """현재 코스를 분석해 대화형 추천을 돌려준다 — 코스는 재생성하지 않고(course=None)
+        추천 장소를 '○○ 추가' 칩으로만 제시한다(사용자가 탭하면 클라가 코스에 더한다)."""
+        pet_size = PetSize.from_raw(schema.pet_size)
+        plan = _restore_plan(schema.plan)
+        region = plan.destination or "전주"
+        messages = [ChatMessage(role=m.role, content=m.content) for m in schema.messages]
+        current = [CourseStopRef(name=s.name, category=s.category) for s in schema.current_course]
+        logger.info("[RoutePlannerInteractor] recommend | region=%s course=%d", region, len(current))
+
+        reply, picks = await self.agent.recommend(
+            region, messages, current, pet_size, schema.pet_breed, schema.pet_traits
+        )
+        suggestions = [f"{p.name} 추가" for p in picks]
+        # course=None → 클라이언트가 기존 편집 코스를 유지(덮어쓰지 않음).
+        return RouteChatResponse(reply=reply, plan=_to_plan_dto(plan), suggestions=suggestions)
+
     async def _build_course(
         self, plan: TripPlan, pet_size: PetSize, pet_breed, pet_traits
     ) -> RoutePlanResponse:
@@ -107,8 +127,9 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
         코스(LLM)·숙소·경유지·코호트 인기도는 서로 독립이므로 동시에 조회한다(병렬화).
         """
         region = plan.destination or "전주"
-        days = 2 if plan.lodging is LodgingOption.OVERNIGHT else 1
-        brief = CourseBrief(region=region, days=days, pet_size=pet_size, pet_breed=pet_breed)
+        # 박 수 → 일수(N박이면 N+1일). 당일치기는 1일.
+        days = plan.nights + 1 if plan.lodging is LodgingOption.OVERNIGHT else 1
+        brief = CourseBrief(region=region, days=days, pet_size=pet_size, pet_breed=pet_breed, transport=plan.transport)
 
         async def _lodging_task() -> list[LodgingDto]:
             if plan.lodging is not LodgingOption.OVERNIGHT:
@@ -126,6 +147,13 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
             _stopover_task(),
             self.cohort.recommend(Cohort(size=pet_size), action_type="visit", limit=500),
         )
+
+        # 이동수단별 도착 지점에서 동선을 시작 — KTX 전주역 / 버스 전주터미널 / 자차 한옥마을(주차).
+        # "내려서 첫 코스"가 자연스럽도록 도착점 최근접 순으로 재정렬(에이전트 선택은 유지, 순서만 조정).
+        start = _ARRIVAL_BY_TRANSPORT.get(plan.transport)
+        if start is not None and len(agent_plan.stops) > 1:
+            reordered = self._order_nearest(start, agent_plan.stops)
+            agent_plan = AgentCoursePlan(stops=reordered, narrative=agent_plan.narrative, trails=agent_plan.trails)
 
         return await self._assemble_course(
             region, pet_size, agent_plan, pet_traits, lodging, stopovers, recommendations
@@ -190,17 +218,20 @@ class RoutePlannerInteractor(RoutePlannerUseCase):
             recommendations = await self.cohort.recommend(Cohort(size=pet_size), action_type="visit", limit=500)
         score_by_facility = {r.facility_id: r.score for r in recommendations}
         max_score = max(score_by_facility.values(), default=1)
+        # 닮은친구% — 같은 크기 코호트의 실제 방문 기록이 있을 때만 산출. 기록이 없으면 0
+        # (UI 미표기). 데이터 없는 곳에 가짜 내림차순 숫자를 붙이지 않는다(실데이터 원칙).
         similarities = [
             min(98, round(62 + score_by_facility[s.id] / max_score * 36))
             if score_by_facility.get(s.id)
-            else max(64, 82 - i * 4)
-            for i, s in enumerate(plan.stops)
+            else 0
+            for s in plan.stops
         ]
 
         stops = [
             RouteStopDto(
                 i + 1, s.name, s.category, s.latitude, s.longitude, prev_km[i], similarities[i],
-                reason=_stop_reason(s.category, pet_traits), source=_SOURCE_TAG,
+                reason=_stop_reason(s.category, pet_traits, score_by_facility.get(s.id, 0)),
+                source=_SOURCE_TAG,
             )
             for i, s in enumerate(plan.stops)
         ]
@@ -229,6 +260,13 @@ _SOURCE_TAG_TRAVEL = "한국관광공사 반려동물 동반여행"
 
 # 데모는 전주 중심. 대화에서 목적지를 뽑는 최소 힌트(서버 무상태 — 추측은 보수적으로).
 _REGION_HINTS = ("전주", "강릉", "경주", "제주", "여수", "부산", "속초", "통영", "남원", "군산")
+
+# 이동수단별 전주 도착 지점 — 여기서 가까운 순으로 코스를 시작한다(내려서 첫 코스).
+_ARRIVAL_BY_TRANSPORT = {
+    TransportMode.KTX: Coordinate(35.8503, 127.1602),   # 전주역
+    TransportMode.BUS: Coordinate(35.8345, 127.1292),   # 전주고속버스터미널
+    TransportMode.CAR: Coordinate(35.8150, 127.1530),   # 한옥마을(주차 후 시작)
+}
 
 
 def _extract_region(text: str) -> str | None:
@@ -268,6 +306,7 @@ def _restore_plan(sp) -> TripPlan:
         destination=sp.destination or None,
         transport=_safe_transport(sp.transport),
         lodging=_safe_lodging(sp.lodging),
+        nights=max(0, sp.nights or 0),
     )
 
 
@@ -278,9 +317,16 @@ def _apply_message(plan: TripPlan, latest: str) -> TripPlan:
     if transport is TransportMode.UNSET:
         transport = TransportMode.from_raw(latest)
     lodging = plan.lodging
+    nights = plan.nights
     if lodging is LodgingOption.UNSET:
-        lodging = LodgingOption.from_raw(latest)
-    return TripPlan(origin=plan.origin, destination=destination, transport=transport, lodging=lodging)
+        parsed = LodgingOption.nights_from_raw(latest)
+        if parsed is not None:
+            nights = parsed
+            lodging = LodgingOption.DAYTRIP if parsed == 0 else LodgingOption.OVERNIGHT
+    return TripPlan(
+        origin=plan.origin, destination=destination, transport=transport,
+        lodging=lodging, nights=nights,
+    )
 
 
 def _ask(stage: PlannerStage, plan: TripPlan) -> tuple[str, list[str]]:
@@ -292,13 +338,17 @@ def _ask(stage: PlannerStage, plan: TripPlan) -> tuple[str, list[str]]:
             f"{plan.origin}에서 {plan.destination}까지 어떻게 갈까요?",
             ["KTX", "고속버스", "자차"],
         )
-    # ASK_LODGING
-    return (f"{plan.destination}에서 1박 하실 건가요, 당일치기인가요?", ["1박 할래요", "당일치기"])
+    # ASK_LODGING — 몇 박 묵을지는 사용자가 직접 고른다(당일치기 포함).
+    return (
+        f"{plan.destination}에서 며칠 묵으실 건가요? 당일치기도 가능해요.",
+        ["당일치기", "1박", "2박", "3박"],
+    )
 
 
 def _ready_reply(plan: TripPlan, course: RoutePlanResponse) -> str:
     """코스 확정 시 사용자에게 보일 한 마디 — 이동수단·경유지·숙소 맥락 + 코스 요약."""
-    bits = [f"{plan.transport.label}로 {plan.destination}까지 가는 일정으로 코스를 짰어요."]
+    stay = f"{plan.nights}박 {plan.nights + 1}일" if plan.lodging is LodgingOption.OVERNIGHT else "당일치기"
+    bits = [f"{plan.transport.label}로 {plan.destination}까지 가는 {stay} 일정으로 코스를 짰어요."]
     if plan.transport is TransportMode.CAR and course.stopovers:
         names = ", ".join(s.name for s in course.stopovers[:2])
         bits.append(f"가는 길엔 {names} 같은 경유지를 넣었어요.")
@@ -315,6 +365,7 @@ def _to_plan_dto(plan: TripPlan) -> TripPlanDto:
         destination=plan.destination,
         transport=plan.transport.value,
         lodging=plan.lodging.value,
+        nights=plan.nights,
         stage=plan.next_stage().value,
     )
 
@@ -335,14 +386,36 @@ def _to_stopover_dto(p: PetFriendlyPlace) -> StopoverDto:
     )
 
 
-def _stop_reason(category: str, pet_traits: str | None) -> str:
-    """왜 이 장소 — 반려견 특징을 반영한 규칙 기반 한 줄."""
+def _stop_reason(category: str, pet_traits: str | None, cohort_visits: int = 0) -> str:
+    """왜 이 장소 — 업종 + 체리 특징(대형견·더위 취약)에 근거한 규칙 한 줄.
+
+    근거: (1) 펫 동반 가능(공공데이터 등록) (2) 업종별 실내·야외 적합성 (3) 같은 크기
+    코호트의 실제 방문 기록(있을 때만). 데이터 없는 근거를 지어내지 않는다.
+    """
     traits = pet_traits or ""
     cat = category or ""
-    if "더위" in traits and any(k in cat for k in ("공원", "야외", "산책", "둘레", "호수", "정원", "수목")):
-        return "그늘·야외가 있어 더위 타는 체리에게 좋아요"
-    if "관절" in traits:
-        return "평지 위주라 관절 부담이 적어요"
-    if any(k in traits for k in ("겁", "낯가림")):
-        return "비교적 한적해 겁 많은 아이도 편해요"
-    return "체리가 동반 입장할 수 있는 곳이에요"
+    heat = "더위" in traits
+    big = "대형" in traits or "large" in traits.lower()
+
+    if any(k in cat for k in ("박물관", "미술관", "전시", "유산원", "문화원", "과학관")):
+        reason = (
+            "실내 전시가 있어 더위에 약한 체리가 시원하게 쉬며 둘러보기 좋아요. 야외 마당·정원은 동반 가능, 실내 전시관은 목줄·제한을 확인하세요."
+            if heat else
+            "야외 마당·정원은 대형견 체리와 함께 둘러볼 수 있어요(실내 전시관은 제한)."
+        )
+    elif any(k in cat for k in ("공원", "호수", "정원", "수목", "산책", "둘레", "천", "강")):
+        reason = "탁 트인 평지 야외라 대형견 체리가 목줄 산책하기 좋아요. 그늘·급수 포인트를 확인하세요."
+    elif any(k in cat for k in ("문예회관", "공연", "극장", "전당", "회관")):
+        reason = "야외 행사·마당은 동반 가능하고 실내 공연장은 제한돼요."
+    elif any(k in cat for k in ("카페", "식당", "맛집", "음식")):
+        reason = "동반석이 있어 체리와 함께 쉬어가기 좋아요(테라스·목줄 확인)."
+    elif any(k in cat for k in ("여행지", "관광", "명소", "유적", "사적")):
+        reason = "야외 명소라 대형견 체리와 목줄 산책으로 둘러보기 좋아요."
+    else:
+        reason = "반려동물 동반 가능으로 등록된 곳이라 체리와 함께 입장할 수 있어요."
+
+    if heat and not any(k in cat for k in ("박물관", "미술관", "전시")):
+        reason += " 한낮 더위엔 그늘과 수분을 자주 챙겨주세요."
+    if cohort_visits:
+        reason += f" 같은 대형견 친구들이 실제로 {cohort_visits}번 다녀간 곳이에요."
+    return reason

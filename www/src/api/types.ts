@@ -76,6 +76,7 @@ export interface TripPlan {
   destination: string | null;
   transport: 'ktx' | 'bus' | 'car' | 'unset';
   lodging: 'overnight' | 'daytrip' | 'unset';
+  nights: number; // 묵는 박 수(0=당일치기)
   stage: 'ask_destination' | 'ask_transport' | 'ask_lodging' | 'ready';
 }
 
@@ -105,12 +106,21 @@ export interface EntryCheckRequest {
   pet_size: string;
 }
 
+export interface EntryAlternative {
+  name: string;
+  category: string;
+  latitude: number;
+  longitude: number;
+  distance_km: number;
+}
+
 export interface EntryVerdictResult {
   place_name: string;
   pet_name: string;
   verdict: 'allowed' | 'conditional' | 'denied';
   conditions: string[];
   message: string;
+  alternatives?: EntryAlternative[];
 }
 
 export interface CohortPlace {
@@ -230,6 +240,32 @@ export interface SafetyAlertResult {
   hospital_count: number;
   nearest_hospital: string | null;
   nearest_hospital_km: number | null;
+}
+
+// 응급 동물병원 (행안부 표준데이터)
+export interface AnimalHospital {
+  name: string;
+  latitude: number;
+  longitude: number;
+  phone: string;
+  road_address: string;
+  is_24h: boolean;
+  is_open: boolean;
+  distance_km: number | null;
+}
+
+export interface AnimalHospitalList {
+  region: string;
+  total: number;
+  hospitals: AnimalHospital[];
+}
+
+export interface NearbyHospitalRequest {
+  region?: string;
+  latitude?: number;
+  longitude?: number;
+  open_only?: boolean;
+  limit?: number;
 }
 
 // ── 코스 저장(C) ──

@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from map.domain.value_objects.pet_place_vo import PetSize
+from map.domain.value_objects.route_planner_vo import TransportMode
 
 
 @dataclass(frozen=True)
@@ -26,6 +27,7 @@ class CourseBrief:
     days: int
     pet_size: PetSize
     pet_breed: Optional[str]
+    transport: TransportMode = TransportMode.UNSET  # 이동수단 — 코스 후보·순서 차별화에 사용
 
 
 @dataclass(frozen=True)
@@ -37,6 +39,14 @@ class PlannedStop:
     category: str
     latitude: float
     longitude: float
+
+
+@dataclass(frozen=True)
+class CourseStopRef:
+    """추천 분석용 현재 코스의 한 정류장 참조(좌표 불필요, 이름·카테고리만)."""
+
+    name: str
+    category: str
 
 
 @dataclass(frozen=True)
@@ -125,6 +135,7 @@ class TripPlanDto:
     destination: Optional[str]
     transport: str   # TransportMode 값(ktx/bus/car/unset)
     lodging: str     # LodgingOption 값(overnight/daytrip/unset)
+    nights: int      # 묵는 박 수(0=당일치기)
     stage: str       # PlannerStage 값(다음에 채울 단계)
 
 

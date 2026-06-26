@@ -53,3 +53,7 @@ KMA_SERVICE_KEY = os.getenv("KMA_SERVICE_KEY") or DATA_GO_KR_SERVICE_KEY
 # 전국길관광정보 표준데이터 CSV (둘레길 추천용). 좌표 없는 선형 코스 데이터.
 _CSV_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "csv")
 TRAIL_CSV_PATH = os.getenv("TRAIL_CSV_PATH", os.path.join(_CSV_DIR, "전국길관광정보표준데이터.csv"))
+# 전국 반려동물 동반 가능 문화시설(좌표·입장가능크기 포함) — 자차 경유지 코리도어 필터링에 사용.
+PETPLACE_CSV_PATH = os.getenv("PETPLACE_CSV_PATH", os.path.join(_CSV_DIR, "한국문화정보원_전국 반려동물 동반 가능 문화시설 위치 데이터_20250324.csv"))
+# 행정안전부 전국 동물병원 표준데이터(영업상태·전화·TM좌표 EPSG:2097) — 응급 병원 안내에 사용.
+ANIMAL_HOSPITAL_CSV_PATH = os.getenv("ANIMAL_HOSPITAL_CSV_PATH", os.path.join(_CSV_DIR, "동물_동물병원.csv"))

@@ -4,6 +4,7 @@ import asyncio
 import csv
 import json
 import logging
+import math
 import re
 from typing import Optional
 
@@ -12,6 +13,7 @@ from map.app.dtos.route_planner_dto import (
     ChatMessage,
     ChatTurn,
     CourseBrief,
+    CourseStopRef,
     PlannedStop,
     TrailDto,
 )
@@ -25,6 +27,7 @@ from map.app.ports.output.route_planner_port import (
 from map.domain.entities.pet_place_entity import PetFriendlyPlace
 from map.domain.entities.route_planner_entity import RouteCourse, Trail
 from map.domain.value_objects.pet_place_vo import Coordinate, PetSize
+from map.domain.value_objects.route_planner_vo import TransportMode
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +53,32 @@ _CHAT_SYSTEM_INSTRUCTION = (
     '{"ordered_place_ids": [정수 id...]}. '
     "아직 코스를 확정하지 않는 일반 대화에서는 JSON을 넣지 마세요."
 )
+
+
+_COURSE_ANALYSIS_INSTRUCTION = (
+    "당신은 반려견과 함께하는 여행 동선을 다듬어주는 친근한 플래너입니다. "
+    "사용자의 '현재 코스'와 후보 시설 목록, 그리고 사용자의 요청이 주어집니다. "
+    "먼저 현재 코스의 성격을 한눈에 분석하세요 — 예: 박물관·전시가 많아 실내 위주로 빡빡한지, "
+    "야외만 많아 더위에 지칠지, 비슷한 업종이 몰려 단조로운지. "
+    "그 분석에 근거해 균형을 맞출 대안을 후보 목록에서 1~3곳 골라 추천하세요 "
+    "(예: 박물관이 많으면 쉬어갈 카페나 탁 트인 공원, 실내가 없으면 더위 피할 실내). "
+    "추천은 사람에게 말하듯 따뜻하게, 왜 그곳인지 이유를 곁들여 2~4문장으로 설명하세요. "
+    "후보로 받은 시설만 사용하고 지어내지 마세요. 현재 코스에 이미 있는 곳은 추천하지 마세요. "
+    "답변 맨 끝에 JSON 한 줄을 덧붙이세요: "
+    '{"recommend_place_ids": [정수 id...]}. 추천할 곳이 없으면 빈 배열.'
+)
+
+# 추천 균형용 업종 힌트 — 카테고리 부분일치로 코스 분포를 읽는다(규칙기반 폴백에서 사용).
+_CATEGORY_HINTS = {
+    "카페": ("카페", "음식", "식당", "맛집"),
+    "공원": ("공원", "여행", "관광", "명소", "호수", "정원", "수목", "둘레", "산책"),
+    "박물관": ("박물관", "미술관", "전시", "문화", "문예", "유산"),
+}
+
+
+def _by_category_hint(places: list[PetFriendlyPlace], hints: tuple[str, ...]) -> list[PetFriendlyPlace]:
+    """후보 중 업종 힌트(부분일치)에 해당하는 시설만 추린다."""
+    return [p for p in places if any(h in (p.category or "") for h in hints)]
 
 
 def _guess_region(messages: list[ChatMessage]) -> Optional[str]:
@@ -92,21 +121,38 @@ def _is_visitable(category: str) -> bool:
 
 
 def _max_stops(brief: CourseBrief) -> int:
-    """추천 정류장 상한 — 프론트가 5곳씩 '더보기'로 펼치므로 넉넉히 (하루 ~20곳, 최소 10, 최대 30)."""
-    return max(10, min(brief.days * 20, 30))
+    """추천 정류장 상한 — 현실적 일정(하루 ~4곳). 당일 4곳·1박 8곳·2박+ 최대 12."""
+    return max(4, min(brief.days * 4, 12))
+
+
+# 이동수단별 후보 큐레이션 기준점 — 직행(KTX·버스)은 도착지(역·터미널) 인근 도심 클러스터를
+# 우선하고, 자차는 풀 평균 중심(외곽 포함 더 넓게)으로 분산시켜 코스가 수단별로 달라지게 한다.
+_CANDIDATE_CENTER = {
+    TransportMode.KTX: Coordinate(35.8503, 127.1602),   # 전주역
+    TransportMode.BUS: Coordinate(35.8345, 127.1292),   # 전주고속버스터미널
+}
+
+# 이동수단별 코스 성격 힌트 — LLM이 같은 후보라도 수단에 맞게 다르게 동선을 짜도록.
+_TRANSPORT_HINT = {
+    TransportMode.KTX: "이동수단: KTX(전주역 도착). 차가 없으니 역·한옥마을 도보권 도심 명소 중심으로, 정류장 간 이동이 짧게 묶어주세요.\n",
+    TransportMode.BUS: "이동수단: 고속버스(전주고속버스터미널 도착). 차가 없으니 터미널·도심 도보권 명소 중심으로, 대중교통으로 다니기 쉽게 묶어주세요.\n",
+    TransportMode.CAR: "이동수단: 자차. 외곽에 흩어진 명소도 포함해 폭넓게 묶어도 좋습니다. 이동 구간은 대형견 체리의 휴식·창밖 구경 시간으로 활용하세요.\n",
+}
 
 
 def _destinations(places: list[PetFriendlyPlace], brief: CourseBrief) -> list[PetFriendlyPlace]:
-    """동선 후보 = 크기 동반 가능 + 동물병원 제외 → 중심점 인근 _CANDIDATE_CAP개로 큐레이션."""
+    """동선 후보 = 크기 동반 가능 + 동물병원 제외 → 이동수단별 기준점 인근 _CANDIDATE_CAP개로 큐레이션."""
     pool = [
         p for p in places
         if p.accommodates(brief.pet_size) and not p.is_animal_hospital() and _is_visitable(p.category)
     ]
     if len(pool) <= _CANDIDATE_CAP:
         return pool
-    lat = sum(p.coordinate.latitude for p in pool) / len(pool)
-    lng = sum(p.coordinate.longitude for p in pool) / len(pool)
-    center = Coordinate(lat, lng)
+    center = _CANDIDATE_CENTER.get(brief.transport)
+    if center is None:  # 자차·미정 = 풀 평균 중심(외곽 포함 더 넓게 분산)
+        lat = sum(p.coordinate.latitude for p in pool) / len(pool)
+        lng = sum(p.coordinate.longitude for p in pool) / len(pool)
+        center = Coordinate(lat, lng)
     return sorted(pool, key=lambda p: center.distance_km_to(p.coordinate))[:_CANDIDATE_CAP]
 
 
@@ -123,8 +169,9 @@ class RuleBasedRoutePlannerAgent(RoutePlannerAgentPort):
         course = _nearest_neighbor(candidates)
         stops = [_to_stop(p) for p in course.stops[:_max_stops(brief)]]
         trails = [_to_trail_dto(t) for t in (await self.trail_port.find_trails(brief.region))[:_TRAIL_CAP]]
+        via = f"{brief.transport.label}로 " if brief.transport is not TransportMode.UNSET else ""
         narrative = (
-            f"{brief.region} {brief.days}일 일정으로 {brief.pet_size.value} 동반 가능한 "
+            f"{via}{brief.region} {brief.days}일 일정으로 {brief.pet_size.value} 동반 가능한 "
             f"{len(stops)}곳을 가까운 순서로 묶었어요."
             if stops
             else f"{brief.region}에서 {brief.pet_size.value} 동반 가능한 시설을 찾지 못했어요."
@@ -158,6 +205,17 @@ class RuleBasedRoutePlannerAgent(RoutePlannerAgentPort):
         logger.info("[RuleBasedRoutePlannerAgent] chat | region=%s stops=%d", region, len(stops))
         return ChatTurn(reply=reply, region=region, plan=AgentCoursePlan(stops=stops, narrative=reply, trails=trails))
 
+    async def recommend(
+        self, region: str, messages: list[ChatMessage], current_course: list[CourseStopRef],
+        pet_size: PetSize, pet_breed: Optional[str], pet_traits: Optional[str] = None,
+    ) -> tuple[str, list[PlannedStop]]:
+        """LLM 없는 폴백 추천 — 코스 카테고리 분포를 보고 빠진 쉼표(카페/공원)를 후보에서 고른다."""
+        brief = CourseBrief(region=region, days=1, pet_size=pet_size, pet_breed=pet_breed)
+        candidates = _destinations(await self.pet_place.find_places(region), brief)
+        picks, reply = _rule_recommend(current_course, candidates)
+        logger.info("[RuleBasedRoutePlannerAgent] recommend | region=%s picks=%d", region, len(picks))
+        return reply, [_to_stop(p) for p in picks]
+
 
 class GeminiRoutePlannerAgent(RoutePlannerAgentPort):
     """Gemini 함수호출 기반 동선 에이전트.
@@ -176,7 +234,7 @@ class GeminiRoutePlannerAgent(RoutePlannerAgentPort):
         genai.configure(api_key=api_key)
 
     async def plan(self, brief: CourseBrief) -> AgentCoursePlan:
-        key = (brief.region, brief.days, brief.pet_size.value, brief.pet_breed or "")
+        key = (brief.region, brief.days, brief.pet_size.value, brief.pet_breed or "", brief.transport.value)
         cached = _PLAN_CACHE.get(key)
         if cached is not None:  # 동일 브리프(데모 전주/대형견 등)는 LLM 재호출 없이 즉시 반환
             logger.info("[GeminiRoutePlannerAgent] plan cache hit | %s", key)
@@ -231,9 +289,11 @@ class GeminiRoutePlannerAgent(RoutePlannerAgentPort):
         model = self._genai.GenerativeModel(
             self.model_name, system_instruction=_SYSTEM_INSTRUCTION
         )
+        transport_hint = _TRANSPORT_HINT.get(brief.transport, "")
         prompt = (
             f"지역: {brief.region}\n여행 일수: {brief.days}일\n"
             f"반려견 크기: {brief.pet_size.value}\n견종: {brief.pet_breed or '미지정'}\n"
+            f"{transport_hint}"
             f"{trail_block}"
             f"\n[동반 가능 후보 시설]\n{place_lines}\n\n"
             "위 후보 중에서만 골라 동선 순서를 정하고 JSON으로만 답하세요."
@@ -314,6 +374,89 @@ class GeminiRoutePlannerAgent(RoutePlannerAgentPort):
         resp = chat.send_message(prompt)
         return _parse_chat(resp.text, valid_ids=set(snapshot))
 
+    async def recommend(
+        self, region: str, messages: list[ChatMessage], current_course: list[CourseStopRef],
+        pet_size: PetSize, pet_breed: Optional[str], pet_traits: Optional[str] = None,
+    ) -> tuple[str, list[PlannedStop]]:
+        """현재 코스를 분석해 대안을 추천 — 후보는 async 계층에서 미리 조회, Gemini는 분석+선택만.
+
+        코스에 이미 있는 곳은 후보에서 빼서 중복 추천을 막는다.
+        """
+        brief = CourseBrief(region=region, days=1, pet_size=pet_size, pet_breed=pet_breed)
+        pool = _destinations(await self.pet_place.find_places(region), brief)
+        in_course = {s.name for s in current_course}
+        candidates = [p for p in pool if p.name not in in_course]
+        if not candidates:
+            return "추천할 만한 다른 장소를 못 찾았어요. 다른 종류를 알려주시면 더 찾아볼게요!", []
+
+        try:
+            reply, ids = await asyncio.to_thread(
+                self._run_recommend, messages, current_course, candidates, pet_size, pet_breed, pet_traits
+            )
+        except Exception as e:  # noqa: BLE001 — Gemini 장애 시 규칙기반 폴백(서비스 유지)
+            logger.warning("[GeminiRoutePlannerAgent] recommend 실패 → 규칙기반 폴백 | %s", e)
+            picks, reply = _rule_recommend(current_course, candidates)
+            return reply, [_to_stop(p) for p in picks]
+
+        by_id = {p.id: p for p in candidates}
+        picks = [by_id[i] for i in ids if i in by_id][:3]
+        logger.info("[GeminiRoutePlannerAgent] recommend | region=%s picks=%d", region, len(picks))
+        return reply, [_to_stop(p) for p in picks]
+
+    def _run_recommend(
+        self, messages: list[ChatMessage], current_course: list[CourseStopRef],
+        candidates: list[PetFriendlyPlace], pet_size: PetSize, pet_breed: Optional[str],
+        pet_traits: Optional[str],
+    ) -> tuple[str, list[int]]:
+        latest = messages[-1].content if messages else ""
+        course_lines = "\n".join(f"- {s.name}({s.category})" for s in current_course) or "(아직 코스가 비어 있음)"
+        cand_lines = "\n".join(f"- id={p.id} {p.name}({p.category})" for p in candidates)
+        model = self._genai.GenerativeModel(
+            self.model_name, system_instruction=_COURSE_ANALYSIS_INSTRUCTION
+        )
+        traits_line = f" · 특징: {pet_traits}" if pet_traits else ""
+        prompt = (
+            f"반려견: {pet_breed or '미지정'} ({pet_size.value}){traits_line}\n\n"
+            f"[현재 코스]\n{course_lines}\n\n"
+            f"[추천 후보 시설]\n{cand_lines}\n\n"
+            f"사용자 요청: {latest}\n\n"
+            "현재 코스를 분석해 균형을 맞출 대안을 후보 중에서 추천하고, 끝에 JSON 한 줄을 붙이세요."
+        )
+        resp = model.generate_content(prompt)
+        return _parse_recommend(resp.text, valid_ids={p.id for p in candidates})
+
+
+def _rule_recommend(
+    current_course: list[CourseStopRef], candidates: list[PetFriendlyPlace]
+) -> tuple[list[PetFriendlyPlace], str]:
+    """규칙 기반 추천 — 코스 업종 분포를 보고 빠진 '쉼표'(카페·공원)를 후보에서 고른다."""
+    in_course = {s.name for s in current_course}
+    pool = [p for p in candidates if p.name not in in_course]
+    cats = [s.category or "" for s in current_course]
+    n = len(cats) or 1
+    museum_heavy = sum(1 for c in cats if any(h in c for h in _CATEGORY_HINTS["박물관"])) / n >= 0.5
+
+    picks: list[PetFriendlyPlace] = []
+    cafe = _by_category_hint(pool, _CATEGORY_HINTS["카페"])
+    park = _by_category_hint(pool, _CATEGORY_HINTS["공원"])
+    if cafe:
+        picks.append(cafe[0])
+    if park:
+        picks.append(park[0])
+    picks = picks[:2]
+
+    if not picks:
+        return [], "지금 코스에 더할 만한 다른 종류를 못 찾았어요. 원하는 분위기를 알려주시면 더 찾아볼게요!"
+    names = ", ".join(p.name for p in picks)
+    if museum_heavy:
+        reply = (
+            f"지금 코스가 박물관·전시 위주라 체리가 실내만 다니다 지칠 수 있어요. "
+            f"중간에 쉬어갈 {names} 같은 곳을 더하면 한결 여유로워져요. 추가해볼까요?"
+        )
+    else:
+        reply = f"코스에 변화를 줄 만한 {names}을(를) 골라봤어요. 마음에 들면 추가해보세요!"
+    return picks, reply
+
 
 def _to_stop(p: PetFriendlyPlace) -> PlannedStop:
     return PlannedStop(p.id, p.name, p.category, p.coordinate.latitude, p.coordinate.longitude)
@@ -379,6 +522,22 @@ def _parse_chat(text: str, valid_ids: set[int]) -> tuple[str, list[int]]:
     return (visible or "이런 코스는 어떠세요?"), ordered
 
 
+def _parse_recommend(text: str, valid_ids: set[int]) -> tuple[str, list[int]]:
+    """추천 응답에서 (보일 텍스트, 추천 시설 id 목록)을 분리한다(_parse_chat와 동일 패턴)."""
+    ids: list[int] = []
+    visible = text
+    match = re.search(r"\{[^{}]*recommend_place_ids[^{}]*\}", text, re.DOTALL)
+    if match:
+        try:
+            data = json.loads(match.group(0))
+            ids = [int(i) for i in data.get("recommend_place_ids", []) if int(i) in valid_ids]
+        except (json.JSONDecodeError, ValueError, TypeError):
+            ids = []
+        visible = text[: match.start()] + text[match.end():]
+    visible = re.sub(r"```(json)?", "", visible).strip()
+    return (visible or "이런 곳은 어떠세요?"), ids
+
+
 # ── 펫 동반 숙소 (LodgingPort) ─────────────────────────────────────────────────
 def _is_lodging(category: str) -> bool:
     """숙박 업종 여부 — 코스 정류장이 아니라 '숙소' 섹션에 들어갈 시설."""
@@ -426,11 +585,96 @@ class LodgingRepository(LodgingPort):
 
 
 # ── 자차 경유지 (RouteLegsPort) ────────────────────────────────────────────────
+# 서울→전주 경로 코리도어 위의 '실제' 펫 동반 문화시설을 CSV에서 좌표로 골라낸다.
+# 경로에서 크게 벗어난 시설(예: 부산)은 진행도·수직이탈거리 필터로 원천 배제.
+_SEOUL = Coordinate(37.5547, 126.9707)   # 서울역
+_JEONJU = Coordinate(35.8242, 127.1480)  # 전주(도심)
+_KM_PER_DEG = 111.0
+# 채택할 펫동반 '문화/휴게/자연' 업종 힌트 / 제외할 업종(병원·약국·미용·숙박 등).
+_CORRIDOR_HINTS = ("공원", "미술관", "박물관", "문화", "관광", "여행", "유적", "사찰",
+                   "수목원", "정원", "호수", "명소", "휴게", "전시", "해변", "해수욕", "산림", "숲")
+_CORRIDOR_BLOCK = ("병원", "약국", "미용", "호텔", "펜션", "숙박", "분양", "장묘", "유치원", "카페", "식당", "음식")
+
+
+def _corridor_project(o: Coordinate, d: Coordinate, p: Coordinate) -> tuple[float, float]:
+    """점 p를 o→d 직선에 투영 → (진행도 t[0=출발,1=도착], 경로 수직이탈거리 km)."""
+    lat0 = math.radians((o.latitude + d.latitude) / 2)
+    kx = _KM_PER_DEG * math.cos(lat0)
+    ox, oy = o.longitude * kx, o.latitude * _KM_PER_DEG
+    dx, dy = d.longitude * kx - ox, d.latitude * _KM_PER_DEG - oy
+    px, py = p.longitude * kx - ox, p.latitude * _KM_PER_DEG - oy
+    denom = dx * dx + dy * dy
+    if denom == 0:
+        return 0.0, 9e9
+    t = (px * dx + py * dy) / denom
+    perp = math.hypot(px - t * dx, py - t * dy)
+    return t, perp
+
+
+_CORRIDOR_CACHE: Optional[list[tuple[float, float, PetFriendlyPlace]]] = None
+
+
+def _load_corridor_candidates() -> list[tuple[float, float, PetFriendlyPlace]]:
+    """펫동반 문화시설 CSV → 서울→전주 코리도어 위 대형견 가능 시설 (t, 이탈km, place). 1회 캐시."""
+    global _CORRIDOR_CACHE
+    if _CORRIDOR_CACHE is not None:
+        return _CORRIDOR_CACHE
+    from core.config import PETPLACE_CSV_PATH
+    out: list[tuple[float, float, PetFriendlyPlace]] = []
+    try:
+        with open(PETPLACE_CSV_PATH, encoding="utf-8-sig", newline="") as f:
+            for i, r in enumerate(csv.DictReader(f), 1):
+                name = (r.get("시설명") or "").strip()
+                lat_s, lng_s = (r.get("위도") or "").strip(), (r.get("경도") or "").strip()
+                if not (name and lat_s and lng_s):
+                    continue
+                try:
+                    coord = Coordinate(float(lat_s), float(lng_s))
+                except (ValueError, TypeError):
+                    continue
+                cat = (r.get("카테고리3") or r.get("카테고리2") or r.get("카테고리1") or "").strip()
+                if any(b in cat or b in name for b in _CORRIDOR_BLOCK):
+                    continue
+                outdoor = (r.get("장소(실외)여부") or "").strip().upper() == "Y"
+                cultural = any(h in cat or h in name for h in _CORRIDOR_HINTS)
+                if not (cultural or outdoor):
+                    continue
+                sizes = PetSize.parse_allowed(r.get("입장 가능 동물 크기"))
+                if PetSize.LARGE not in sizes:
+                    continue
+                t, perp = _corridor_project(_SEOUL, _JEONJU, coord)
+                if not (0.12 <= t <= 0.9) or perp > 18.0:
+                    continue
+                out.append((t, perp, PetFriendlyPlace(
+                    id=900000 + i, name=name, coordinate=coord,
+                    category=cat or "문화시설", allowed_sizes=sizes,
+                    restriction=(r.get("반려동물 제한사항") or "").strip(),
+                )))
+    except FileNotFoundError:
+        logger.warning("[corridor] 펫동반 CSV 없음 → 시드 폴백 가능 | %s", PETPLACE_CSV_PATH)
+        _CORRIDOR_CACHE = []
+        return _CORRIDOR_CACHE
+    out.sort(key=lambda x: x[0])
+    _CORRIDOR_CACHE = out
+    logger.info("[corridor] 서울→전주 경유 후보 로드 | n=%d", len(out))
+    return out
+
+
+def _pick_spread_stopovers(pet_size: PetSize, k: int = 3) -> list[PetFriendlyPlace]:
+    """진행도 초/중/후반 구간별로 경로 이탈이 가장 적은 시설 하나씩 → 경로 따라 고르게 분포."""
+    pool = [(t, perp, pl) for t, perp, pl in _load_corridor_candidates() if pl.accommodates(pet_size)]
+    picked: list[PetFriendlyPlace] = []
+    for lo, hi in ((0.12, 0.42), (0.42, 0.68), (0.68, 0.9)):
+        seg = sorted([(perp, pl) for t, perp, pl in pool if lo <= t < hi], key=lambda x: x[0])
+        if seg:
+            picked.append(seg[0][1])  # 경로 이탈 최소 시설
+    return picked[:k]
+
+
 def _seed_seoul_jeonju_stopovers() -> list[PetFriendlyPlace]:
-    """데모 시드 — 서울→전주 자차 경로상 펫 동반 명소·휴게(Mock-first)."""
+    """CSV 코리도어가 비었을 때만 쓰는 최소 폴백(실데이터 우선)."""
     seeds = [
         (91001, "수원 광교호수공원", 37.2856, 127.0648, "여행지(공원)"),
-        (91002, "용인 반려견 놀이터 펫파크", 37.2410, 127.1776, "여행지(펫파크)"),
         (91003, "여산휴게소(호남고속도로)", 36.0625, 127.1167, "휴게소"),
     ]
     return [
@@ -441,11 +685,13 @@ def _seed_seoul_jeonju_stopovers() -> list[PetFriendlyPlace]:
 
 
 class RouteLegsRepository(RouteLegsPort):
-    """자차 경유지 — 서울→전주 루트 상의 펫 동반 명소·휴게(시드 Mock)."""
+    """자차 경유지 — 서울→전주 경로 코리도어 위 실제 펫동반 문화시설(CSV). 시드는 폴백."""
 
     async def stopovers(self, origin: str, destination: str, pet_size: PetSize) -> list[PetFriendlyPlace]:
         if "서울" in origin and "전주" in destination:
-            stops = [p for p in _seed_seoul_jeonju_stopovers() if p.accommodates(pet_size)]
+            stops = await asyncio.to_thread(_pick_spread_stopovers, pet_size)
+            if not stops:  # CSV 부재/0건 → 시드 폴백
+                stops = [p for p in _seed_seoul_jeonju_stopovers() if p.accommodates(pet_size)]
         else:
             stops = []
         logger.info("[RouteLegsRepository] stopovers | %s→%s n=%d", origin, destination, len(stops))
